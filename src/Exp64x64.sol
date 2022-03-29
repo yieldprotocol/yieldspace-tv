@@ -1,19 +1,24 @@
-// SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.13;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity >=0.8.13; /*
+   __     ___      _     _
+   \ \   / (_)    | |   | | ███████╗██╗  ██╗██████╗  ██████╗ ██╗  ██╗██╗  ██╗ ██████╗ ██╗  ██╗
+    \ \_/ / _  ___| | __| | ██╔════╝╚██╗██╔╝██╔══██╗██╔════╝ ██║  ██║╚██╗██╔╝██╔════╝ ██║  ██║
+     \   / | |/ _ \ |/ _` | █████╗   ╚███╔╝ ██████╔╝███████╗ ███████║ ╚███╔╝ ███████╗ ███████║
+      | |  | |  __/ | (_| | ██╔══╝   ██╔██╗ ██╔═══╝ ██╔═══██╗╚════██║ ██╔██╗ ██╔═══██╗╚════██║
+      |_|  |_|\___|_|\__,_| ███████╗██╔╝ ██╗██║     ╚██████╔╝     ██║██╔╝ ██╗╚██████╔╝     ██║
+       yieldprotocol.com    ╚══════╝╚═╝  ╚═╝╚═╝      ╚═════╝      ╚═╝╚═╝  ╚═╝ ╚═════╝      ╚═╝
+                            Gas optimized math library custom-built by ABDK -- Copyright © 2019 */
 
 import "./Math64x64.sol";
 
 library Exp64x64 {
-    /**
-     * Raise given number x into power specified as a simple fraction y/z and then
-     * multiply the result by the normalization factor 2^(128 * (1 - y/z)).
-     * Revert if z is zero, or if both x and y are zeros.
-     *
-     * @param x number to raise into given power y/z
-     * @param y numerator of the power to raise x into
-     * @param z denominator of the power to raise x into
-     * @return x raised into power y/z and then multiplied by 2^(128 * (1 - y/z))
-     */
+    /// @dev Raise given number x into power specified as a simple fraction y/z and then
+    /// multiply the result by the normalization factor 2^(128 /// (1 - y/z)).
+    /// Revert if z is zero, or if both x and y are zeros.
+    /// @param x number to raise into given power y/z -- integer
+    /// @param y numerator of the power to raise x into  -- 64.64
+    /// @param z denominator of the power to raise x into  -- 64.64
+    /// @return x raised into power y/z and then multiplied by 2^(128 * (1 - y/z)) -- integer
     function pow(
         uint128 x,
         uint128 y,
@@ -33,13 +38,10 @@ library Exp64x64 {
         }
     }
 
-    /**
-     * Calculate base 2 logarithm of an unsigned 128-bit integer number.  Revert
-     * in case x is zero.
-     *
-     * @param x number to calculate base 2 logarithm of
-     * @return base 2 logarithm of x, multiplied by 2^121
-     */
+    /// @dev Calculate base 2 logarithm of an unsigned 128-bit integer number.  Revert
+    /// in case x is zero.
+    /// @param x number to calculate base 2 logarithm of
+    /// @return base 2 logarithm of x, multiplied by 2^121
     function log_2(uint128 x) internal pure returns (uint128) {
         unchecked {
             require(x != 0);
@@ -431,12 +433,9 @@ library Exp64x64 {
         }
     }
 
-    /**
-     * Calculate 2 raised into given power.
-     *
-     * @param x power to raise 2 into, multiplied by 2^121
-     * @return 2 raised into given power
-     */
+    /// @dev Calculate 2 raised into given power.
+    /// @param x power to raise 2 into, multiplied by 2^121
+    /// @return 2 raised into given power
     function pow_2(uint128 x) internal pure returns (uint128) {
         unchecked {
             uint256 r = 0x80000000000000000000000000000000;
