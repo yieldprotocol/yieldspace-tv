@@ -161,6 +161,7 @@ library Math64x64 {
      * @return signed 256-bit integer number
      */
     function muli(int128 x, int256 y) internal pure returns (int256) {
+        //NOTE: This reverts if y == type(int128).min
         unchecked {
             if (x == MIN_64x64) {
                 require(
@@ -642,7 +643,8 @@ library Math64x64 {
      * @param y unsigned 256-bit integer number
      * @return unsigned 64.64-bit fixed point number
      */
-    function divuu(uint256 x, uint256 y) private pure returns (uint128) {
+    function divuu(uint256 x, uint256 y) internal pure returns (uint128) {
+        // ^^ changed visibility from private to internal for testing
         unchecked {
             require(y != 0);
 
@@ -706,7 +708,9 @@ library Math64x64 {
      * @param x unsigned 256-bit integer number
      * @return unsigned 128-bit integer number
      */
-    function sqrtu(uint256 x) private pure returns (uint128) {
+    function sqrtu(uint256 x) internal pure returns (uint128) {
+    // ^^ changed visibility from private to internal for testing
+
         unchecked {
             if (x == 0) return 0;
             else {
