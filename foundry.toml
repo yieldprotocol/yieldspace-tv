@@ -1,7 +1,29 @@
 [default]
-src = 'src'
-out = 'out'
+block_timestamp = 1622400000  # Timestamp for tests (non-zero)\
+contracts = 'src/contracts'
+gas_reports = ["*"]
 libs = ['lib']
-remappings = ['ds-test/=lib/ds-test/src/']
+offline = true                # Disable downloading of missing solc version(s)
+optimizer = true              # Enable or disable the solc optimizer
+optimizer_runs = 200          # The number of optimizer runs
+out = 'out'
+remappings = [
+    'ds-test/=lib/ds-test/src/',
+    'forge-std/=lib/forge-std/src/',
+    '@yield-protocol/=./node_modules/@yield-protocol/'
+]
+solc_version = '0.8.13'        # Override for the solc version (setting this ignores `auto_detect_solc`)
+src = 'src'
+verbosity = 3                 # The verbosity of tests
+
+[local]
+fuzz_runs = 100
+
+[deep]
+fuzz_runs = 5000
+
+[super_deep]
+fuzz_runs = 50000
+
 
 # See more config options https://github.com/gakonst/foundry/tree/master/config
