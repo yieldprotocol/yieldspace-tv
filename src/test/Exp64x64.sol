@@ -147,9 +147,8 @@ contract Exp64x64Test is DSTest {
         Exp64x64.log_2(uint128(0x0));
     }
 
-    function testFuzz_log_2_Exp64x64(uint256 passedInX) public {
-        if (passedInX ==0) passedInX = 0x1;
-        uint128 x = coerceUInt256To128(passedInX);
+    function testFuzz_log_2_Exp64x64(uint128 x) public {
+        if (x ==0) x = 0x1;
 
         uint128 result = Exp64x64.log_2(x);
 
