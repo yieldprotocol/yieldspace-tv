@@ -11,8 +11,8 @@ pragma solidity >=0.8.13; /*
 
 import "ds-test/test.sol";
 
-import "./../Math64x64.sol";
 import "./helpers.sol";
+import "./../Math64x64.sol";
 
 contract Math64x64Test is DSTest {
     /**TESTS*********************************************************

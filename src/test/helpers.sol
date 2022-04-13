@@ -3,9 +3,6 @@ pragma solidity >=0.8.13;
 
 import "../Math64x64.sol";
 
-// import "../Exp64x64.sol";
-// import "../YieldMath.sol";
-
 /// @dev Library wrapper contract to allow for try/catch logic within tests
 contract ForTesting {
     function exp(int128 x) public pure returns (int128) {

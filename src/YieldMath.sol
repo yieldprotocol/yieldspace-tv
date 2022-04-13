@@ -10,8 +10,8 @@ pragma solidity >=0.8.13;
        yieldprotocol.com       ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
 */
 
-import {Math64x64} from "./Math64x64.sol";
 import {Exp64x64} from "./Exp64x64.sol";
+import {Math64x64} from "./Math64x64.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 library YieldMath {
