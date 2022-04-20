@@ -1,2 +1,5 @@
-ds-test/=./lib/ds-test/src/
+ds-test/=lib/ds-test/src/
 forge-std/=lib/forge-std/src/
+@yield-protocol/utils-v2/=lib/yield-utils-v2/
+@yield-protocol/vault-interfaces/=lib/vault-interfaces/
+
