@@ -38,10 +38,6 @@ error NotEnoughFYTokenIn(uint256 fYTokensAvailable, uint256 fYTokensNeeded);
 /// @dev To save gas, total supply == 0 is checked instead of a state variable
 error NotInitialized();
 
-/// Mu is the initial c reading, usually obtained through an external call to the base contract. It cannot be zero.
-/// If the current price of the base is really zero, you've got bigger problems.
-error MuZero();
-
 /// Maximum amount of fyToken (per the max arg) would be exceeded for the trade. gg
 /// @param fyTokenIn fyTokens that would be required for the trade.
 /// @param max The maximum amount of fyTokens to be paid as specified by the caller.
