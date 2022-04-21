@@ -12,7 +12,7 @@ import {YieldMath} from "../../YieldMath.sol";
 import "./Utils.sol";
 import "./Constants.sol";
 import {TestCore} from "./TestCore.sol";
-import {Pool4626} from "../../Pool/Pool4626.sol";
+import {Pool} from "../../Pool/Pool.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
 
@@ -62,7 +62,7 @@ abstract contract ZeroState is TestCore {
         vm.label(bob, "bob");
 
         // setup pool
-        pool = new Pool4626(address(base), address(fyToken), ts, g1Fee);
+        pool = new Pool(address(base), address(fyToken), ts, g1Fee);
         pool.grantRole(bytes4(pool.initialize.selector), alice);
         pool.grantRole(bytes4(pool.setFees.selector), bob);
 

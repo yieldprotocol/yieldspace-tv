@@ -20,7 +20,7 @@ import "./shared/Utils.sol";
 import "./shared/Constants.sol";
 import {ZeroStateDai} from "./shared/ZeroState.sol";
 
-import "../Pool/Pool4626Errors.sol";
+import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";

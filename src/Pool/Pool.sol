@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.13;
 
-import "./Pool4626Imports.sol"; /*
+import "./PoolImports.sol"; /*
 
 
   __     ___      _     _
@@ -46,7 +46,8 @@ import "./Pool4626Imports.sol"; /*
 /// @title  Pool.sol
 /// @dev    Uses ABDK 64.64 mathlib for precision and reduced gas. Deploy pool with 4626 token and associated fyToken.
 /// @author Adapted by @devtooligan from original work by @alcueca and UniswapV2. Maths and whitepaper by @aniemburg.
-contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
+contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
+
     /* LIBRARIES
      *****************************************************************************************************************/
 
@@ -100,7 +101,6 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
     /// @dev Footgun alert!  Be careful, this number is probably not what you need and should normally be considered
     /// along with blockTimestampLast. Use currentCumulativeRatio() for consumption as a TWAR observation.
     /// @return a fixed point factor with 27 decimals (ray).
-    // TODO: consider changing visibility to private to reduce risk of misuse and remove footgun warnings
     uint256 public cumulativeRatioLast;
 
     /* CONSTRUCTOR
@@ -119,15 +119,16 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         )
     {
         fyToken = IFYToken(fyToken_);
-        base = IERC4626(base_);
+        base = IERC20Like(base_);
 
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
         ts = ts_;
-        setFees(g1Fee_);
         scaleFactor = uint96(10**(18 - uint96(decimals))); // No more than 18 decimals allowed, reverts on underflow.
 
-        if ((mu = _getC()) == 0) revert MuZero();
+        setFees(g1Fee_);
+
+        mu = _getC();
     }
 
     /* LIQUIDITY FUNCTIONS
@@ -532,7 +533,7 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
               |      |  \   /      `'''''''`               |                          |+
               |      |   \_/                               |       ---     ---        |+
               |______|                                     |       (o )    (o )       |+
-              |__X___|             ┌──────────────┐      /`|                          |+
+              |__GG__|             ┌──────────────┐      /`|                          |+
               |      |             │$            $│     / /|            [             |+
               |  |   |             │   B A S E    │    / / |        ----------        |+
               |  |  _|             │  `tokenOut`  │\.-" ;  \        \________/        /+
@@ -624,7 +625,7 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
               |      |  \   /         _......._             /`|       ---     ---        |+
               |      |   \_/       .-:::::::::::-.         / /|       (o )    (o )       |+
               |______|           .:::::::::::::::::.      / / |                          |+
-              |__X___|          :  _______  __   __ : _.-" ;  |            [             |+
+              |__GG__|          :  _______  __   __ : _.-" ;  |            [             |+
               |      |         :: |       ||  | |  |::),.-'   |        ----------        |+
               |  |   |        ::: |    ___||  |_|  |:::/      \        \________/        /+
               |  |  _|        ::: |   |___ |       |:::        `-..__________________..-' +=
@@ -716,7 +717,7 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
               |      |  \   /         _......._             /`|       ---     ---        |+
               |      |   \_/       .-:::::::::::-.         / /|       (o )    (o )       |+
               |______|           .:::::::::::::::::.      / / |                          |+
-              |__X___|          :  _______  __   __ : _.-" ;  |            [             |+
+              |__GG__|          :  _______  __   __ : _.-" ;  |            [             |+
               |      |         :: |       ||  | |  |::),.-'   |        ----------        |+
               |  |   |        ::: |    ___||  |_|  |:::/      \        \________/        /+
               |  |  _|        ::: |   |___ |       |:::        `-..__________________..-' +=
@@ -805,7 +806,7 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
               |      |  \   /      `'''''''`               |                          |+
               |      |   \_/                               |       ---     ---        |+
               |______|                                     |       (o )    (o )       |+
-              |__X___|             ┌──────────────┐      /`|                          |+
+              |__GG__|             ┌──────────────┐      /`|                          |+
               |      |             │$            $│     / /|            [             |+
               |  |   |             │   B A S E    │    / / |        ----------        |+
               |  |  _|             │    ????      │\.-" ;  \        \________/        /+
@@ -1040,7 +1041,7 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
 
         uint32 blockTimestamp = uint32(block.timestamp);
         uint32 timeElapsed;
-        timeElapsed = blockTimestamp - blockTimestampLast; // underflow is desired //TODO: UniV2 said "overflow is desired" but not sure why
+        timeElapsed = blockTimestamp - blockTimestampLast; // reverts on underflow
 
         uint256 oldCumulativeRatioLast = cumulativeRatioLast;
         uint256 newCumulativeRatioLast = oldCumulativeRatioLast;
@@ -1050,7 +1051,6 @@ contract Pool4626 is PoolEvents, IYVPool, ERC20Permit, AccessControl {
             newCumulativeRatioLast += (scaledFYTokenCached * timeElapsed) / baseCached_;
         }
 
-        // TODO: Consider not udpating these two if ratio hasn't changed to save gas on SSTORE.
         blockTimestampLast = blockTimestamp;
         cumulativeRatioLast = newCumulativeRatioLast;
 

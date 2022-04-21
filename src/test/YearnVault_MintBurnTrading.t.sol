@@ -16,7 +16,7 @@ pragma solidity >=0.8.13;
 //
 //    NOTE:
 //    These tests are exactly copy and pasted from the MintBurn.t.sol and TradingDAI.t.sol test suites.
-//    The only difference is they are setup and based on the PoolYearnVault contract instead of the Pool4626 contract
+//    The only difference is they are setup and based on the PoolYearnVault contract instead of the Pool contract
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -25,7 +25,7 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../Pool/Pool4626Errors.sol";
+import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";

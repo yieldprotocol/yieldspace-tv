@@ -11,7 +11,7 @@ import {YieldMath} from "../../YieldMath.sol";
 
 import "./Utils.sol";
 import "./Constants.sol";
-import {Pool4626} from "../../Pool/Pool4626.sol";
+import {Pool} from "../../Pool/Pool.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
 
@@ -40,7 +40,7 @@ abstract contract TestCore {
 
     ERC4626TokenMock public base;
     FYTokenMock public fyToken;
-    Pool4626 public pool;
+    Pool public pool;
 
     address public alice;
     address public bob;
