@@ -51,7 +51,7 @@ abstract contract TestCore {
 
     int128 immutable k;
 
-    uint16 public constant g1Fee = 500;
+    uint16 public constant g1Fee = 9500;
     uint16 public constant g1Denominator = 10000;
     int128 public g1; // g to use when selling shares to pool
     int128 public g2; // g to use when selling fyTokens to pool
@@ -66,8 +66,8 @@ abstract contract TestCore {
     constructor() {
         uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;
         k = uint256(1).fromUInt().div(invK.fromUInt());
-        g1 = uint256(g1Denominator - g1Fee).fromUInt().div(uint256(g1Denominator).fromUInt());
-        g2 = uint256(g1Denominator).fromUInt().div(uint256(g1Denominator - g1Fee).fromUInt());
+        g1 = uint256(g1Fee).fromUInt().div(uint256(g1Denominator).fromUInt());
+        g2 = uint256(g1Denominator).fromUInt().div(uint256(g1Fee).fromUInt());
         mu = muNumerator.fromUInt().div(muDenominator.fromUInt());
     }
 }

@@ -52,7 +52,7 @@ contract PoolYearnVault is Pool {
 
     /// Returns the base token current price.
     /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
-    function getBaseCurrentPrice() public view override virtual returns (uint256) {
+    function _getBaseCurrentPrice() internal view override virtual returns (uint256) {
         return IYVToken(address(base)).getPricePerFullShare();
     }
 }

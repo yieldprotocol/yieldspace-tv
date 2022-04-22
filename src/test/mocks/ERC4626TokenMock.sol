@@ -34,7 +34,7 @@ contract ERC4626TokenMock is Mintable {
         token.transfer(to, obtained);
     }
 
-    function previewRedeem(uint256 amount) public view virtual returns (uint256) {
+    function convertToAssets(uint256 amount) public view virtual returns (uint256) {
         return price * amount / (10 ** decimals);
     }
 

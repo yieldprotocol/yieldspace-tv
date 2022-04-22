@@ -63,7 +63,7 @@ abstract contract ZeroState is TestCore {
 
         // setup pool
         pool = new Pool(address(base), address(fyToken), ts, g1Fee);
-        pool.grantRole(bytes4(pool.initialize.selector), alice);
+        pool.grantRole(bytes4(pool.init.selector), alice);
         pool.grantRole(bytes4(pool.setFees.selector), bob);
 
     }

@@ -33,7 +33,7 @@ abstract contract WithLiquidity is ZeroStateUSDC {
         super.setUp();
         base.mint(address(pool), initialBase);
         vm.prank(alice);
-        pool.initialize(address(0), address(0), 0, MAX);
+        pool.init(address(0), address(0), 0, MAX);
         base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
         fyToken.mint(address(pool), initialFYTokens);
         pool.sync();
@@ -111,7 +111,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.previewRedeem(10 ** base.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
+        int128 c_ = (base.convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -187,7 +187,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint256 userBaseBalanceBefore = base.balanceOf(alice);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.previewRedeem(10 ** base.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
+        int128 c_ = (base.convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
 
         // Transfer base for sale to the pool
         base.mint(address(pool), baseIn);
@@ -249,7 +249,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.previewRedeem(10 ** base.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
+        int128 c_ = (base.convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
 
         // Transfer base for sale to the pool
         base.mint(address(pool), initialBase);

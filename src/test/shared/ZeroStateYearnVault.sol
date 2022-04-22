@@ -62,10 +62,10 @@ abstract contract ZeroStateYearnVault is TestCoreYearnVault {
         // setup pool
         pool = new PoolYearnVault(address(base), address(fyToken), ts, g1Fee);
         pool.grantRole(0x00000000, alice);
-        pool.grantRole(bytes4(pool.initialize.selector), alice);
+        pool.grantRole(bytes4(pool.init.selector), alice);
 
         pool.grantRole(0x00000000, bob);
-        pool.grantRole(bytes4(pool.initialize.selector), bob);
+        pool.grantRole(bytes4(pool.init.selector), bob);
     }
 }
 

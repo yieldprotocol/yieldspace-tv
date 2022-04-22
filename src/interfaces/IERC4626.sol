@@ -5,5 +5,5 @@ import "@yield-protocol/utils-v2/contracts/token/IERC20.sol";
 
 interface IERC4626 is IERC20, IERC20Metadata {
     function mint(uint256 shares, address receiver) external returns (uint256 assets);
-    function previewRedeem(uint256 shares) external view returns (uint256);
+    function convertToAssets(uint256 shares) external view returns (uint256);
 }
