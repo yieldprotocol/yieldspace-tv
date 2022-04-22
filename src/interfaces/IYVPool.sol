@@ -27,7 +27,7 @@ interface IYVPool is IERC20, IERC2612 {
     function getBaseCurrentPrice() external view returns (uint256);
     function getCache() external view returns (uint16, uint104, uint104, uint32);
     function getFYTokenBalance() external view returns(uint104);
-    function initialize(
+    function init(
         address to,
         address remainder,
         uint256 minRatio,

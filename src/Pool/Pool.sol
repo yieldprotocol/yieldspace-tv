@@ -3,14 +3,13 @@ pragma solidity >=0.8.13;
 
 import "./PoolImports.sol"; /*
 
-
-  __     ___      _     _
-  \ \   / (_)    | |   | | ██████╗  ██████╗  ██████╗ ██╗██╗  ██╗ ██████╗ ██████╗  ██████╗    ███████╗ ██████╗ ██╗
-   \ \_/ / _  ___| | __| | ██╔══██╗██╔═══██╗██╔═══██╗██║██║  ██║██╔════╝ ╚════██╗██╔════╝    ██╔════╝██╔═══██╗██║
-    \   / | |/ _ \ |/ _` | ██████╔╝██║   ██║██║   ██║██║███████║███████╗  █████╔╝███████╗    ███████╗██║   ██║██║
-     | |  | |  __/ | (_| | ██╔═══╝ ██║   ██║██║   ██║██║╚════██║██╔═══██╗██╔═══╝ ██╔═══██╗   ╚════██║██║   ██║██║
-     |_|  |_|\___|_|\__,_| ██║     ╚██████╔╝╚██████╔╝███████╗██║╚██████╔╝███████╗╚██████╔╝██╗███████║╚██████╔╝███████╗
-       yieldprotocol.com   ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚══════╝
+   __     ___      _     _
+   \ \   / (_)    | |   | |  ██████╗  ██████╗  ██████╗ ██╗        ███████╗ ██████╗ ██╗
+    \ \_/ / _  ___| | __| |  ██╔══██╗██╔═══██╗██╔═══██╗██║        ██╔════╝██╔═══██╗██║
+     \   / | |/ _ \ |/ _` |  ██████╔╝██║   ██║██║   ██║██║        ███████╗██║   ██║██║
+      | |  | |  __/ | (_| |  ██╔═══╝ ██║   ██║██║   ██║██║        ╚════██║██║   ██║██║
+      |_|  |_|\___|_|\__,_|  ██║     ╚██████╔╝╚██████╔╝███████╗██╗███████║╚██████╔╝███████╗
+       yieldprotocol.com     ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝╚══════╝ ╚═════╝ ╚══════╝
 
                                                 ┌─────────┐
                                                 │no       │
@@ -64,7 +63,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
     /* MODIFIERS
      *****************************************************************************************************************/
 
-    /// Trading can only be done before maturity
+    /// Trading can only be done before maturity.
     modifier beforeMaturity() {
         if (block.timestamp >= maturity) revert AfterMaturity();
         _;
@@ -73,9 +72,11 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
     /* IMMUTABLES
      *****************************************************************************************************************/
 
-    /// This pool accepts a pair of fyTokens and ERC4626 base tokens.
+    /// This pool accepts a pair of ERC4626 base token and related fyToken.
+    /// For most of this contract, only the ERC20 functionality of the base token is required.  As such, base is cast
+    /// as an "IERC20Like" and only cast as an IERC4626 when that functionality is needed in _getBaseCurrentPrice()
     /// We mostly use the core ERC20 (except when checking current price), so we cast the base token as an IERC20Like
-    /// in order that this contract can be inherited by other non-standard tokenized vault contracts.
+    /// This wei, non-4626 compliant tokenized vault modules can import this contract and override that function.
     IERC20Like public immutable base;
     IFYToken public immutable fyToken;
 
@@ -88,18 +89,19 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
      *****************************************************************************************************************/
 
     // The following 4 vars use one storage slot and can be retrieved with getCache()
-    uint16 public g1Fee; //                            Fee (in bps) To be used when buying fyToken
-    uint104 private baseCached; //                     Base token reserves, cached
-    uint104 private fyTokenCached; //                  fyToken reserves, cached
-    uint32 private blockTimestampLast; //              block.timestamp of last time reserve caches were updated
+    uint16 public g1Fee; //                             Fee this is a fp4 with a max of 10,000 representing 1
+    uint104 internal baseCached; //                     Base token reserves, cached
+    uint104 internal fyTokenCached; //                  fyToken reserves, cached
+    uint32 internal blockTimestampLast; //              block.timestamp of last time reserve caches were updated
 
     /// ╔═╗┬ ┬┌┬┐┬ ┬┬  ┌─┐┌┬┐┬┬  ┬┌─┐  ╦═╗┌─┐┌┬┐┬┌─┐  ╦  ┌─┐┌─┐┌┬┐
     /// ║  │ │││││ ││  ├─┤ │ │└┐┌┘├┤   ╠╦╝├─┤ │ ││ │  ║  ├─┤└─┐ │
     /// ╚═╝└─┘┴ ┴└─┘┴─┘┴ ┴ ┴ ┴ └┘ └─┘  ╩╚═┴ ┴ ┴ ┴└─┘  ╩═╝┴ ┴└─┘ ┴
-    /// a LAGGING, time weighted sum of the fyToken:base reserves ratio:
+    /// a LAGGING, time weighted sum of the fyToken:base reserves ratio measured in ratio seconds.
     ///
     /// @dev Footgun alert!  Be careful, this number is probably not what you need and should normally be considered
     /// along with blockTimestampLast. Use currentCumulativeRatio() for consumption as a TWAR observation.
+    /// In future pools, this function's visibility will be changed to internal.
     /// @return a fixed point factor with 27 decimals (ray).
     uint256 public cumulativeRatioLast;
 
@@ -113,22 +115,25 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         uint16 g1Fee_ //      fees (in bps) when buying fyToken
     )
         ERC20Permit(
-            string(abi.encodePacked(IERC20Metadata(fyToken_).name(), " LP")),
-            string(abi.encodePacked(IERC20Metadata(fyToken_).symbol(), "LP")),
-            IERC20Metadata(fyToken_).decimals()
+            string(abi.encodePacked(IERC20Like(fyToken_).name(), " LP")),
+            string(abi.encodePacked(IERC20Like(fyToken_).symbol(), "LP")),
+            IERC20Like(fyToken_).decimals()
         )
     {
-        fyToken = IFYToken(fyToken_);
-        base = IERC20Like(base_);
-
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
+        // set immutables
+        fyToken = IFYToken(fyToken_);
+        base = IERC20Like(base_);
         ts = ts_;
         scaleFactor = uint96(10**(18 - uint96(decimals))); // No more than 18 decimals allowed, reverts on underflow.
-
-        setFees(g1Fee_);
-
         mu = _getC();
+
+        //set fee
+        if (g1Fee_ > 10000) revert InvalidFee(g1Fee_);
+        g1Fee = g1Fee_;
+        emit FeesSet(g1Fee_);
+
     }
 
     /* LIQUIDITY FUNCTIONS
@@ -186,9 +191,10 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         )
     {
         if (_totalSupply == 0) revert NotInitialized();
-        return _mintInternal(to, remainder, 0, minRatio, maxRatio);
+        return _mink(to, remainder, 0, minRatio, maxRatio);
     }
 
+    /// This is the internal function for the external mint.  _mint is a common fn name in ERC20 implementations so we use menk here.
     /// ╦┌┐┌┬┌┬┐┬┌─┐┬  ┬┌─┐┌─┐  ╔═╗┌─┐┌─┐┬
     /// ║││││ │ │├─┤│  │┌─┘├┤   ╠═╝│ ││ ││
     /// ╩┘└┘┴ ┴ ┴┴ ┴┴─┘┴└─┘└─┘  ╩  └─┘└─┘┴─┘
@@ -198,7 +204,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
     /// @param minRatio Minimum ratio of base to fyToken in the pool.
     /// @param maxRatio Maximum ratio of base to fyToken in the pool.
     /// @return The amount of liquidity tokens minted.
-    function initialize(
+    function init(
         address to,
         address remainder,
         uint256 minRatio,
@@ -214,10 +220,11 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         )
     {
         if (_totalSupply != 0) revert Initialized();
-        return _mintInternal(to, remainder, 0, minRatio, maxRatio);
+        return _mink(to, remainder, 0, minRatio, maxRatio);
     }
 
-    /*mintWithBase
+    /*This is the internal function for the external mint.  _mint is a common fn name in ERC20 implementations so we use menk here.
+    /// mintWithBase
                                                                                              V
                                   ┌───────────────────────────────┐                   \            /
                                   │                               │                 `    _......._     '   gm!
@@ -260,9 +267,11 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         )
     {
         if (_totalSupply == 0) revert NotInitialized();
-        return _mintInternal(to, remainder, fyTokenToBuy, minRatio, maxRatio);
+        return _mink(to, remainder, fyTokenToBuy, minRatio, maxRatio);
     }
 
+    /// This is the internal function for the external mint.
+    /// Because _mint is a common fn name in ERC20 implementations, the name of this fn is _mink.
     /// Mint liquidity tokens, with an optional internal trade to buy fyToken beforehand.
     /// The amount of liquidity tokens is calculated from the amount of fyTokenToBuy from the pool,
     /// plus the amount of extra, unaccounted for fyToken in this contract.
@@ -273,7 +282,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
     /// @param fyTokenToBuy Amount of `fyToken` being bought in the Pool, from this we calculate how much base it will be taken in.
     /// @param minRatio Minimum ratio of base to fyToken in the pool.
     /// @param maxRatio Maximum ratio of base to fyToken in the pool.
-    function _mintInternal(
+    function _mink(
         address to,
         address remainder,
         uint256 fyTokenToBuy,
@@ -593,7 +602,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         uint104 baseBalance,
         uint104 fyTokenBalance,
         int128 g2_
-    ) private view beforeMaturity returns (uint128) {
+    ) internal view beforeMaturity returns (uint128) {
         return
             YieldMath.fyTokenInForSharesOut(
                 baseBalance * scaleFactor,
@@ -680,7 +689,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         uint128 baseBalance,
         uint128 fyTokenBalance,
         int128 g1_
-    ) private view beforeMaturity returns (uint128) {
+    ) internal view beforeMaturity returns (uint128) {
         uint128 baseIn = YieldMath.sharesInForFYTokenOut(
             baseBalance * scaleFactor,
             fyTokenBalance * scaleFactor,
@@ -770,7 +779,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         uint104 baseBalance,
         uint104 fyTokenBalance,
         int128 g1_
-    ) private view beforeMaturity returns (uint128) {
+    ) internal view beforeMaturity returns (uint128) {
         uint128 fyTokenOut = YieldMath.fyTokenOutForSharesIn(
             baseBalance * scaleFactor,
             fyTokenBalance * scaleFactor,
@@ -860,7 +869,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         uint104 baseBalance,
         uint104 fyTokenBalance,
         int128 g2_
-    ) private view beforeMaturity returns (uint128) {
+    ) internal view beforeMaturity returns (uint128) {
         return
             YieldMath.sharesOutForFYTokenIn(
                 baseBalance * scaleFactor,
@@ -897,8 +906,15 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
 
     /// Returns the base token current price.
     /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
-    function getBaseCurrentPrice() public view virtual returns (uint256) {
-        return IERC4626(address(base)).previewRedeem(10**base.decimals());
+    function getBaseCurrentPrice() external view returns (uint256) {
+        return _getBaseCurrentPrice();
+    }
+
+    /// Returns the base token current price.
+    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
+    function _getBaseCurrentPrice() internal view virtual returns (uint256) {
+
+        return IERC4626(address(base)).convertToAssets(10**base.decimals());
     }
 
     /// The "virtual" fyToken balance, which is the actual balance plus the pool token supply.
@@ -911,11 +927,10 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
-    /// @return g1Fee.
+    /// @return g1Fee  This is a fp4 number where 10000 is 1.
     /// @return Cached base token balance.
     /// @return Cached virtual FY token balance which is the actual balance plus the pool token supply.
     /// @return Timestamp that balances were last cached.
-    //TODO: Should we replace this with a struct?
     function getCache()
         public
         view
@@ -989,13 +1004,13 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
 
     /// Returns the ratio of net proceeds after fees, for buying fyToken
     function _computeG1(uint16 g1Fee_) internal pure returns (int128) {
-        return uint256(10000 - g1Fee_).fromUInt().div(uint256(10000).fromUInt());
+        return uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt());
     }
 
     /// Returns the ratio of net proceeds after fees, for selling fyToken
     function _computeG2(uint16 g1Fee_) internal pure returns (int128) {
         // Divide 1 (64.64) by g1
-        return int128(YieldMath.ONE).div(uint256(10000 - g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
+        return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
     }
 
     /// Returns the base balance
@@ -1005,7 +1020,8 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
 
     /// Returns the c based on the current price
     function _getC() internal view returns (int128) {
-        return ((getBaseCurrentPrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
+
+        return ((_getBaseCurrentPrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
     }
 
     /// Returns the "virtual" fyToken balance, which is the real balance plus the pool token supply.
@@ -1035,7 +1051,7 @@ contract Pool is PoolEvents, IYVPool, ERC20Permit, AccessControl {
         uint128 fyBalance,
         uint104 baseCached_,
         uint104 fyTokenCached_
-    ) private {
+    ) internal {
         // No need to update and spend gas on SSTORE if reserves haven't changed.
         if (baseBalance == baseCached_ && fyBalance == fyTokenCached_) return;
 

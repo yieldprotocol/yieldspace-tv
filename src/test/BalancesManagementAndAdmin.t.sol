@@ -30,7 +30,7 @@ abstract contract WithLiquidity is ZeroStateDai {
         base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
 
         vm.prank(alice);
-        pool.initialize(alice, bob, 0, MAX);
+        pool.init(alice, bob, 0, MAX);
         base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
 
@@ -45,7 +45,7 @@ contract Admin__WithLiquidity is WithLiquidity {
     function testUnit_admin1() public {
         console.log("balance management getters return correct values");
         require(pool.getBaseBalance() == base.balanceOf(address(pool)));
-        require(pool.getBaseCurrentPrice() == base.previewRedeem(10**base.decimals()));
+        require(pool.getBaseCurrentPrice() == base.convertToAssets(10**base.decimals()));
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
         (uint16 g1fee_, uint104 baseCached, uint104 fyTokenCached, uint32 blockTimeStampLast) = pool.getCache();
         require(g1fee_ == g1Fee);

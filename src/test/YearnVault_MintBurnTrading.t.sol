@@ -40,7 +40,7 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnVaultDai {
         base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
 
         vm.prank(alice);
-        pool.initialize(alice, bob, 0, MAX);
+        pool.init(alice, bob, 0, MAX);
         base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
 
@@ -69,7 +69,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnVaultDai {
             int256(INITIAL_YVDAI)
         );
 
-        pool.initialize(bob, bob, 0, MAX);
+        pool.init(bob, bob, 0, MAX);
         base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
@@ -84,7 +84,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnVaultDai {
 
         vm.startPrank(alice);
 
-        pool.initialize(address(0), address(0), 0, MAX);
+        pool.init(address(0), address(0), 0, MAX);
 
         // After initializing, donate base and sync to simulate having reached zero fyToken through trading
         base.mint(address(pool), INITIAL_YVDAI);
