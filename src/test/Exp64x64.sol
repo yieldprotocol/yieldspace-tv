@@ -8,7 +8,7 @@ pragma solidity >=0.8.13;/*
      |_|  |_|\___|_|\__,_|    ██║   ███████╗███████║   ██║   ███████║
       yieldprotocol.com       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝
 */
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 import "./helpers.sol";
 import "./../YieldMath.sol";
