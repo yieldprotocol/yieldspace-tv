@@ -25,10 +25,10 @@ import "./shared/Utils.sol";
 import "./shared/Constants.sol";
 import {FYTokenMock} from "./mocks/FYTokenMock.sol";
 import {YVTokenMock} from "./mocks/YVTokenMock.sol";
-import {ZeroStateUSDC} from "./shared/ZeroState.sol";
+import {ZeroState4626USDC} from "./shared/ZeroState4626USDC.sol";
 
 
-abstract contract WithLiquidity is ZeroStateUSDC {
+abstract contract WithLiquidity is ZeroState4626USDC {
     function setUp() public virtual override {
         super.setUp();
         base.mint(address(pool), initialBase);

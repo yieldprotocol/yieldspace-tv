@@ -38,7 +38,7 @@ abstract contract TestCore {
 
     Vm public vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
-    ERC4626TokenMock public base;
+    // ERC4626TokenMock public base;
     FYTokenMock public fyToken;
     Pool public pool;
 

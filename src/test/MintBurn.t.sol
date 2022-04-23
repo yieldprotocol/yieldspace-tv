@@ -18,14 +18,14 @@ import {console} from "forge-std/console.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
-import {ZeroStateDai} from "./shared/ZeroState.sol";
+import {ZeroState4626DAI} from "./shared/ZeroState4626DAI.sol";
 
 import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
 
-abstract contract WithLiquidity is ZeroStateDai {
+abstract contract WithLiquidity is ZeroState4626DAI {
     function setUp() public virtual override {
         super.setUp();
         base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
@@ -42,7 +42,7 @@ abstract contract WithLiquidity is ZeroStateDai {
     }
 }
 
-contract Mint__ZeroState is ZeroStateDai {
+contract Mint__ZeroState is ZeroState4626DAI {
     function testUnit_mint0() public {
         console.log("cannot mint before initialize or initialize without auth");
 

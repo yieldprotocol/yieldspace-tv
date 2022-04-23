@@ -50,9 +50,7 @@ abstract contract ZeroState is TestCore {
 
     function setUp() public virtual {
         ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
-        // setup mock tokens
-        base = new ERC4626TokenMock(baseName, baseSymbol, baseDecimals, address(0));
-        base.setPrice((muNumerator * (10**base.decimals())) / muDenominator);
+        // setup fyToken
         fyToken = new FYTokenMock(fyName, fySymbol, address(base), maturity);
 
         // setup users
@@ -61,54 +59,5 @@ abstract contract ZeroState is TestCore {
         bob = address(0xb0b);
         vm.label(bob, "bob");
 
-        // setup pool
-        pool = new Pool(address(base), address(fyToken), ts, g1Fee);
-        pool.grantRole(bytes4(pool.init.selector), alice);
-        pool.grantRole(bytes4(pool.setFees.selector), bob);
-
-    }
-}
-
-abstract contract ZeroStateDai is ZeroState {
-    // used in 2 test suites __WithLiquidity
-
-    uint256 public constant aliceBaseInitialBalance = 1000 * 1e18;
-    uint256 public constant bobBaseInitialBalance = 2_000_000 * 1e18;
-
-    uint256 public constant initialBase = 1_100_000 * 1e18;
-    uint256 public constant initialFYTokens = 1_500_000 * 1e18;
-
-    ZeroStateParams public zeroStateParams =
-        ZeroStateParams("fyTVDai1", "fyToken tvDAI maturity 1", "tvDAI", "Tokenized Vault DAI", 18);
-
-    constructor() ZeroState(zeroStateParams) {}
-
-    function setUp() public virtual override {
-        super.setUp();
-
-        base.mint(alice, aliceBaseInitialBalance);
-        base.mint(bob, bobBaseInitialBalance);
-    }
-}
-
-abstract contract ZeroStateUSDC is ZeroState {
-    // used in 2 test suites __WithLiquidity
-
-    uint256 public constant aliceBaseInitialBalance = 1000 * 1e6;
-    uint256 public constant bobBaseInitialBalance = 2_000_000 * 1e6;
-
-    uint256 public constant initialFYTokens = 1_500_000 * 1e6;
-    uint256 public constant initialBase = 1_100_000 * 1e6;
-
-    ZeroStateParams public zeroStateParams =
-        ZeroStateParams("fyTVUSDC1", "fyToken tvUSDC maturity 1", "tvUSDC", "Tokenized Vault USDC", 6);
-
-    constructor() ZeroState(zeroStateParams) {}
-
-    function setUp() public virtual override {
-        super.setUp();
-
-        base.mint(alice, aliceBaseInitialBalance);
-        base.mint(bob, bobBaseInitialBalance);
     }
 }

@@ -26,7 +26,6 @@ import "./shared/Constants.sol";
 import {WithLiquidity} from "./MintBurn.t.sol";
 import {FYTokenMock} from "./mocks/FYTokenMock.sol";
 import {YVTokenMock} from "./mocks/YVTokenMock.sol";
-import {ZeroStateDai} from "./shared/ZeroState.sol";
 
 abstract contract WithExtraFYToken is WithLiquidity {
     using Exp64x64 for uint128;

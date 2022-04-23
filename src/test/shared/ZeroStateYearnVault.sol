@@ -11,7 +11,7 @@ import {YieldMath} from "../../YieldMath.sol";
 
 import "./Utils.sol";
 import "./Constants.sol";
-import {TestCoreYearnVault} from "./TestCoreYearnVault.sol";
+import {TestCore} from "./TestCore.sol";
 import {PoolYearnVault} from "../../Pool/YearnVault/PoolYearnVault.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {YVTokenMock} from "../mocks/YVTokenMock.sol";
@@ -24,19 +24,23 @@ struct ZeroStateParams {
     uint8 baseDecimals;
 }
 
-abstract contract ZeroStateYearnVault is TestCoreYearnVault {
+abstract contract ZeroStateYearnVault is TestCore {
     using Exp64x64 for uint128;
     using Math64x64 for int256;
     using Math64x64 for int128;
     using Math64x64 for uint128;
     using Math64x64 for uint256;
 
+
+    YVTokenMock public base;
     string public baseName;
     string public baseSymbol;
     uint8 public baseDecimals;
 
     string public fyName;
     string public fySymbol;
+
+    PoolYearnVault public pool;
 
     constructor(ZeroStateParams memory params) {
         fyName = params.fyName;
