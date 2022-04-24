@@ -5,7 +5,7 @@ import "@yield-protocol/utils-v2/contracts/token/IERC2612.sol";
 import "@yield-protocol/vault-interfaces/IFYToken.sol";
 import "src/interfaces/IYVToken.sol";
 
-interface IYVPool is IERC20, IERC2612 {
+interface IPool is IERC20, IERC2612 {
     // function base() external returns(IYVToken);
     function burn(
         address baseTo,
@@ -22,6 +22,8 @@ interface IYVPool is IERC20, IERC2612 {
     function buyBasePreview(uint128 baseOut) external view returns(uint128);
     function buyFYToken(address to, uint128 fyTokenOut, uint128 max) external returns(uint128);
     function buyFYTokenPreview(uint128 fyTokenOut) external view returns(uint128);
+    function currentCumulativeRatio() external returns (uint256 currentCumulativeRatio_, uint256 blockTimestampCurrent);
+    function cumulativeRatioLast() external returns (uint256);
     function fyToken() external view returns(IFYToken);
     function getBaseBalance() external view returns(uint104);
     function getBaseCurrentPrice() external view returns (uint256);
@@ -67,5 +69,7 @@ interface IYVPool is IERC20, IERC2612 {
     function sellBasePreview(uint128 baseIn) external view returns(uint128);
     function sellFYToken(address to, uint128 min) external returns(uint128);
     function sellFYTokenPreview(uint128 fyTokenIn) external view returns(uint128);
+    function setFees(uint16 g1Fee_) external;
+    function sync() external;
     function ts() external view returns(int128);
 }

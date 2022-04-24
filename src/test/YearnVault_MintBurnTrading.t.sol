@@ -32,16 +32,22 @@ import {YieldMath} from "../YieldMath.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
-import {ZeroStateYearnVaultDai} from "./shared/ZeroStateYearnVault.sol";
+import {YVTokenMock} from "./mocks/YVTokenMock.sol";
+import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
 
-abstract contract WithLiquidityYearnVault is ZeroStateYearnVaultDai {
+abstract contract ZeroStateYearnDai is ZeroState {
+        constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "YearnVault")) {}
+
+}
+
+abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
     function setUp() public virtual override {
         super.setUp();
-        base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
 
+        base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
         vm.prank(alice);
         pool.init(alice, bob, 0, MAX);
-        base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
+        setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
 
         // Skew the balances without using trading functions
@@ -51,17 +57,17 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnVaultDai {
     }
 }
 
-contract Mint__ZeroStateYearnVault is ZeroStateYearnVaultDai {
+contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
     function testUnit_YearnVault_mint1() public {
         console.log("adds initial liquidity");
 
-        vm.startPrank(bob);
+        vm.prank(bob);
         base.transfer(address(pool), INITIAL_YVDAI);
 
         vm.expectEmit(true, true, true, true);
         emit Liquidity(
             maturity,
-            bob,
+            alice,
             bob,
             address(0),
             int256(-1 * int256(INITIAL_YVDAI)),
@@ -69,8 +75,9 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnVaultDai {
             int256(INITIAL_YVDAI)
         );
 
+        vm.prank(alice);
         pool.init(bob, bob, 0, MAX);
-        base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
+        setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
         (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
@@ -229,7 +236,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedBaseOut = YieldMath.sharesOutForFYTokenIn(
@@ -289,7 +296,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -367,7 +374,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         // Transfer base for sale to the pool
         base.mint(address(pool), baseIn);
@@ -433,7 +440,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (base.getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         // Transfer base for sale to the pool
         base.mint(address(pool), initialBase);

@@ -11,10 +11,18 @@ import {YieldMath} from "../../YieldMath.sol";
 
 import "./Utils.sol";
 import "./Constants.sol";
-import {Pool} from "../../Pool/Pool.sol";
+import {IPool} from "../../interfaces/IPool.sol";
+// import {Pool} from "../../Pool/Pool.sol";
+import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
-import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
+import {IERC20Like} from  "../../interfaces/IERC20Like.sol";
 
+// TestCore
+// - Initializes state variables.
+// - Sets state variable vm for accessing cheat codes.
+// - Declares events,
+// - Declares constants.
+// No new contracts are created
 abstract contract TestCore {
     event Liquidity(
         uint32 maturity,
@@ -38,9 +46,8 @@ abstract contract TestCore {
 
     Vm public vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
-    ERC4626TokenMock public base;
     FYTokenMock public fyToken;
-    Pool public pool;
+    IPool public pool;
 
     address public alice;
     address public bob;
@@ -62,6 +69,27 @@ abstract contract TestCore {
     uint256 public constant muNumerator = 105;
     uint256 public constant muDenominator = 100;
     int128 public mu;
+
+    string public underlyingName;
+    string public underlyingSymbol;
+    uint8 public underlyingDecimals;
+    ERC20Mock public underlying;
+
+    string public fyName;
+    string public fySymbol;
+
+    bytes32 public baseType; // TYPE_4626 or TYPE_YV
+    string public baseTypeString; // TYPE_4626 or TYPE_YV
+    string public baseName;
+    string public baseSymbol;
+    IERC20Like public base;
+
+    uint256 public aliceBaseInitialBalance;
+    uint256 public bobBaseInitialBalance;
+
+    uint256 public initialBase;
+    uint256 public initialFYTokens;
+
 
     constructor() {
         uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;

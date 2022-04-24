@@ -6,8 +6,16 @@ import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 import {IYVToken} from "../../interfaces/IYVToken.sol";
 import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
 
+interface IERC4626Mock {
+    function convertToAssets(uint256 amount) external returns (uint256);
+    function setPrice(uint256 price_) external;
+
+}
+
 
 abstract contract Mintable is ERC20 {
+
+
     /// @dev Give tokens to whoever asks for them.
     function mint(address to, uint256 amount) public virtual {
         _mint(to, amount);

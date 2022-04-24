@@ -18,5 +18,5 @@ import {MinimalTransferHelper} from  "@yield-protocol/utils-v2/contracts/token/M
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
-import {IYVPool} from "../interfaces/IYVPool.sol";
+import {IPool} from "../interfaces/IPool.sol";
 import {IERC4626} from  "../interfaces/IERC4626.sol";

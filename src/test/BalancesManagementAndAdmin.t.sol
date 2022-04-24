@@ -18,20 +18,25 @@ import {console} from "forge-std/console.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
-import {ZeroStateDai} from "./shared/ZeroState.sol";
+import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
+import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
 
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
 
-abstract contract WithLiquidity is ZeroStateDai {
+abstract contract WithLiquidity is ZeroState {
+
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
     function setUp() public virtual override {
         super.setUp();
         base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
 
+
         vm.prank(alice);
         pool.init(alice, bob, 0, MAX);
-        base.setPrice((cNumerator * (10**base.decimals())) / cDenominator);
+
+        setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
 
         // Skew the balances without using trading functions
@@ -45,7 +50,7 @@ contract Admin__WithLiquidity is WithLiquidity {
     function testUnit_admin1() public {
         console.log("balance management getters return correct values");
         require(pool.getBaseBalance() == base.balanceOf(address(pool)));
-        require(pool.getBaseCurrentPrice() == base.convertToAssets(10**base.decimals()));
+        require(pool.getBaseCurrentPrice() == ERC4626TokenMock(address(base)).convertToAssets(10**base.decimals()));
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
         (uint16 g1fee_, uint104 baseCached, uint104 fyTokenCached, uint32 blockTimeStampLast) = pool.getCache();
         require(g1fee_ == g1Fee);
