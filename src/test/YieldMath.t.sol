@@ -10,7 +10,6 @@ pragma solidity >=0.8.13; /*
 */
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 import {Exp64x64} from "./../Exp64x64.sol";
 import {YieldMath} from "./../YieldMath.sol";
 import {Math64x64} from "./../Math64x64.sol";
