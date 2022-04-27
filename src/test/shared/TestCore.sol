@@ -11,10 +11,9 @@ import {YieldMath} from "../../YieldMath.sol";
 
 import "./Utils.sol";
 import "./Constants.sol";
-import {IPool} from "../../interfaces/IPool.sol";
-// import {Pool} from "../../Pool/Pool.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
+import {ISyncablePool} from "../mocks/ISyncablePool.sol";
 import {IERC20Like} from  "../../interfaces/IERC20Like.sol";
 
 // TestCore
@@ -47,7 +46,7 @@ abstract contract TestCore {
     Vm public vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     FYTokenMock public fyToken;
-    IPool public pool;
+    ISyncablePool public pool;
 
     address public alice;
     address public bob;

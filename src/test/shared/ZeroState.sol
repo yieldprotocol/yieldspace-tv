@@ -12,13 +12,13 @@ import {YieldMath} from "../../YieldMath.sol";
 import "./Utils.sol";
 import "./Constants.sol";
 import {TestCore} from "./TestCore.sol";
-import {Pool} from "../../Pool/Pool.sol";
+import {SyncablePool} from "../mocks/SyncablePool.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {YVTokenMock} from "../mocks/YVTokenMock.sol";
 import {IERC20Like} from "../../interfaces/IERC20Like.sol";
 import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
-import {PoolYearnVault} from "../../Pool/YearnVault/PoolYearnVault.sol";
+import {SyncablePoolYearnVault} from "../mocks/SyncablePoolYearnVault.sol";
 import {AccessControl} from "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
 
 bytes4 constant ROOT = 0x00000000;
@@ -35,10 +35,10 @@ struct ZeroStateParams {
 // There is some complexity around baseType ("4626" or "YearnVault").
 // If baseType is 4626:
 //   - The base token is a ERC4626TokenMock cast as IERC20Like.
-//   - The Pool is a Pool.sol cast as IPool.sol.
+//   - The pool is a SyncablePool.sol cast as ISyncablePool.
 // If baseType is YearnVault:
 //   - The base token is a YVTokenMock cast as IERC20Like.
-//   - The Pool is a PoolYearnVault.sol cast as IPool.sol.
+//   - The pool is a SyncablePoolYearnVault.sol cast as ISyncablePool.
 abstract contract ZeroState is TestCore {
     using Math64x64 for int128;
     using Math64x64 for uint256;
@@ -97,10 +97,10 @@ abstract contract ZeroState is TestCore {
 
         // Setup pool and grant roles:
         if (baseType == TYPE_4626) {
-            pool = new Pool(address(base), address(fyToken), ts, g1Fee);
+            pool = new SyncablePool(address(base), address(fyToken), ts, g1Fee);
         }
         if (baseType == TYPE_YV) {
-            pool = new PoolYearnVault(address(base), address(fyToken), ts, g1Fee);
+            pool = new SyncablePoolYearnVault(address(base), address(fyToken), ts, g1Fee);
         }
 
         // Alice: init

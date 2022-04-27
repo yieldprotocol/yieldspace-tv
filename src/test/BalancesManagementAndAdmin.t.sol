@@ -26,12 +26,11 @@ import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
 
 abstract contract WithLiquidity is ZeroState {
-
     constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
+
     function setUp() public virtual override {
         super.setUp();
         base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
-
 
         vm.prank(alice);
         pool.init(alice, bob, 0, MAX);
@@ -64,9 +63,10 @@ contract Admin__WithLiquidity is WithLiquidity {
         require(actualCurrentCumulativeRatio == expectedCurrentCumulativeRatio);
         base.mint(address(pool), 1e18);
         pool.sync();
-        (,uint104 baseCachedNew,,) = pool.getCache();
+        console.log(baseCached);
+        (, uint104 baseCachedNew, , ) = pool.getCache();
+        console.log(baseCachedNew);
         require(baseCachedNew == baseCached + 1e18);
-
     }
 
     function testUnit_admin2() public {
