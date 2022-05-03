@@ -246,7 +246,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     {
         if (_totalSupply != 0) revert Initialized();
         (baseIn, fyTokenIn, tokensMinted) = _mnti(to, remainder, 0, minRatio, maxRatio);
-        emit Gm();
+        emit gm();
     }
 
     /* mintWithBase
@@ -552,6 +552,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             fyTokenOut.i256(),
             -(tokensBurned.i256())
         );
+
+        if (_totalSupply == 0 && block.timestamp >= maturity) {
+            emit gg();
+        }
     }
 
     /* TRADING FUNCTIONS

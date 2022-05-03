@@ -8,8 +8,11 @@ interface PoolEvents {
     /// Fees have been updated.
     event FeesSet(uint16 g1Fee);
 
-    /// Gm.  Pool is initialized.
-    event Gm();
+    /// Pool is matured and all LP tokens burned. gg.
+    event gg();
+
+    /// gm.  Pool is initialized.
+    event gm();
 
     /// A liquidity event has occured (burn / mint).
     event Liquidity(
