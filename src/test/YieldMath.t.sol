@@ -17,32 +17,64 @@ import {Math64x64} from "./../Math64x64.sol";
 
 import "./helpers.sol";
 
+/**TESTS
+
+Links to Desmos for each formula can be found at:
+https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+
+Tests grouped by function:
+1. function fyTokenOutForSharesIn
+2. function sharesInForFYTokenOut
+3. function sharesOutForFYTokenIn
+4. function fyTokenInForSharesOut
+
+Each function has the following tests:
+__overReserves  - test that the fn reverts if amounts are > reserves
+__reverts       - try to hit each of the require statements within each function
+__basecases     - test 5 scenarios comparing results to Desmos
+__mirror        - FUZZ test the tokensOut of one fn can be piped to the tokensIn of the mirror fn
+__noFees1       - FUZZ test the inverse of one fn reverts change from original fn -- assuming no fees
+__noFees2       - FUZZ test the inverse of one fn reverts change from original fn -- assuming no fees
+__isCatMaturity - FUZZ test that the value of the fn approaches C at maturity
+
+Test name prefixe definitions:
+testFail_          - Unit tests that pass if the test reverts
+testUnit_          - Unit tests for common edge cases
+testFuzz_          - Property based fuzz tests
+
+All 4 trading functions were tested against eachother as follows:
+
+                       ┌───────────────────────┬───────────────────────┬───────────────────────┬──────────────────────┐
+                       │ fyTokenOutForSharesIn │ sharesInForFYTokenOut │ sharesOutForFYTokenIn │ fyTokenInForSharesOut│
+┌──────────────────────┼───────────────────────┼───────────────────────┼───────────────────────┼──────────────────────┤
+│                      │                       │                       │                       │                      │
+│fyTokenOutForSharesIn │          X            │ fyTokenOutForSharesIn │ fyTokenOutForSharesIn │ fyTokenOutForSharesIn│
+│                      │                       │ __mirror              │ __noFees1             │ __noFees2            │
+├──────────────────────┼───────────────────────┼───────────────────────┼───────────────────────┼──────────────────────┤
+│                      │                       │                       │                       │                      │
+│sharesInForFYTokenOut │ sharesInForFYTokenOut │           X           │ sharesInForFYTokenOut │ sharesInForFYTokenOut│
+│                      │ __mirror              │                       │ __noFees2             │ __noFees1            │
+├──────────────────────┼───────────────────────┼───────────────────────┼───────────────────────┼──────────────────────┤
+│                      │                       │                       │                       │                      │
+│sharesOutForFYTokenIn │ sharesOutForFYTokenIn │ sharesOutForFYTokenIn │           X           │ sharesOutForFYTokenIn│
+│                      │ __noFees1             │ __noFees2             │                       │ __mirror             │
+├──────────────────────┼───────────────────────┼───────────────────────┼───────────────────────┼──────────────────────┤
+│                      │                       │                       │                       │                      │
+│fyTokenInForSharesOut │ fyTokenInForSharesOut │ fyTokenInForSharesOut │ fyTokenInForSharesOut │          X           │
+│                      │ __noFees2             │ __noFees1             │ __mirror              │                      │
+└──────────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴──────────────────────┘
+
+**********************************************************************************************************************/
+
 contract YieldMathTest is Test {
-    using Math64x64 for int128;
-    using Math64x64 for uint128;
-    using Math64x64 for int256;
-    using Math64x64 for uint256;
     using Exp64x64 for uint128;
+    using Math64x64 for int128;
+    using Math64x64 for int256;
+    using Math64x64 for uint128;
+    using Math64x64 for uint256;
 
-    /**TESTS
-
-        Tests grouped by function:
-        1. function fyTokenOutForSharesIn
-        2. function sharesInForFYTokenOut
-        3. function sharesOutForFYTokenIn
-        4. function fyTokenInForSharesOut
-
-        Links to Desmos for each formula can be found at:
-        https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
-
-        Test name prefixe definitions:
-        testUnit_          - Unit tests for common edge cases
-        testFuzz_          - Property based fuzz tests
-
-    ******************************************************************************************************************/
-
-    uint128 public constant sharesReserves = uint128(1100000 * 1e18); // Z
     uint128 public constant fyTokenReserves = uint128(1500000 * 1e18); // Y
+    uint128 public constant sharesReserves = uint128(1100000 * 1e18); // Z
 
     // The DESMOS uses 0.1 second increments, so we use them here in the tests for easy comparison.  In the deployed
     // contract we use seconds.
@@ -74,12 +106,16 @@ contract YieldMathTest is Test {
         mu = muNumerator.fromUInt().div(muDenominator.fromUInt());
     }
 
-    function assertSameOrSlightlyLess(uint128 result, uint128 expectedResult) public pure {
-        require((expectedResult - result) <= 2);
-    }
-
-    function assertSameOrSlightlyMore(uint128 result, uint128 expectedResult) public pure {
-        require((result - expectedResult) <= 2);
+    function isClose(
+        uint256 result,
+        uint256 expectedResult,
+        uint256 maxDiff
+    ) public pure {
+        if (expectedResult > result) {
+            require((expectedResult - result) <= maxDiff);
+        } else {
+            require((result - expectedResult) <= maxDiff);
+        }
     }
 
     /* 1. function fyTokenOutForSharesIn
@@ -97,6 +133,82 @@ contract YieldMathTest is Test {
             c,
             mu
         ) / 1e18;
+    }
+
+    function testUnit_fyTokenOutForSharesIn__reverts() public {
+        // Try to hit all require statements within the function
+        vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
+        YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            0,
+            mu
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
+        YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            0
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (nsr)"));
+        YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            type(int128).max
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
+        YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            type(int128).max,
+            0x10000000000000000
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (nsi)"));
+        YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            type(uint128).max,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rounding error"));
+        YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            100000,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        ) / 1e18;
+        // NOTE: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
     }
 
     function testUnit_fyTokenOutForSharesIn__baseCases() public view {
@@ -132,12 +244,12 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            assertSameOrSlightlyLess(result, expectedResults[idx]);
+            isClose(result, expectedResults[idx], 2);
         }
     }
 
-    function testUnit_fyTokenOutForSharesIn__mirror(uint128 sharesAmount) public {
-        vm.assume(sharesAmount > 10000000000000000000 && sharesAmount < (1_379_000 * 1e18)); // max per desmos
+    function testFuzz_fyTokenOutForSharesIn__mirror(uint128 sharesAmount) public {
+        sharesAmount = uint128(bound(sharesAmount, 10000000000000000000, 1_379_000 * 1e18)); // max per desmos
         uint128 result;
         result = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
@@ -163,8 +275,8 @@ contract YieldMathTest is Test {
         require(resultShares / 1e18 == sharesAmount / 1e18);
     }
 
-    function testUnit_fyTokenOutForSharesIn__noFees1(uint128 sharesAmount) public {
-        vm.assume(sharesAmount > 10000000000000000000 && sharesAmount < (1_379_000 * 1e18));
+    function testFuzz_fyTokenOutForSharesIn__noFees1(uint128 sharesAmount) public {
+        sharesAmount = uint128(bound(sharesAmount, 10000000000000000000, 1_379_000 * 1e18));
         uint128 result;
         result = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
@@ -190,8 +302,8 @@ contract YieldMathTest is Test {
         require(result2 / 1e18 == sharesAmount / 1e18);
     }
 
-    function testUnit_fyTokenOutForSharesIn__noFees2(uint128 sharesAmount) public {
-        vm.assume(sharesAmount > 10000000000000000000 && sharesAmount < (1_379_000 * 1e18));
+    function testFuzz_fyTokenOutForSharesIn__noFees2(uint128 sharesAmount) public {
+        sharesAmount = uint128(bound(sharesAmount, 10000000000000000000, 1_379_000 * 1e18));
         uint128 result;
         result = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
@@ -217,9 +329,9 @@ contract YieldMathTest is Test {
         require(result / 1e18 == result2 / 1e18);
     }
 
-    function test_fyTokenOutForSharesIn_isCatMaturity(uint128 sharesAmount) public {
+    function testFuzz_fyTokenOutForSharesIn__isCatMaturity(uint128 sharesAmount) public {
         // At maturity the fytoken price will be close to c
-        vm.assume(sharesAmount > 1000000000000000000 && sharesAmount < (1_370_000 * 1e18));
+        sharesAmount = uint128(bound(sharesAmount, 1000000000000000000, 1_370_000 * 1e18));
         uint128 result = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
             fyTokenReserves,
@@ -233,12 +345,37 @@ contract YieldMathTest is Test {
 
         uint256 cPrice = ((cNumerator * sharesAmount) / cDenominator) / 1e18;
 
-        require(result == cPrice);
+        isClose(result, cPrice, 2);
     }
 
-    // function testUnit_fyTokenOutForSharesIn__increaseG(uint128 amount, uint16 g_) public {
-    //     // as G approaches 1, less fees are charged so the amount of fyToken should increase
-    //     vm.assume(amount > 10000000000000000000 && amount < (1_379_000 * 1e18));
+    function testFuzz_fyTokenOutForSharesIn_farFromMaturity(uint128 sharesAmount) public {
+        // asserts that when time to maturity is approaching 100% the result is the same as UniV2 style constant product amm
+        sharesAmount = uint128(bound(sharesAmount, 1000000000000000000, 1_379_000 * 1e18));
+        uint128 result = YieldMath.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            sharesAmount, // x or ΔZ
+            25 * 365 * 24 * 60 * 60 * 10 - 10,
+            k,
+            int128(YieldMath.ONE), // set fees to 0
+            int128(YieldMath.ONE), // set c to 1
+            int128(YieldMath.ONE) //  set mu to 1
+        );
+        uint256 oldK = uint256(fyTokenReserves) * uint256(sharesReserves);
+
+        uint256 newSharesReserves = sharesReserves + sharesAmount;
+        uint256 newFyTokenReserves = oldK / newSharesReserves;
+        uint256 ammFyOut = fyTokenReserves - newFyTokenReserves;
+
+        console.log("ammFyOut", ammFyOut);
+        console.log("result", result);
+        isClose(ammFyOut / 1e18, result / 1e18, 1000);
+    }
+
+    // // function testUnit_fyTokenOutForSharesIn__increaseG(uint128 amount) public {
+    // function testUnit_fyTokenOutForSharesIn__increaseG() public {
+    //     uint128 amount = uint128(969274532731510217051237);
+    //     // amount = uint128(bound(amount, 10000000000000000000, 1_379_000 * 1e18)); // max per desmos
     //     uint128 result1 = YieldMath.fyTokenOutForSharesIn(
     //         sharesReserves,
     //         fyTokenReserves,
@@ -250,9 +387,7 @@ contract YieldMathTest is Test {
     //         mu
     //     ) / 1e18;
 
-    //     console.log("+ + file: YieldMath.t.sol + line 191 + testUnit_fyTokenOutForSharesIn__increaseG + uint256(950 + g_ % 50)", uint256(950 + g_ % 50));
-    //     console.log("+ + file: YieldMath.t.sol + line 191 + testUnit_fyTokenOutForSharesIn__increaseG + gDenominator * 10", gDenominator * 10);
-    //     int128 bumpedG = uint256(950 + g_ % 50).fromUInt().div((gDenominator * 10).fromUInt());
+    //     int128 bumpedG = uint256(975).fromUInt().div((10 * gDenominator).fromUInt());
     //     uint128 result2 = YieldMath.fyTokenOutForSharesIn(
     //         sharesReserves,
     //         fyTokenReserves,
@@ -263,42 +398,15 @@ contract YieldMathTest is Test {
     //         c,
     //         mu
     //     ) / 1e18;
+    //     console.log("+ + file: YieldMath.t.sol + line 400 + testUnit_fyTokenOutForSharesIn__increaseG + result1", result1);
+    //     console.log("+ + file: YieldMath.t.sol + line 400 + testUnit_fyTokenOutForSharesIn__increaseG + result2", result2);
     //     require(result2 >= result1);
-    // }
-
-    // function test_fyTokenOutForSharesIn_farFromMaturity() public {
-    //     // TODO: convert to fuzz
-    //     // function testFuzz_fyTokenOutForSharesIn_farFromMaturity(uint128 sharesAmount) public {
-    //     // asserts that the fyToken out will always be more than the shares in
-    //     // vm.assume(sharesAmount > 1000000000000000000 && sharesAmount < (1_379_000 * 1e18));
-    //     uint128 sharesAmount = 50_000 * 1e18;
-    //     uint128 result = YieldMath.fyTokenOutForSharesIn(
-    //         sharesReserves,
-    //         fyTokenReserves,
-    //         sharesAmount, // x or ΔZ
-    //         timeTillMaturity,
-    //         k,
-    //         g1,
-    //         c,
-    //         mu
-    //     );
-    //     uint256 oldK = uint256(fyTokenReserves) * uint256(sharesReserves) / 1e18;
-
-    //     uint256 newSharesReserves = sharesReserves + sharesAmount;
-    //     console.log("+ + file: YieldMath.t.sol + line 235 + testFuzz_fyTokenOutForSharesIn_farFromMaturity + newSharesReserves", newSharesReserves);
-    //     console.log("+ + file: YieldMath.t.sol + line 237 + testFuzz_fyTokenOutForSharesIn_farFromMaturity + (oldK * 1e18)", (oldK * 1e18));
-    //     uint256 newFyTokenReserves = (oldK * 1e18) / newSharesReserves;
-    //     uint256 ammFyOut = fyTokenReserves - newFyTokenReserves;
-
-    //     console.log('result', result);
-    //     console.log('ammFyOut', ammFyOut);
-
     // }
 
     /* 2. function sharesInForFYTokenOut
      ***************************************************************/
 
-    function testFail_sharesInForFYTokenOut__overReserves() public view {
+    function testFail_sharesInForFYTokenOut__overReserves() public {
         // Per desmos, this would require more fytoken than are available, so it should revert.
         YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -323,8 +431,82 @@ contract YieldMathTest is Test {
             mu
         ) / 1e18;
 
-        // TODO: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
+        // NOTE: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
+    }
 
+    function testUnit_sharesInForFYTokenOut__reverts() public {
+        // Try to hit all require statements within the function
+        vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
+        YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            0,
+            mu
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
+        YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            0
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (nsr)"));
+        YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            type(int128).max
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
+        YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            type(int128).max,
+            0x10000000000000000
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate underflow"));
+        YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            type(uint128).max,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (zyy)"));
+        YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            100000,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        ) / 1e18;
     }
 
     function testUnit_sharesInForFYTokenOut__baseCases() public view {
@@ -358,12 +540,12 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            assertSameOrSlightlyMore(result, expectedResults[idx]);
+            isClose(result, expectedResults[idx], 2);
         }
     }
 
-    function testUnit_sharesInForFYTokenOut__mirror(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_379_000 * 1e18)); // max per desmos
+    function testFuzz_sharesInForFYTokenOut__mirror(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_379_000 * 1e18)); // max per desmos
         uint128 result = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
             fyTokenReserves,
@@ -384,11 +566,11 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        assertSameOrSlightlyMore(resultFYTokens / 1e18, fyTokenAmount / 1e18);
+        isClose(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
     }
 
-    function testUnit_sharesInForFYTokenOut__noFees1(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_379_000 * 1e18));
+    function testFuzz_sharesInForFYTokenOut__noFees1(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_379_000 * 1e18));
         uint128 result;
         result = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -411,11 +593,11 @@ contract YieldMathTest is Test {
             mu
         );
 
-        require(result2 / 1e18 == fyTokenAmount / 1e18);
+        isClose(result2 / 1e18, fyTokenAmount / 1e18, 2);
     }
 
-    function testUnit_sharesInForFYTokenOut__noFees2(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_379_000 * 1e18));
+    function testFuzz_sharesInForFYTokenOut__noFees2(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_379_000 * 1e18));
         uint128 result;
         result = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -441,9 +623,9 @@ contract YieldMathTest is Test {
         require(result / 1e18 == result2 / 1e18);
     }
 
-    function test_sharesInForFYTokenOut_isCatMaturity(uint128 fyTokenAmount) public {
+    function testFuzz_sharesInForFYTokenOut__isCatMaturity(uint128 fyTokenAmount) public {
         // At maturity the fytoken price will be close to c
-        vm.assume(fyTokenAmount > 1000000000000000000 && fyTokenAmount < (1_370_000 * 1e18));
+        fyTokenAmount = uint128(bound(fyTokenAmount, 1000000000000000000, 1_370_000 * 1e18));
         uint128 result = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
             fyTokenReserves,
@@ -457,9 +639,11 @@ contract YieldMathTest is Test {
 
         uint256 cPrice = (cNumerator * result) / cDenominator;
 
-        require(fyTokenAmount / 1e18 == cPrice / 1e18);
+        isClose(fyTokenAmount / 1e18, cPrice / 1e18, 2);
     }
 
+    // NOTE: testFuzz_sharesInForFYTokenOut_farFromMaturity cannot be implemented because the size of
+    // time to maturity creates an overflow in the final step of the function.
 
     /* 3. function sharesOutForFYTokenIn
      ***************************************************************/
@@ -478,142 +662,8 @@ contract YieldMathTest is Test {
         ) / 1e18;
     }
 
-    function testUnit_sharesOutForFYTokenIn__baseCases() public view {
-        // should match Desmos for selected inputs
-        uint128[5] memory fyTokenAmounts = [
-            uint128(25000 * 1e18),
-            uint128(50_000 * 1e18),
-            uint128(100_000 * 1e18),
-            uint128(200_000 * 1e18),
-            uint128(500_000 * 10**18)
-        ];
-        uint128[5] memory expectedResults = [
-            uint128(22_661),
-            uint128(45_313),
-            uint128(90_592),
-            uint128(181_041),
-            uint128(451_473)
-        ];
-        uint128 result;
-        for (uint256 idx; idx < fyTokenAmounts.length; idx++) {
-            result =
-                YieldMath.sharesOutForFYTokenIn(
-                    sharesReserves,
-                    fyTokenReserves,
-                    fyTokenAmounts[idx], // x or ΔZ
-                    timeTillMaturity,
-                    k,
-                    g2,
-                    c,
-                    mu
-                ) /
-                1e18;
-
-            assertSameOrSlightlyMore(result, expectedResults[idx]);
-        }
-    }
-
-    function testUnit_sharesOutForFYTokenIn__mirror(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_100_000 * 1e18)); // max per desmos
-        // should match Desmos for selected inputs
-        uint128 result= YieldMath.fyTokenInForSharesOut(
-                sharesReserves,
-                fyTokenReserves,
-                fyTokenAmount, // x or ΔZ
-                timeTillMaturity,
-                k,
-                g1,
-                c,
-                mu
-            );
-            uint128 resultFYTokens = YieldMath.sharesOutForFYTokenIn(
-                sharesReserves,
-                fyTokenReserves,
-                result,
-                timeTillMaturity,
-                k,
-                g1,
-                c,
-                mu
-            );
-            assertSameOrSlightlyLess(resultFYTokens / 1e18, fyTokenAmount / 1e18);
-    }
-
-    function testUnit_sharesOutForFYTokenIn__noFees1(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_100_000 * 1e18)); // max per desmos
-
-        uint128 result = YieldMath.sharesOutForFYTokenIn(
-            sharesReserves,
-            fyTokenReserves,
-            fyTokenAmount, // x or ΔZ
-            timeTillMaturity,
-            k,
-            int128(YieldMath.ONE),
-            c,
-            mu
-        );
-        uint128 result2 = YieldMath.fyTokenOutForSharesIn(
-            sharesReserves - result,
-            fyTokenReserves + fyTokenAmount,
-            result,
-            timeTillMaturity,
-            k,
-            int128(YieldMath.ONE),
-            c,
-            mu
-        );
-
-        require(result2 / 1e18 == fyTokenAmount / 1e18);
-    }
-
-    function testUnit_sharesOutForFYTokenIn__noFees2(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_100_000 * 1e18)); // max per desmos
-
-        uint128 result = YieldMath.sharesOutForFYTokenIn(
-            sharesReserves,
-            fyTokenReserves,
-            fyTokenAmount, // x or ΔZ
-            timeTillMaturity,
-            k,
-            int128(YieldMath.ONE),
-            c,
-            mu
-        );
-        uint128 result2 = YieldMath.sharesInForFYTokenOut(
-            sharesReserves - result,
-            fyTokenReserves + fyTokenAmount,
-            fyTokenAmount,
-            timeTillMaturity,
-            k,
-            int128(YieldMath.ONE),
-            c,
-            mu
-        );
-
-        require(result / 1e18 == result2 / 1e18);
-    }
-
-    function test_sharesOutForFYTokenIn_isCatMaturity(uint128 fyTokenAmount) public {
-        // At maturity the fytoken price will be close to c
-        vm.assume(fyTokenAmount > 1000000000000000000 && fyTokenAmount < (1_100_000 * 1e18));
-        uint128 result = YieldMath.sharesOutForFYTokenIn(
-            sharesReserves,
-            fyTokenReserves,
-            fyTokenAmount, // x or ΔZ
-            0,
-            k,
-            int128(YieldMath.ONE),
-            c,
-            mu
-        );
-
-        uint256 cPrice = (cNumerator * result) / cDenominator;
-
-        require(fyTokenAmount / 1e18 == cPrice / 1e18);
-    }
-
-
     function testUnit_sharesOutForFYTokenIn__reverts() public {
+        // Try to hit all require statements within the function
 
         vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
         YieldMath.sharesOutForFYTokenIn(
@@ -664,21 +714,148 @@ contract YieldMathTest is Test {
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (yxa)"));
-        YieldMath.sharesOutForFYTokenIn(
-            50000,
+        YieldMath.sharesOutForFYTokenIn(50000, fyTokenReserves, 1_500_000 * 1e18, timeTillMaturity, k, g1, c, mu) /
+            1e18;
+
+        // NOTE: could not hit "YieldMath: Rate underflow" <- possibly redundant
+    }
+
+    function testUnit_sharesOutForFYTokenIn__baseCases() public view {
+        // should match Desmos for selected inputs
+        uint128[5] memory fyTokenAmounts = [
+            uint128(25000 * 1e18),
+            uint128(50_000 * 1e18),
+            uint128(100_000 * 1e18),
+            uint128(200_000 * 1e18),
+            uint128(500_000 * 10**18)
+        ];
+        uint128[5] memory expectedResults = [
+            uint128(22_661),
+            uint128(45_313),
+            uint128(90_592),
+            uint128(181_041),
+            uint128(451_473)
+        ];
+        uint128 result;
+        for (uint256 idx; idx < fyTokenAmounts.length; idx++) {
+            result =
+                YieldMath.sharesOutForFYTokenIn(
+                    sharesReserves,
+                    fyTokenReserves,
+                    fyTokenAmounts[idx], // x or ΔZ
+                    timeTillMaturity,
+                    k,
+                    g2,
+                    c,
+                    mu
+                ) /
+                1e18;
+
+            isClose(result, expectedResults[idx], 2);
+        }
+    }
+
+    function testFuzz_sharesOutForFYTokenIn__mirror(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_100_000 * 1e18)); // max per desmos
+        // should match Desmos for selected inputs
+        uint128 result = YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
             fyTokenReserves,
-            1_500_000 * 1e18,
+            fyTokenAmount, // x or ΔZ
             timeTillMaturity,
             k,
             g1,
             c,
             mu
-        ) / 1e18;
-
-        // TODO: could not hit "YieldMath: Rate underflow" <- possibly redundant
-
-
+        );
+        uint128 resultFYTokens = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            result,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+        isClose(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
     }
+
+    function testFuzz_sharesOutForFYTokenIn__noFees1(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_100_000 * 1e18)); // max per desmos
+
+        uint128 result = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            fyTokenAmount, // x or ΔZ
+            timeTillMaturity,
+            k,
+            int128(YieldMath.ONE),
+            c,
+            mu
+        );
+        uint128 result2 = YieldMath.fyTokenOutForSharesIn(
+            sharesReserves - result,
+            fyTokenReserves + fyTokenAmount,
+            result,
+            timeTillMaturity,
+            k,
+            int128(YieldMath.ONE),
+            c,
+            mu
+        );
+
+        require(result2 / 1e18 == fyTokenAmount / 1e18);
+    }
+
+    function testFuzz_sharesOutForFYTokenIn__noFees2(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_100_000 * 1e18)); // max per desmos
+
+        uint128 result = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            fyTokenAmount, // x or ΔZ
+            timeTillMaturity,
+            k,
+            int128(YieldMath.ONE),
+            c,
+            mu
+        );
+        uint128 result2 = YieldMath.sharesInForFYTokenOut(
+            sharesReserves - result,
+            fyTokenReserves + fyTokenAmount,
+            fyTokenAmount,
+            timeTillMaturity,
+            k,
+            int128(YieldMath.ONE),
+            c,
+            mu
+        );
+
+        require(result / 1e18 == result2 / 1e18);
+    }
+
+    function testFuzz_sharesOutForFYTokenIn__isCatMaturity(uint128 fyTokenAmount) public {
+        // At maturity the fytoken price will be close to c
+        fyTokenAmount = uint128(bound(fyTokenAmount, 1000000000000000000, 1_100_000 * 1e18));
+        uint128 result = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            fyTokenAmount, // x or ΔZ
+            0,
+            k,
+            int128(YieldMath.ONE),
+            c,
+            mu
+        );
+
+        uint256 cPrice = (cNumerator * result) / cDenominator;
+
+        require(fyTokenAmount / 1e18 == cPrice / 1e18);
+    }
+
+    // NOTE: testFuzz_sharesOutForFYTokenIn_farFromMaturity cannot be implemented because the size of
+    // time to maturity creates an overflow in the final step of the function.
 
     /* 4. function fyTokenInForSharesOut
      *
@@ -694,6 +871,88 @@ contract YieldMathTest is Test {
             c,
             mu
         ) / 1e18;
+    }
+
+    function testUnit_fyTokenInForSharesOut__reverts() public {
+        // Try to hit all require statements within the function
+
+        vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
+        YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            0,
+            mu
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: c and mu must be positive"));
+        YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            0
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (nsr)"));
+        YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            type(int128).max
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
+        YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            type(int128).max,
+            0x10000000000000000
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rate overflow (nso)"));
+        YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            type(uint128).max,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Too many shares in"));
+        YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            1_500_000 * 1e18,
+            timeTillMaturity,
+            k,
+            g1,
+            1e12,
+            1
+        ) / 1e18;
+
+        vm.expectRevert(bytes("YieldMath: Rounding error"));
+        YieldMath.fyTokenInForSharesOut(sharesReserves, 100000 * 1e18, 1_500 * 1e18, timeTillMaturity, k, g1, 1, 1) /
+            1e18;
+
+        // NOTE: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
     }
 
     function testUnit_fyTokenInForSharesOut__baseCases() public view {
@@ -729,38 +988,38 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            assertSameOrSlightlyMore(result, expectedResults[idx]);
+            isClose(result, expectedResults[idx], 2);
         }
     }
 
-    function testUnit_fyTokenInForSharesOut__mirror(uint128 fyTokenAmount) public {
-        vm.assume(fyTokenAmount > 10000000000000000000 && fyTokenAmount < (1_100_000 * 1e18));
+    function testFuzz_fyTokenInForSharesOut__mirror(uint128 fyTokenAmount) public {
+        fyTokenAmount = uint128(bound(fyTokenAmount, 10000000000000000000, 1_100_000 * 1e18));
         uint128 result = YieldMath.fyTokenInForSharesOut(
-                sharesReserves,
-                fyTokenReserves,
-                fyTokenAmount, // x or ΔZ
-                timeTillMaturity,
-                k,
-                g1,
-                c,
-                mu
-            );
-            uint128 resultFYTokens = YieldMath.sharesOutForFYTokenIn(
-                sharesReserves,
-                fyTokenReserves,
-                result,
-                timeTillMaturity,
-                k,
-                g1,
-                c,
-                mu
-            );
-            assertSameOrSlightlyLess(resultFYTokens / 1e18, fyTokenAmount / 1e18);
+            sharesReserves,
+            fyTokenReserves,
+            fyTokenAmount, // x or ΔZ
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+        uint128 resultFYTokens = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            result,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+        isClose(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
     }
 
-    function testUnit_fyTokenInForSharesOut__noFees1(uint128 sharesAmount) public {
-        vm.assume(sharesAmount > 10000000000000000000 && sharesAmount < (1_100_000 * 1e18));
-        uint128 result= YieldMath.fyTokenInForSharesOut(
+    function testFuzz_fyTokenInForSharesOut__noFees1(uint128 sharesAmount) public {
+        sharesAmount = uint128(bound(sharesAmount, 10000000000000000000, 1_100_000 * 1e18));
+        uint128 result = YieldMath.fyTokenInForSharesOut(
             sharesReserves,
             fyTokenReserves,
             sharesAmount, // x or ΔZ
@@ -780,12 +1039,12 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        require(result2 / 1e18 == sharesAmount / 1e18);
+        isClose(result2 / 1e18, sharesAmount / 1e18, 2);
     }
 
-    function testUnit_fyTokenInForSharesOut__noFees2(uint128 sharesAmount) public {
-        vm.assume(sharesAmount > 10000000000000000000 && sharesAmount < (1_100_000 * 1e18));
-        uint128 result= YieldMath.fyTokenInForSharesOut(
+    function testFuzz_fyTokenInForSharesOut__noFees2(uint128 sharesAmount) public {
+        sharesAmount = uint128(bound(sharesAmount, 10000000000000000000, 1_100_000 * 1e18));
+        uint128 result = YieldMath.fyTokenInForSharesOut(
             sharesReserves,
             fyTokenReserves,
             sharesAmount, // x or ΔZ
@@ -795,6 +1054,7 @@ contract YieldMathTest is Test {
             c,
             mu
         );
+        console.log("+ + file: YieldMath.t.sol + line 1060 + testUnit_fyTokenInForSharesOut__noFees2 + result", result);
         uint128 result2 = YieldMath.fyTokenOutForSharesIn(
             sharesReserves - sharesAmount,
             fyTokenReserves + result,
@@ -805,12 +1065,16 @@ contract YieldMathTest is Test {
             c,
             mu
         );
+        console.log(
+            "+ + file: YieldMath.t.sol + line 1071 + testUnit_fyTokenInForSharesOut__noFees2 + result2",
+            result2
+        );
         require(result2 / 1e18 == result / 1e18);
     }
 
-    function test_fyTokenInForSharesOut_isCatMaturity(uint128 sharesAmount) public {
+    function testFuzz_fyTokenInForSharesOut__isCatMaturity(uint128 sharesAmount) public {
         // At maturity the fytoken price will be close to c
-        vm.assume(sharesAmount > 1000000000000000000 && sharesAmount < (1_100_000 * 1e18));
+        sharesAmount = uint128(bound(sharesAmount, 1000000000000000000, 1_100_000 * 1e18));
         uint128 result = YieldMath.fyTokenInForSharesOut(
             sharesReserves,
             fyTokenReserves,
@@ -825,5 +1089,30 @@ contract YieldMathTest is Test {
         uint256 cPrice = (cNumerator * sharesAmount) / cDenominator;
         require(result / 1e18 == cPrice / 1e18);
     }
+
+    function testFuzz_fyTokenInForSharesOut_farFromMaturity(uint128 sharesAmount) public {
+        // asserts that when time to maturity is approaching 100% the result is the same as UniV2 style constant product amm
+        sharesAmount = uint128(bound(sharesAmount, 1000000000000000000, 1_100_000 * 1e18));
+        uint128 result = YieldMath.fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            sharesAmount, // x or ΔZ
+            25 * 365 * 24 * 60 * 60 * 10 - 10,
+            k,
+            int128(YieldMath.ONE), // set fees to 0
+            int128(YieldMath.ONE), // set c to 1
+            int128(YieldMath.ONE) //  set mu to 1
+        );
+        uint256 oldK = uint256(fyTokenReserves) * uint256(sharesReserves);
+
+        uint256 newSharesReserves = sharesReserves - sharesAmount;
+        uint256 newFyTokenReserves = oldK / newSharesReserves;
+        uint256 ammFyIn = newFyTokenReserves - fyTokenReserves;
+
+        console.log("ammFyIn", ammFyIn / 1e18);
+        console.log("result", result / 1e18);
+        isClose(ammFyIn / 1e18, result / 1e18, 3000);
+    }
+
 
 }
