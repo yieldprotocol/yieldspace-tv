@@ -118,6 +118,11 @@ contract YieldMathTest is Test {
         }
     }
 
+    function percentOrMinumum(uint256 result, uint256 divisor, uint256 nominalDiff) public pure returns(uint256) {
+        uint256 fraction = result/divisor;
+        return fraction > nominalDiff ? fraction : nominalDiff;
+    }
+
     /* 1. function fyTokenOutForSharesIn
      ***************************************************************/
 
@@ -331,7 +336,8 @@ contract YieldMathTest is Test {
 
     function testFuzz_fyTokenOutForSharesIn__isCatMaturity(uint128 sharesAmount) public {
         // At maturity the fytoken price will be close to c
-        sharesAmount = uint128(bound(sharesAmount, 1000000000000000000, 1_370_000 * 1e18));
+        // max per desmos = 1.367m -- anything higher will result in more han 1.5m fyTokens out
+        sharesAmount = uint128(bound(sharesAmount, 1000000000000000000, 1_360_000 * 1e18));
         uint128 result = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
             fyTokenReserves,
@@ -369,7 +375,7 @@ contract YieldMathTest is Test {
 
         console.log("ammFyOut", ammFyOut);
         console.log("result", result);
-        isClose(ammFyOut / 1e18, result / 1e18, 1000);
+        isClose(ammFyOut / 1e18, result / 1e18, percentOrMinumum(result, 1e20, 2));
     }
 
     // // function testUnit_fyTokenOutForSharesIn__increaseG(uint128 amount) public {
@@ -1109,9 +1115,7 @@ contract YieldMathTest is Test {
         uint256 newFyTokenReserves = oldK / newSharesReserves;
         uint256 ammFyIn = newFyTokenReserves - fyTokenReserves;
 
-        console.log("ammFyIn", ammFyIn / 1e18);
-        console.log("result", result / 1e18);
-        isClose(ammFyIn / 1e18, result / 1e18, 3000);
+        isClose(ammFyIn / 1e18, result / 1e18, percentOrMinumum(result, 1e20, 2));
     }
 
 
