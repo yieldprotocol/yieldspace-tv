@@ -564,7 +564,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* buyBase
 
                          I want to buy `uint128 tokenOut` worth of base tokens.
-             _______     I've already approved fyTokens to the pool so take what you need for the swap.
+             _______     I've transferred you some fyTokens -- that should be enough.
             /   GUY \         .:::::::::::::::::.
      (^^^|   \===========    :  _______  __   __ :                 ┌─────────┐
       \(\/    | _  _ |      :: |       ||  | |  |::                │no       │
@@ -573,7 +573,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         \  \   \ == /      ::: |    ___||_     _|::      ok guy      │     │    =======+
          \  \___|  |___    ::: |   |      |   |  :::            _____│_____│______    |+
           \ /   \__/   \    :: |___|      |___|  ::         .-'"___________________`-.|+
-           \            \    :        ????       :         ( .'"                   '-.)+
+           \            \    :                   :         ( .'"                   '-.)+
             --|  GUY |\_/\  / `:::::::::::::::::'          |`-..__________________..-'|+
               |      | \  \/ /  `-:::::::::::-'            |                          |+
               |      |  \   /      `'''''''`               |                          |+
@@ -594,7 +594,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                                                            '-..___|_..=:` `-:=.._|___..-'
     */
     /// Buy base for fyToken
-    /// The trader needs to have called `fyToken.approve`
+    /// The trader needs to have transferred in the correct amount of fyTokens in advance.
     /// @param to Wallet receiving the base being bought
     /// @param tokenOut Amount of base being bought that will be deposited in `to` wallet
     /// @param max Maximum amount of fyToken that will be paid for the trade
@@ -657,14 +657,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /*buyFYToken
 
                          I want to buy `uint128 fyTokenOut` worth of fyTokens.
-             _______     I've approved base for you to take what you need for the swap.
+             _______     I've transferred you some base -- that should be enough.
             /   GUY \                                                 ┌─────────┐
      (^^^|   \===========  ┌──────────────┐                           │no       │
       \(\/    | _  _ |     │$            $│                           │lifeguard│
        \ \   (. o  o |     │ ┌────────────┴─┐                         └─┬─────┬─┘       ==+
         \ \   |   ~  |     │ │$            $│   hmm, let's see here     │     │    =======+
         \  \   \ == /      │ │   B A S E    │                      _____│_____│______    |+
-         \  \___|  |___    │$│    ????      │                  .-'"___________________`-.|+
+         \  \___|  |___    │$│              │                  .-'"___________________`-.|+
           \ /   \__/   \   └─┤$            $│                 ( .'"                   '-.)+
            \            \    └──────────────┘                 |`-..__________________..-'|+
             --|  GUY |\_/\  / /                               |                          |+
@@ -686,7 +686,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                                                               '-..___|_..=:` `-:=.._|___..-'
  */
     /// Buy fyToken for base
-    /// The trader needs to have called `base.approve`
+    /// The trader needs to have transferred in the correct amount of tokens in advance.
     /// @param to Wallet receiving the fyToken being bought.
     /// @param fyTokenOut Amount of fyToken being bought that will be deposited in `to` wallet
     /// @param max Maximum amount of base token that will be paid for the trade
