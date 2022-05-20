@@ -457,14 +457,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param to Wallet receiving the base and fyToken.
     /// @param minRatio Minimum ratio of base to fyToken in the pool.
     /// @param maxRatio Maximum ratio of base to fyToken in the pool.
-    /// @return tokensBurned The amount of lp tokens burned.
+    /// @return lpTokensBurned The amount of lp tokens burned.
     /// @return baseOut The amount of base tokens returned.
     function burnForBase(
         address to,
         uint256 minRatio,
         uint256 maxRatio
-    ) external virtual override returns (uint256 tokensBurned, uint256 baseOut) {
-        (tokensBurned, baseOut, ) = _burnInternal(to, address(0), true, minRatio, maxRatio);
+    ) external virtual override returns (uint256 lpTokensBurned, uint256 baseOut) {
+        (lpTokensBurned, baseOut, ) = _burnInternal(to, address(0), true, minRatio, maxRatio);
     }
 
     /// Burn liquidity tokens in exchange for base.
@@ -474,8 +474,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param tradeToBase Whether the resulting fyToken should be traded for base tokens.
     /// @param minRatio Minimum ratio of base to fyToken in the pool.
     /// @param maxRatio Maximum ratio of base to fyToken in the pool.
-    /// @return tokensBurned The amount of pool tokens burned.
-    /// @return tokenOut The amount of base tokens returned.
+    /// @return lpTokensBurned The amount of pool tokens burned.
+    /// @return baseOut The amount of base tokens returned.
     /// @return fyTokenOut The amount of fyTokens returned.
     function _burnInternal(
         address baseTo,
@@ -486,13 +486,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     )
         internal
         returns (
-            uint256 tokensBurned,
-            uint256 tokenOut,
+            uint256 lpTokensBurned,
+            uint256 baseOut,
             uint256 fyTokenOut
         )
     {
         // Gather data
-        tokensBurned = _balanceOf[address(this)];
+        lpTokensBurned = _balanceOf[address(this)];
         uint256 supply = _totalSupply;
 
         Cache memory cache = _getCache();
@@ -511,16 +511,16 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
 
         // Calculate trade
-        tokenOut = (tokensBurned * cache.baseCached) / supply;
-        fyTokenOut = (tokensBurned * realFYTokenCached_) / supply;
+        baseOut = (lpTokensBurned * cache.baseCached) / supply;
+        fyTokenOut = (lpTokensBurned * realFYTokenCached_) / supply;
 
         if (tradeToBase) {
-            tokenOut +=
-                YieldMath.sharesOutForFYTokenIn( //                         This is a virtual sell
-                    (cache.baseCached - tokenOut.u128()) * scaleFactor_, //      Cache, minus virtual burn
-                    (cache.fyTokenCached - fyTokenOut.u128()) * scaleFactor_, // Cache, minus virtual burn
-                    fyTokenOut.u128() * scaleFactor_, //                    Sell the virtual fyToken obtained
-                    maturity - uint32(block.timestamp), //                  This can't be called after maturity
+            baseOut +=
+                YieldMath.sharesOutForFYTokenIn( //                                This is a virtual sell
+                    (cache.baseCached - baseOut.u128()) * scaleFactor_, //       Cache, minus virtual burn
+                    (cache.fyTokenCached - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
+                    fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
+                    maturity - uint32(block.timestamp), //                         This can't be called after maturity
                     ts,
                     _computeG2(cache.g1Fee),
                     _getC(),
@@ -532,15 +532,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Update TWAR
         _update(
-            (cache.baseCached - tokenOut).u128(),
-            (cache.fyTokenCached - fyTokenOut - tokensBurned).u128(),
+            (cache.baseCached - baseOut).u128(),
+            (cache.fyTokenCached - fyTokenOut - lpTokensBurned).u128(),
             cache.baseCached,
             cache.fyTokenCached
         );
 
         // Transfer assets
-        _burn(address(this), tokensBurned);
-        base.safeTransfer(baseTo, tokenOut);
+        _burn(address(this), lpTokensBurned);
+        base.safeTransfer(baseTo, baseOut);
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
 
         emit Liquidity(
@@ -548,9 +548,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             msg.sender,
             baseTo,
             fyTokenTo,
-            tokenOut.i256(),
+            baseOut.i256(),
             fyTokenOut.i256(),
-            -(tokensBurned.i256())
+            -(lpTokensBurned.i256())
         );
 
         if (_totalSupply == 0 && block.timestamp >= maturity) {
@@ -563,7 +563,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /* buyBase
 
-                         I want to buy `uint128 tokenOut` worth of base tokens.
+                         I want to buy `uint128 baseOut` worth of base tokens.
              _______     I've transferred you some fyTokens -- that should be enough.
             /   GUY \         .:::::::::::::::::.
      (^^^|   \===========    :  _______  __   __ :                 ┌─────────┐
@@ -582,7 +582,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
               |__GG__|             ┌──────────────┐      /`|                          |+
               |      |             │$            $│     / /|            [             |+
               |  |   |             │   B A S E    │    / / |        ----------        |+
-              |  |  _|             │  `tokenOut`  │\.-" ;  \        \________/        /+
+              |  |  _|             │  `baseOut`   │\.-" ;  \        \________/        /+
               |  |  |              │$            $│),.-'    `-..__________________..-' +=
               |  |  |              └──────────────┘                |    | |    |
               (  (  |                                              |    | |    |
@@ -596,18 +596,18 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Buy base for fyToken
     /// The trader needs to have transferred in the correct amount of fyTokens in advance.
     /// @param to Wallet receiving the base being bought
-    /// @param tokenOut Amount of base being bought that will be deposited in `to` wallet
+    /// @param baseOut Amount of base being bought that will be deposited in `to` wallet
     /// @param max Maximum amount of fyToken that will be paid for the trade
     /// @return Amount of fyToken that will be taken from caller
     function buyBase(
         address to,
-        uint128 tokenOut,
+        uint128 baseOut,
         uint128 max
     ) external virtual override returns (uint128) {
         // Calculate trade
         uint128 fyTokenBalance = _getFYTokenBalance();
         Cache memory cache = _getCache();
-        uint128 fyTokenIn = _buyBasePreview(tokenOut, cache.baseCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        uint128 fyTokenIn = _buyBasePreview(baseOut, cache.baseCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
 
         if (fyTokenBalance - cache.fyTokenCached < fyTokenIn) {
             revert NotEnoughFYTokenIn(fyTokenBalance - cache.fyTokenCached, fyTokenIn);
@@ -616,26 +616,26 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (fyTokenIn > max) revert SlippageDuringBuyBase(fyTokenIn, max);
 
         // Update TWAR
-        _update(cache.baseCached - tokenOut, cache.fyTokenCached + fyTokenIn, cache.baseCached, cache.fyTokenCached);
+        _update(cache.baseCached - baseOut, cache.fyTokenCached + fyTokenIn, cache.baseCached, cache.fyTokenCached);
 
         // Transfer assets
-        base.safeTransfer(to, tokenOut);
+        base.safeTransfer(to, baseOut);
 
-        emit Trade(maturity, msg.sender, to, tokenOut.i128(), -(fyTokenIn.i128()));
+        emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
         return fyTokenIn;
     }
 
-    /// Returns how much fyToken would be required to buy `tokenOut` base.
-    /// @param tokenOut Amount of base hypothetically desired.
+    /// Returns how much fyToken would be required to buy `baseOut` base.
+    /// @param baseOut Amount of base hypothetically desired.
     /// @return Amount of fyToken hypothetically required.
-    function buyBasePreview(uint128 tokenOut) external view virtual override returns (uint128) {
+    function buyBasePreview(uint128 baseOut) external view virtual override returns (uint128) {
         Cache memory cache = _getCache();
-        return _buyBasePreview(tokenOut, cache.baseCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        return _buyBasePreview(baseOut, cache.baseCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
     }
 
-    /// Returns how much fyToken would be required to buy `tokenOut` base.
+    /// Returns how much fyToken would be required to buy `baseOut` base.
     function _buyBasePreview(
-        uint128 tokenOut,
+        uint128 baseOut,
         uint104 baseBalance,
         uint104 fyTokenBalance,
         int128 g2_
@@ -645,7 +645,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             YieldMath.fyTokenInForSharesOut(
                 baseBalance * scaleFactor_,
                 fyTokenBalance * scaleFactor_,
-                tokenOut * scaleFactor_,
+                baseOut * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 g2_,
@@ -788,15 +788,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Calculate trade
         Cache memory cache = _getCache();
         uint104 baseBalance = _getBaseBalance();
-        uint104 fyTokenBalance = _getFYTokenBalance();
         uint128 baseIn = baseBalance - cache.baseCached;
-        uint128 fyTokenOut = _sellBasePreview(baseIn, cache.baseCached, fyTokenBalance, _computeG1(cache.g1Fee));
+        uint128 fyTokenOut = _sellBasePreview(baseIn, cache.baseCached, cache.fyTokenCached, _computeG1(cache.g1Fee));
 
         // Slippage check
         if (fyTokenOut < min) revert SlippageDuringSellBase(fyTokenOut, min);
 
         // Update TWAR
-        _update(baseBalance, fyTokenBalance - fyTokenOut, cache.baseCached, cache.fyTokenCached);
+        _update(baseBalance, cache.fyTokenCached - fyTokenOut, cache.baseCached, cache.fyTokenCached);
 
         // Transfer assets
         fyToken.safeTransfer(to, fyTokenOut);
@@ -880,7 +879,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Calculate trade
         Cache memory cache = _getCache();
         uint104 fyTokenBalance = _getFYTokenBalance();
-        uint104 baseBalance = _getBaseBalance();
         uint128 fyTokenIn = fyTokenBalance - cache.fyTokenCached;
         uint128 baseOut = _sellFYTokenPreview(fyTokenIn, cache.baseCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
 
@@ -888,7 +886,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         // Update TWAR
-        _update(baseBalance - baseOut, fyTokenBalance, cache.baseCached, cache.fyTokenCached);
+        _update(cache.baseCached - baseOut, fyTokenBalance, cache.baseCached, cache.fyTokenCached);
 
         // Transfer assets
         base.safeTransfer(to, baseOut);

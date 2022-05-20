@@ -113,7 +113,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
     }
 
     function testUnit_tradeDAI03() public {
-        console.log("donates base and sells fyToken");
+        console.log("donating base does not affect cache balances when selling fyToken");
 
         uint256 baseDonation = WAD;
         uint256 fyTokenIn = WAD;
@@ -128,7 +128,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
 
         // Check cached balances are udpated correctly.
         (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance());
+        require(baseBal == pool.getBaseBalance() - baseDonation);
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
@@ -195,25 +195,35 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
     }
 
     function testUnit_tradeDAI06() public {
-        console.log("buys base and retrieves change");
-        uint256 userBaseBefore = base.balanceOf(bob);
-        uint128 baseOut = uint128(WAD);
+        console.log("when buying base, donating fyToken and extra base doesn't get absorbed and can be retrieved");
+        uint256 aliceBaseBefore = base.balanceOf(alice);
+        uint256 bobBaseBefore = base.balanceOf(bob);
+        uint256 aliceFYTokenBefore = fyToken.balanceOf(alice);
+        uint128 baseOut = uint128(WAD * 10);
+        uint128 expectedFYTokenIn = pool.buyBasePreview(baseOut);
+        uint128 extraFYToken = uint128(5 * 1e17); // half wad
+        uint128 extraBase = uint128(WAD) * 5;
+
 
         // Send some fyTokens to the pool.
-        fyToken.mint(address(pool), initialFYTokens);
+        fyToken.mint(address(pool), expectedFYTokenIn + extraFYToken);
+        base.mint(address(pool), extraBase);
 
         // Alice call buyBase, check balances are as expected.
         vm.startPrank(alice);
         pool.buyBase(bob, baseOut, uint128(MAX));
-        require(base.balanceOf(bob) == userBaseBefore + baseOut);
+        require(base.balanceOf(bob) == bobBaseBefore + baseOut);
         (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance());
-        require(fyTokenBal != pool.getFYTokenBalance());
-        uint256 userFYTokenAfter = fyToken.balanceOf(alice);
+        require(baseBal == pool.getBaseBalance() - extraBase);
+        require(fyTokenBal == pool.getFYTokenBalance() - extraFYToken);
 
         pool.retrieveFYToken(alice);
+        pool.retrieveBase(alice);
+        require(baseBal == pool.getBaseBalance());
+        require(fyTokenBal == pool.getFYTokenBalance());
 
-        require(fyToken.balanceOf(alice) > userFYTokenAfter);
+        require(fyToken.balanceOf(alice) == aliceFYTokenBefore + extraFYToken);
+        require(base.balanceOf(alice) == aliceBaseBefore + extraBase);
     }
 }
 
@@ -276,7 +286,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
     }
 
     function testUnit_tradeDAI09() public {
-        console.log("donates fyToken and sells base");
+        console.log("donating fyToken does not affect cache balances when selling base");
         uint128 baseIn = uint128(WAD);
         uint128 fyTokenDonation = uint128(WAD);
 
@@ -291,7 +301,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         (, uint104 baseBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
 
         require(baseBalAfter == pool.getBaseBalance());
-        require(fyTokenBalAfter == pool.getFYTokenBalance());
+        require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
     }
 
     function testUnit_tradeDAI10() public {
@@ -355,26 +365,33 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
     }
 
     function testUnit_tradeDAI12() public {
-        console.log("donates base and buys fyToken");
-        uint256 baseBalances = pool.getBaseBalance();
-        uint256 fyTokenBalances = pool.getFYTokenBalance();
+        console.log("donating fyToken and extra base doesn't get absorbed into the cache when buying fyTokens");
+        uint256 baseBalance = pool.getBaseBalance();
+        uint256 fyTokenBalance = pool.getFYTokenBalance();
         (, uint104 baseCachedBefore,,) = pool.getCache();
 
-        uint128 fyTokenOut = uint128(WAD);
-        uint128 baseDonation = uint128(WAD);
+        uint128 fyTokenOut = uint128(WAD * 10);
+        uint128 expectedBaseIn = pool.buyFYTokenPreview(fyTokenOut);
+        uint128 extraBase = uint128(WAD) * 5;
+        uint128 extraFYToken = uint128(5 * 1e17); // half wad
 
        // Send some base to the pool.
-        base.mint(address(pool), initialBase + baseDonation);
+        base.mint(address(pool), expectedBaseIn + extraBase);
+        fyToken.mint(address(pool), extraFYToken);
+        require(pool.getBaseBalance() == baseBalance + extraBase + expectedBaseIn);
 
         // Alice does buyFYToken. Confirm caches and balances.
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
-
+        require(pool.getBaseBalance() == baseBalance + extraBase + expectedBaseIn);
         (, uint104 baseCachedCurrent, uint104 fyTokenCachedCurrent,) = pool.getCache();
         uint256 baseIn = baseCachedCurrent - baseCachedBefore;
+        require(baseCachedCurrent == baseBalance + baseIn);
+        require(baseCachedCurrent + extraBase == pool.getBaseBalance());
+        require(fyTokenCachedCurrent == fyTokenBalance - fyTokenOut);
+        require(fyTokenCachedCurrent + extraFYToken== pool.getFYTokenBalance());
 
-        require(baseCachedCurrent == baseBalances + baseIn);
-        require(fyTokenCachedCurrent == fyTokenBalances - fyTokenOut);
+
     }
 }
 

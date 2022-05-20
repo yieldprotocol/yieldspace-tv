@@ -91,7 +91,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
     }
 
     function testUnit_tradeUSDC03() public {
-        console.log("donates base and sells fyToken");
+        console.log("donating base does not affect cache balances when selling fyToken");
 
         uint256 baseDonation = 1e6;
         uint256 fyTokenIn = 1e6;
@@ -103,7 +103,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         pool.sellFYToken(bob, 0);
 
         (,uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance());
+        require(baseBal == pool.getBaseBalance() - baseDonation);
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
@@ -230,7 +230,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
     }
 
     function testUnit_tradeUSDC09() public {
-        console.log("donates fyToken and sells base");
+        console.log("donating fyToken does not affect cache balances when selling base");
         uint128 baseIn = uint128(1e6);
         uint128 fyTokenDonation = uint128(1e6);
 
@@ -243,7 +243,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         (,uint104 baseBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
 
         require(baseBalAfter == pool.getBaseBalance());
-        require(fyTokenBalAfter == pool.getFYTokenBalance());
+        require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
     }
 
     function testUnit_tradeUSDC10() public {

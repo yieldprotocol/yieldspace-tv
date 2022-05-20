@@ -168,7 +168,7 @@ contract Mint__WithLiquidity is WithLiquidity {
         // Send some fyToken to the pool.
         fyToken.mint(address(pool), fyTokenIn);
 
-        // Alice calls mint.
+        // Alice calls mint to Bob.
         vm.startPrank(alice);
         pool.mint(bob, bob, 0, MAX);
 

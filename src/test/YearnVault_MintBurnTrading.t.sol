@@ -270,7 +270,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
     }
 
     function testUnit_YearnVault_tradeDAI03() public {
-        console.log("donates base and sells fyToken");
+        console.log("donating base does not affect cache balances when selling fyToken");
 
         uint256 baseDonation = WAD;
         uint256 fyTokenIn = WAD;
@@ -282,7 +282,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         pool.sellFYToken(bob, 0);
 
         (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance());
+        require(baseBal == pool.getBaseBalance() - baseDonation);
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
@@ -429,7 +429,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         (, uint104 baseBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
 
         require(baseBalAfter == pool.getBaseBalance());
-        require(fyTokenBalAfter == pool.getFYTokenBalance());
+        require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
     }
 
     function testUnit_YearnVault_tradeDAI10() public {
