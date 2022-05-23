@@ -14,4 +14,5 @@ int128 constant ONE = 0x10000000000000000;
 
 
 bytes32 constant TYPE_4626 = keccak256(abi.encodePacked("4626"));
+bytes32 constant TYPE_NONTV = keccak256(abi.encodePacked("NonTv"));
 bytes32 constant TYPE_YV = keccak256(abi.encodePacked("YearnVault"));

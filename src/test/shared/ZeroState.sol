@@ -18,6 +18,7 @@ import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {YVTokenMock} from "../mocks/YVTokenMock.sol";
 import {IERC20Like} from "../../interfaces/IERC20Like.sol";
 import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
+import {SyncablePoolNonTv} from "../mocks/SyncablePoolNonTv.sol";
 import {SyncablePoolYearnVault} from "../mocks/SyncablePoolYearnVault.sol";
 import {AccessControl} from "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
 
@@ -54,10 +55,18 @@ abstract contract ZeroState is TestCore {
         underlying = new ERC20Mock(underlyingName, underlyingSymbol, underlyingDecimals);
 
         // Set base token related variables.
-        baseName = string.concat(params.baseType, underlyingName);
-        baseSymbol = string.concat(params.baseType, underlyingSymbol);
-        baseType = keccak256(abi.encodePacked(params.baseType));
-        baseTypeString = params.baseType;
+        if (keccak256(abi.encodePacked(params.baseType)) == TYPE_NONTV) {
+            baseName = params.underlyingName;
+            baseSymbol = params.underlyingSymbol;
+            baseType = keccak256(abi.encodePacked(params.baseType));
+            baseTypeString = params.baseType;
+        } else {
+            baseName = string.concat(params.baseType, underlyingName);
+            baseSymbol = string.concat(params.baseType, underlyingSymbol);
+            baseType = keccak256(abi.encodePacked(params.baseType));
+            baseTypeString = params.baseType;
+
+        }
 
         // Set fyToken related variables.
         fySymbol = string.concat("fy", baseSymbol);
@@ -73,15 +82,19 @@ abstract contract ZeroState is TestCore {
 
     function setUp() public virtual {
         // Create base token (e.g. yvDAI)
-        if (baseType == TYPE_4626) {
-            base = IERC20Like(
-                address(new ERC4626TokenMock(baseName, baseSymbol, underlyingDecimals, address(underlying)))
-            );
+        if (baseType == TYPE_NONTV) {
+            base = IERC20Like(address(underlying));
+        } else {
+            if (baseType == TYPE_4626) {
+                base = IERC20Like(
+                    address(new ERC4626TokenMock(baseName, baseSymbol, underlyingDecimals, address(underlying)))
+                );
+            }
+            if (baseType == TYPE_YV) {
+                base = IERC20Like(address(new YVTokenMock(baseName, baseSymbol, underlyingDecimals, address(underlying))));
+            }
+            setPrice(address(base), (muNumerator * (10**underlyingDecimals)) / muDenominator);
         }
-        if (baseType == TYPE_YV) {
-            base = IERC20Like(address(new YVTokenMock(baseName, baseSymbol, underlyingDecimals, address(underlying))));
-        }
-        setPrice(address(base), (muNumerator * (10**underlyingDecimals)) / muDenominator);
 
         // Create fyToken (e.g. "fyyvDAI").
         fyToken = new FYTokenMock(fyName, fySymbol, address(base), maturity);
@@ -90,7 +103,6 @@ abstract contract ZeroState is TestCore {
         alice = address(0xbabe);
         vm.label(alice, "alice");
         base.mint(alice, aliceBaseInitialBalance);
-
         bob = address(0xb0b);
         vm.label(bob, "bob");
         base.mint(bob, bobBaseInitialBalance);
@@ -101,6 +113,9 @@ abstract contract ZeroState is TestCore {
         }
         if (baseType == TYPE_YV) {
             pool = new SyncablePoolYearnVault(address(base), address(fyToken), ts, g1Fee);
+        }
+        if (baseType == TYPE_NONTV) {
+            pool = new SyncablePoolNonTv(address(base), address(fyToken), ts, g1Fee);
         }
 
         // Alice: init

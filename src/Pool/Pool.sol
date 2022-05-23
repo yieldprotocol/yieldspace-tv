@@ -298,7 +298,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return _mnti(to, remainder, fyTokenToBuy, minRatio, maxRatio);
     }
 
-    /// This is the internal function for the external mint.
+    /// This is the internal mint function called by the external mint.
     /// Because _mint is a common fn name in ERC20 implementations, the name of this fn is _mnti.
     /// Mint liquidity tokens, with an optional internal trade to buy fyToken beforehand.
     /// The amount of liquidity tokens is calculated from the amount of fyTokenToBuy from the pool,
@@ -1011,7 +1011,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param to Address of the recipient of the base tokens.
     /// @return retrieved The amount of base tokens sent.
     function retrieveBase(address to) external virtual override returns (uint128 retrieved) {
-        // TODO: any interest in adding auth to these?
         // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
         retrieved = _getBaseBalance() - baseCached; // Cache can never be above balances
         base.safeTransfer(to, retrieved);
@@ -1022,7 +1021,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param to Address of the recipient of the fyTokens.
     /// @return retrieved The amount of fyTokens sent.
     function retrieveFYToken(address to) external virtual override returns (uint128 retrieved) {
-        // TODO: any interest in adding auth to these?
         // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
         retrieved = _getFYTokenBalance() - fyTokenCached; // Cache can never be above balances
         fyToken.safeTransfer(to, retrieved);

@@ -23,15 +23,14 @@ import "../../interfaces/IYVToken.sol";
 
 */
 
-/// A Yieldspace AMM implementation for pools which provide liquidity and trading of fyTokens vs base tokens.
-/// **The base tokens in this implementation are Yearn tokenized vault shares.**
+/// Module for using non-4626 compliant Yearn Vault tokens as base for the Yield Protocol Pool.sol AMM contract.
 /// For example, Yearn Vault Dai: https://etherscan.io/address/0xC2cB1040220768554cf699b0d863A3cd4324ce32#readContract
 /// @dev Since Yearn Vault tokens are not currently ERC4626 compliant, this contract inherits the Yield Pool
-/// contract and overwrites the getBaseCurrentPrice() function to call the getPricePerFullShare() function that the Yearn
-/// Vault tokens currently use.  All other functionality of the Yield Pool remains the same.
+/// contract and overwrites the getBaseCurrentPrice() function to call the getPricePerFullShare() function that the
+/// Yearn Vault tokens currently use.  All other functionality of the Yield Pool remains the same.
 /// @title  PoolYearnVault.sol
 /// @dev Deploy pool with Yearn Vault token and associated fyToken.
-/// @author Orignal work by @alcueca. Adapted by @devtooligan.  Maths and whitepaper by @aniemburg.
+/// @author @devtooligan
 contract PoolYearnVault is Pool {
     /* CONSTRUCTOR
      *****************************************************************************************************************/
