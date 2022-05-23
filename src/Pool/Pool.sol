@@ -213,7 +213,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         )
     {
         if (_totalSupply == 0) revert NotInitialized();
-        return _mnti(to, remainder, 0, minRatio, maxRatio);
+        return _mint(to, remainder, 0, minRatio, maxRatio);
     }
 
     /// ╦┌┐┌┬┌┬┐┬┌─┐┬  ┬┌─┐┌─┐  ╔═╗┌─┐┌─┐┬
@@ -245,7 +245,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         )
     {
         if (_totalSupply != 0) revert Initialized();
-        (baseIn, fyTokenIn, tokensMinted) = _mnti(to, remainder, 0, minRatio, maxRatio);
+        (baseIn, fyTokenIn, tokensMinted) = _mint(to, remainder, 0, minRatio, maxRatio);
         emit gm();
     }
 
@@ -293,18 +293,17 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             uint256
         )
     {
-        //TODO: In addition to the trading functions -- update the liquidity fns for base and init
         if (_totalSupply == 0) revert NotInitialized();
-        return _mnti(to, remainder, fyTokenToBuy, minRatio, maxRatio);
+        return _mint(to, remainder, fyTokenToBuy, minRatio, maxRatio);
     }
 
-    /// This is the internal mint function called by the external mint.
-    /// Because _mint is a common fn name in ERC20 implementations, the name of this fn is _mnti.
+    /// This is the internal mint function called by the external mint functions.
     /// Mint liquidity tokens, with an optional internal trade to buy fyToken beforehand.
     /// The amount of liquidity tokens is calculated from the amount of fyTokenToBuy from the pool,
     /// plus the amount of extra, unaccounted for fyToken in this contract.
     /// The base tokens also need to be present in this contract, unaccounted for.
     /// @dev Warning: This fn expects that the pool has already been initialized or else it is being called by the initialize fn.
+    /// This function overloads the ERC20._mint(address, uint) function.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
     /// @param fyTokenToBuy Amount of `fyToken` being bought in the Pool, from this we calculate how much base it will be taken in.
@@ -313,7 +312,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return tokensMinted The amount of LP tokens minted.
-    function _mnti(
+    function _mint(
         address to,
         address remainder,
         uint256 fyTokenToBuy,
