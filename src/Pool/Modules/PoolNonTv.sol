@@ -22,7 +22,8 @@ import "../../interfaces/IYVToken.sol";
  ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝     ╚═══╝ .SOL
 */
 
-/// @dev This module is meant to be used with Pool.sol for non-tokenized vault base types (example DAI).
+/// Module for using non tokenized vault tokens as base for the Yield Protocol Pool.sol AMM contract.
+/// For example ordinary DAI, as opposed to yvDAI or Compound DAI.
 /// @title  PoolNonTv.sol
 /// @dev Deploy pool with base token and associated fyToken.
 /// @author @devtooligan

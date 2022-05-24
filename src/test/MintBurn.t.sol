@@ -42,6 +42,9 @@ abstract contract WithLiquidity is ZeroStateDai {
         vm.prank(alice);
         pool.init(alice, bob, 0, MAX);
 
+        // elapse some time after initialization
+        vm.warp(block.timestamp + 60);
+
         // Update the price of base to value of state variables: cNumerator/cDenominator
         setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
@@ -49,6 +52,10 @@ abstract contract WithLiquidity is ZeroStateDai {
         // Skew the balances by donating fyToken, without using trading functions.
         fyToken.mint(address(pool), additionalFYToken);
         pool.sync();
+
+        // elapse some time after initialization
+        vm.warp(block.timestamp + 60);
+
     }
 }
 

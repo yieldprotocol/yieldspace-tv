@@ -22,7 +22,7 @@ import {IERC20Like} from  "../../interfaces/IERC20Like.sol";
 // - Declares events,
 // - Declares constants.
 // No new contracts are created
-abstract contract TestCore {
+abstract contract TestCore is Test {
     event Liquidity(
         uint32 maturity,
         address indexed from,
@@ -42,8 +42,6 @@ abstract contract TestCore {
     using Math64x64 for int256;
     using Math64x64 for uint256;
     using Exp64x64 for uint128;
-
-    Vm public vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     FYTokenMock public fyToken;
     ISyncablePool public pool;
