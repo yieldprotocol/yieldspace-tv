@@ -132,10 +132,8 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // Send some base to the pool.
-        fyToken.mint(address(pool), 10e18); // send an extra wad of base
-
-        // calc expected FYTokenIn
+        // Send FYToken, sync, and calc expected FYTokenIn
+        fyToken.mint(address(pool), 5e18);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
         int128 c_ = (IERC4626Mock(address(base)).convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
@@ -151,9 +149,13 @@ contract TWAR__PoolInitialized is PoolInitialized {
             mu
         );
 
+        // Send some fyToken to the pool.
+        fyToken.mint(address(pool), expectedFYTokenIn); // send an extra wad of base
+
+
         // Alice calls mint to Bob.
         vm.startPrank(alice);
-        pool.buyBase(alice, expectedFYTokenIn, type(uint128).max);
+        pool.buyBase(alice, 3e18, type(uint128).max);
 
         // fast forward time
         uint256 timewarp = 100;
@@ -182,35 +184,23 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // Send some base to the pool.
-        base.mint(address(pool), 10e18); // send an extra wad of base
+        // skew the pool to represent some trades
+        (, uint104 baseReserves0, uint104 fyTokenReserves0, ) = pool.getCache();
 
-        // calc expected FYTokenIn
-        uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
-        uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(base)).convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
+        fyToken.mint(address(pool), 2_000_000 * 1e18);
+        pool.sync();
 
-        uint128 expectedFYTokenOut = YieldMath.fyTokenOutForSharesIn(
-            sharesReserves,
-            virtFYTokenBal,
-            3e18,
-            maturity - uint32(block.timestamp),
-            k,
-            g2,
-            c_,
-            mu
-        );
 
-        // Alice calls mint to Bob.
+        // sellBase
+        base.mint(address(pool), 1e18);
         vm.startPrank(alice);
-        pool.sellBase(alice, expectedFYTokenOut);
+        pool.sellBase(alice, 0);
 
         // fast forward time
         uint256 timewarp = 100;
         vm.warp(block.timestamp + timewarp);
 
         // expect the total ratio seconds to be 60 (ray) based on the 1:1 ratio established
-        // in setup and the 60 seconds that had elapsed after
         assertEq(pool.cumulativeRatioLast(), 60 * 1e27);
 
         // expect currCumRat to have increased
@@ -223,6 +213,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, baseReserves, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
+
 
     }
 
@@ -281,28 +272,17 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // Send some base to the pool.
-        fyToken.mint(address(pool), 10e18); // send an extra wad of base
+        // skew the pool to represent some trades
+        (, uint104 baseReserves0, uint104 fyTokenReserves0, ) = pool.getCache();
 
-        // calc expected FYTokenIn
-        uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
-        uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(base)).convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
+        fyToken.mint(address(pool), 2_000_000 * 1e18);
+        pool.sync();
 
-        uint128 expectedBaseIn = YieldMath.sharesInForFYTokenOut(
-            sharesReserves,
-            virtFYTokenBal,
-            3e18,
-            maturity - uint32(block.timestamp),
-            k,
-            g2,
-            c_,
-            mu
-        );
 
-        // Alice calls mint to Bob.
-        vm.startPrank(alice);
-        pool.sellFYToken(alice, expectedBaseIn);
+        // send over base and buy fytoken
+        base.mint(address(pool), 5e18);
+        vm.prank(alice);
+        pool.buyFYToken(alice, 3e18, type(uint128).max);
 
         // fast forward time
         uint256 timewarp = 100;

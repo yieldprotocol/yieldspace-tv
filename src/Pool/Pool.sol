@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.13;
 
-
 import "./PoolImports.sol"; /*
 
    __     ___      _     _
@@ -50,6 +49,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* LIBRARIES
      *****************************************************************************************************************/
 
+    using WMul for uint256;
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU128I128 for uint128;
@@ -336,8 +336,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
-                ((uint256(cache.baseCached) * 1e18) / realFYTokenCached_ < minRatio) ||
-                ((uint256(cache.baseCached) * 1e18) / realFYTokenCached_ > maxRatio)
+                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ < minRatio) ||
+                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ > maxRatio)
             ) revert SlippageDuringMint((uint256(cache.baseCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
         }
 
@@ -505,10 +505,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
-                ((uint256(cache.baseCached) * 1e18) / realFYTokenCached_ < minRatio) ||
-                ((uint256(cache.baseCached) * 1e18) / realFYTokenCached_ > maxRatio)
+                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ < minRatio) ||
+                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ > maxRatio)
             ) {
-                revert SlippageDuringBurn((uint256(cache.baseCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
+                revert SlippageDuringBurn((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_, minRatio, maxRatio);
             }
         }
 
@@ -750,7 +750,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /* sellBase
 
-                         I've transfered you `uint128 baseIn` worth of base.
+                         I've transfered you some base tokens.
              _______     Can you swap them for fyTokens?
             /   GUY \                                                 ┌─────────┐
      (^^^|   \===========  ┌──────────────┐                           │no       │
@@ -837,7 +837,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /*sellFYToken
-                         I've transferred you `uint128 fyTokenIn` worth of fyTokens.
+                         I've transferred you some fyTokens.
              _______     Can you swap them for base?
             /   GUY \         .:::::::::::::::::.
      (^^^|   \===========    :  _______  __   __ :                 ┌─────────┐

@@ -1,5 +1,4 @@
 [default]
-block_timestamp = 1622400000  # Timestamp for tests (non-zero)
 contracts = 'src/contracts'
 gas_reports = ["*"]
 libs = ['lib']
