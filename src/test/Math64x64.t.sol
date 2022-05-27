@@ -9,10 +9,10 @@ pragma solidity >=0.8.13; /*
       yieldprotocol.com       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝
 */
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
-import "./../Math64x64.sol";
 import "./helpers.sol";
+import "./../Math64x64.sol";
 
 contract Math64x64Test is DSTest {
     /**TESTS*********************************************************
@@ -566,52 +566,6 @@ contract Math64x64Test is DSTest {
 
     function testFail_Underflow_muli_Math64x64() public pure {
         Math64x64.muli(type(int128).min, type(int256).max);
-    }
-
-    /**
-     * NOTE: This Math64x64.muli logic is subject to false positive results when fuzzing due to the potential
-     * for a large percentage of test cases being skipped when passed in parameters fall outside certain conditions
-     * found in Math64x64.mulu.  Recommend deep fuzzing w 10,000 runs or more
-     */
-    function testFuzz_muli_Math64x64(int128 x, int256 y) public {
-        if (y == type(int256).min) return;
-
-        int256 expectedResult;
-        // Re-implement logic from lib to derive expected result
-        if (x == type(int128).min) {
-            if (
-                !(y >= -0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF &&
-                    y <= 0x1000000000000000000000000000000000000000000000000)
-            ) return;
-            expectedResult = -y << 63;
-        } else {
-            bool negativeResult = false;
-            if (x < 0) {
-                x = -x;
-                negativeResult = true;
-            }
-            if (y < 0) {
-                y = -y; // We rely on overflow behavior here
-                negativeResult = !negativeResult;
-            }
-
-            // mulu checks
-            uint256 lo = (uint256(int256(x)) * uint256((y) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)) >> 64;
-            uint256 hi = uint256(int256(x)) * (uint256(y) >> 128);
-
-            if (hi > 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) return;
-            hi <<= 64;
-            if (hi > uint256(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) - lo) return;
-
-            uint256 absoluteResult = Math64x64.mulu(x, uint256(y));
-            if (negativeResult) {
-                expectedResult = -int256(absoluteResult); // We rely on overflow behavior here
-            } else {
-                expectedResult = int256(absoluteResult);
-            }
-        }
-        int256 result = Math64x64.muli(x, y);
-        assertEq(expectedResult, result);
     }
 
     /* 11. function mulu (int128 x, uint256 y) internal pure returns (uint256)
