@@ -49,7 +49,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* LIBRARIES
      *****************************************************************************************************************/
 
-    using WMul for uint256;
+    using WDiv for uint256;
+    using RDiv for uint256;
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU128I128 for uint128;
@@ -304,7 +305,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// The amount of liquidity tokens is calculated from the amount of fyTokenToBuy from the pool,
     /// plus the amount of extra, unaccounted for fyToken in this contract.
     /// The base tokens also need to be present in this contract, unaccounted for.
-    /// @dev Warning: This fn expects that the pool has already been initialized or else it is being called by the initialize fn.
+    /// @dev Warning: This fn does not check if supply > 0 like the external functions do.
     /// This function overloads the ERC20._mint(address, uint) function.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
@@ -332,12 +333,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 supply = _totalSupply;
         Cache memory cache = _getCache();
         uint256 realFYTokenCached_ = cache.fyTokenCached - supply; // The fyToken cache includes the virtual fyToken, equal to the supply
-
+        uint baseBalance = base.balanceOf(address(this));
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
-                uint256(cache.baseCached).wdiv(realFYTokenCached_) < minRatio) ||
-                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ > maxRatio)
+                uint256(cache.baseCached).wdiv(realFYTokenCached_) < minRatio ||
+                uint256(cache.baseCached).wdiv(realFYTokenCached_) > maxRatio
             ) revert SlippageDuringMint((uint256(cache.baseCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
         }
 
@@ -345,11 +346,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (supply == 0) {
             // **First mint**
             // Initialize at 1 pool token minted per base token supplied
-            baseIn = base.balanceOf(address(this)) - cache.baseCached;
+            baseIn = baseBalance;
             tokensMinted = baseIn;
         } else if (realFYTokenCached_ == 0) {
             // Edge case, no fyToken in the Pool after initialization
-            baseIn = base.balanceOf(address(this)) - cache.baseCached;
+            baseIn = baseBalance - cache.baseCached;
             tokensMinted = (supply * baseIn) / cache.baseCached;
         } else {
             // There is an optional virtual trade before the mint
@@ -362,8 +363,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             fyTokenIn = fyToken.balanceOf(address(this)) - realFYTokenCached_;
             tokensMinted = (supply * (fyTokenToBuy + fyTokenIn)) / (realFYTokenCached_ - fyTokenToBuy);
             baseIn = baseToSell + ((cache.baseCached + baseToSell) * tokensMinted) / supply;
-            if ((base.balanceOf(address(this)) - cache.baseCached) < baseIn) {
-                revert NotEnoughBaseIn((base.balanceOf(address(this)) - cache.baseCached), baseIn);
+            if ((baseBalance - cache.baseCached) < baseIn) {
+                revert NotEnoughBaseIn((baseBalance - cache.baseCached), baseIn);
             }
         }
 
@@ -379,8 +380,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _mint(to, tokensMinted);
 
         // Return any unused base
-        if ((base.balanceOf(address(this)) - cache.baseCached) - baseIn != 0)
-            base.safeTransfer(remainder, (base.balanceOf(address(this)) - cache.baseCached) - baseIn);
+        if (baseBalance > cache.baseCached + baseIn)
+            base.safeTransfer(remainder, baseBalance - (cache.baseCached + baseIn));
 
         emit Liquidity(
             maturity,
@@ -505,10 +506,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
-                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ < minRatio) ||
-                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ > maxRatio)
+                (uint256(cache.baseCached).wdiv(realFYTokenCached_) < minRatio) ||
+                (uint256(cache.baseCached).wdiv(realFYTokenCached_) > maxRatio)
             ) {
-                revert SlippageDuringBurn((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_, minRatio, maxRatio);
+                revert SlippageDuringBurn(uint256(cache.baseCached).wdiv(realFYTokenCached_), minRatio, maxRatio);
             }
         }
 
@@ -685,7 +686,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
              _|  |  |              `-:::::::::::-'             .` "-. `%   | |    %` .-" `.
             (_____[__)                `'''''''`               /      \    .: :.     /      \
                                                               '-..___|_..=:` `-:=.._|___..-'
- */
+    */
     /// Buy fyToken with base
     /// The trader needs to have transferred in the correct amount of tokens in advance.
     /// @param to Wallet receiving the fyToken being bought.
@@ -866,7 +867,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             (_____[__)                                      .` "-. `%   | |    %` .-" `.
                                                            /      \    .: :.     /      \
                                                            '-..___|_..=:` `-:=.._|___..-'
- */
+    */
     /// Sell fyToken for base
     /// The trader needs to have transferred the amount of fyToken to sell to the pool before in the same transaction.
     /// @param to Wallet receiving the base being bought.
@@ -922,7 +923,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /* BALANCES MANAGEMENT AND ADMINISTRATIVE FUNCTIONS
-       Note: The sync() function has been deprecated and removed.
+       Note: The sync() function has been discontinued and removed.
      *****************************************************************************************************************/
     /*
                   _____________________________________
@@ -936,52 +937,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                    |o o o o o o o o o o o o o o o o o|
                   _|o_o_o_o_o_o_o_o_o_o_o_o_o_o_o_o_o|_
                           "Poolie's Abacus" - ejm */
-
-    /// Returns the base balance.
-    /// @return The current balance of the pool's base tokens.
-    function getBaseBalance() public view virtual override returns (uint104) {
-        return _getBaseBalance();
-    }
-
-    /// Returns the base token current price.
-    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
-    function getBaseCurrentPrice() external view returns (uint256) {
-        return _getBaseCurrentPrice();
-    }
-
-    /// Returns the base token current price.
-    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
-    function _getBaseCurrentPrice() internal view virtual returns (uint256) {
-        return IERC4626(address(base)).convertToAssets(10**base.decimals());
-    }
-
-    /// The "virtual" fyToken balance, which is the actual balance plus the pool token supply.
-    /// @dev For more explanation about using the LP tokens as part of the virtual reserves see:
-    /// https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw
-    /// @return The current balance of the pool's fyTokens plus the current balance of the pool's
-    /// total supply of LP tokens as a uint104
-    function getFYTokenBalance() public view virtual override returns (uint104) {
-        return _getFYTokenBalance();
-    }
-
-    /// Returns the all storage vars except for cumulativeRatioLast
-    /// @return g1Fee  This is a fp4 number where 10_000 is 1.
-    /// @return Cached base token balance.
-    /// @return Cached virtual FY token balance which is the actual balance plus the pool token supply.
-    /// @return Timestamp that balances were last cached.
-    function getCache()
-        public
-        view
-        virtual
-        returns (
-            uint16,
-            uint104,
-            uint104,
-            uint32
-        )
-    {
-        return (g1Fee, baseCached, fyTokenCached, blockTimestampLast);
-    }
 
     /// Calculates cumulative ratio as of current timestamp.  Can be consumed for TWAR observations.
     /// @dev See UniV2 implmentation: https://tinyurl.com/UniV2currentCumulativePrice
@@ -1001,78 +956,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
         currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(baseCached);
-    }
-
-    /// Retrieve any base tokens not accounted for in the cache
-    /// @param to Address of the recipient of the base tokens.
-    /// @return retrieved The amount of base tokens sent.
-    function retrieveBase(address to) external virtual override returns (uint128 retrieved) {
-        // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
-        retrieved = _getBaseBalance() - baseCached; // Cache can never be above balances
-        base.safeTransfer(to, retrieved);
-        // Now the current balances match the cache, so no need to update the TWAR
-    }
-
-    /// Retrieve any fyTokens not accounted for in the cache
-    /// @param to Address of the recipient of the fyTokens.
-    /// @return retrieved The amount of fyTokens sent.
-    function retrieveFYToken(address to) external virtual override returns (uint128 retrieved) {
-        // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
-        retrieved = _getFYTokenBalance() - fyTokenCached; // Cache can never be above balances
-        fyToken.safeTransfer(to, retrieved);
-        // Now the balances match the cache, so no need to update the TWAR
-    }
-
-    /// Sets g1 numerator and denominator
-    /// @dev These numbers are converted to 64.64 and used to calculate g1 by dividing them, or g2 from 1/g1
-    function setFees(uint16 g1Fee_) public auth {
-        if (g1Fee_ > 10000) {
-            revert InvalidFee(g1Fee_);
-        }
-        g1Fee = g1Fee_;
-        emit FeesSet(g1Fee_);
-    }
-
-    /// Returns the ratio of net proceeds after fees, for buying fyToken
-    function _computeG1(uint16 g1Fee_) internal pure returns (int128) {
-        return uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt());
-    }
-
-    /// Returns the ratio of net proceeds after fees, for selling fyToken
-    function _computeG2(uint16 g1Fee_) internal pure returns (int128) {
-        // Divide 1 (64.64) by g1
-        return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
-    }
-
-    /// Returns the base balance
-    function _getBaseBalance() internal view returns (uint104) {
-        return base.balanceOf(address(this)).u104();
-    }
-
-    /// Returns the c based on the current price
-    function _getC() internal view returns (int128) {
-        return _getBaseCurrentPrice().wmul(scaleFactor).fromUInt();
-    }
-
-    /// Returns the "virtual" fyToken balance, which is the real balance plus the pool token supply.
-    function _getFYTokenBalance() internal view returns (uint104) {
-        return (fyToken.balanceOf(address(this)) + _totalSupply).u104();
-    }
-
-    /// Returns the all storage vars except for cumulativeRatioLast
-    /// @dev This returns the same info as external getCache but uses a struct to help with stack too deep.
-    /// @return cache A struct containing:
-    /// g1Fee a fp4 number where 10_000 is 1.
-    /// Cached base token balance.
-    /// Cached virtual FY token balance which is the actual balance plus the pool token supply.
-    /// Timestamp that balances were last cached.
-    function _getCache()
-        internal
-        view
-        virtual
-        returns (Cache memory cache)
-    {
-        cache = Cache(g1Fee, baseCached, fyTokenCached, blockTimestampLast);
+        // currentCumulativeRatio_ = cumulativeRatioLast + ((uint256(fyTokenCached) * 1e27) * (timeElapsed)) / baseCached;
     }
 
     /// Update cached values and, on the first call per block, cumulativeRatioLast.
@@ -1110,7 +994,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (timeElapsed > 0 && fyTokenCached_ > 0 && baseCached_ > 0) {
             // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
             uint256 scaledFYTokenCached = uint256(fyTokenCached_) * 1e27;
-            newCumulativeRatioLast += (fyTokenCached_ * timeElapsed).rdiv(baseCached_);
+            newCumulativeRatioLast += (scaledFYTokenCached * timeElapsed) / baseCached_;
         }
 
         blockTimestampLast = blockTimestamp;
@@ -1123,5 +1007,151 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         fyTokenCached = newFYTokenCached;
 
         emit Sync(newBaseCached, newFYTokenCached, newCumulativeRatioLast);
+    }
+
+    /// Exposes the 64.64 factor used for determining fees.
+    /// A value of 1 means no fees.  Here g1 < 1 because it is used when selling base shares to the pool.
+    /// Useful for external contracts that need to perform calculations related to pool.
+    /// @dev Converts state var cache.g1Fee(fp4) to a 64bit divided by 10,000
+    /// @return a 64bit factor used for applying fees when buying fyToken/selling base.
+    function g1() external view returns (int128) {
+        Cache memory cache = _getCache();
+        return _computeG1(cache.g1Fee);
+    }
+
+    /// Returns the ratio of net proceeds after fees, for buying fyToken
+    function _computeG1(uint16 g1Fee_) internal pure returns (int128) {
+        return uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt());
+    }
+
+    /// Exposes the 64.64 factor used for determining fees.
+    /// A value of 1 means no fees.  Here g2 > 1 because it is used when selling fyToken to the pool.
+    /// Useful for external contracts that need to perform calculations related to pool.
+    /// @dev Calculated by dividing 10,000 by state var cache.g1Fee(fp4) and converting to 64bit.
+    /// @return a 64bit factor used for applying fees when selling fyToken/buying base.
+    function g2() external view returns (int128) {
+        Cache memory cache = _getCache();
+        return _computeG2(cache.g1Fee);
+    }
+
+    /// Returns the ratio of net proceeds after fees, for selling fyToken
+    function _computeG2(uint16 g1Fee_) internal pure returns (int128) {
+        // Divide 1 (64.64) by g1
+        return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
+    }
+
+    /// Returns the base balance.
+    /// @return The current balance of the pool's base tokens.
+    function getBaseBalance() public view virtual override returns (uint104) {
+        return _getBaseBalance();
+    }
+
+    /// Returns the base balance
+    function _getBaseBalance() internal view returns (uint104) {
+        return base.balanceOf(address(this)).u104();
+    }
+
+    /// Returns the base token current price.
+    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
+    function getBaseCurrentPrice() external view returns (uint256) {
+        return _getBaseCurrentPrice();
+    }
+
+    /// Returns the base token current price.
+    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
+    function _getBaseCurrentPrice() internal view virtual returns (uint256) {
+        return IERC4626(address(base)).convertToAssets(10**base.decimals());
+    }
+
+    /// Returns current price of 1 share in 64bit.
+    /// Useful for external contracts that need to perform calculations related to pool.
+    /// @return The current price (as determined by the token) scalled to 18 digits and converted to 64.64.
+    function getC() external view returns (int128) {
+        return _getC();
+    }
+
+    /// Returns the c based on the current price
+    function _getC() internal view returns (int128) {
+        return ((_getBaseCurrentPrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
+    }
+
+    /// Returns the all storage vars except for cumulativeRatioLast
+    /// @return g1Fee  This is a fp4 number where 10_000 is 1.
+    /// @return Cached base token balance.
+    /// @return Cached virtual FY token balance which is the actual balance plus the pool token supply.
+    /// @return Timestamp that balances were last cached.
+    function getCache()
+        public
+        view
+        virtual
+        returns (
+            uint16,
+            uint104,
+            uint104,
+            uint32
+        )
+    {
+        return (g1Fee, baseCached, fyTokenCached, blockTimestampLast);
+    }
+
+    /// Returns the all storage vars except for cumulativeRatioLast
+    /// @dev This returns the same info as external getCache but uses a struct to help with stack too deep.
+    /// @return cache A struct containing:
+    /// g1Fee a fp4 number where 10_000 is 1.
+    /// Cached base token balance.
+    /// Cached virtual FY token balance which is the actual balance plus the pool token supply.
+    /// Timestamp that balances were last cached.
+
+    function _getCache()
+        internal
+        view
+        virtual
+        returns (Cache memory cache)
+    {
+        cache = Cache(g1Fee, baseCached, fyTokenCached, blockTimestampLast);
+    }
+
+    /// The "virtual" fyToken balance, which is the actual balance plus the pool token supply.
+    /// @dev For more explanation about using the LP tokens as part of the virtual reserves see:
+    /// https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw
+    /// @return The current balance of the pool's fyTokens plus the current balance of the pool's
+    /// total supply of LP tokens as a uint104
+    function getFYTokenBalance() public view virtual override returns (uint104) {
+        return _getFYTokenBalance();
+    }
+
+    /// Returns the "virtual" fyToken balance, which is the real balance plus the pool token supply.
+    function _getFYTokenBalance() internal view returns (uint104) {
+        return (fyToken.balanceOf(address(this)) + _totalSupply).u104();
+    }
+
+    /// Retrieve any base tokens not accounted for in the cache
+    /// @param to Address of the recipient of the base tokens.
+    /// @return retrieved The amount of base tokens sent.
+    function retrieveBase(address to) external virtual override returns (uint128 retrieved) {
+        // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
+        retrieved = _getBaseBalance() - baseCached; // Cache can never be above balances
+        base.safeTransfer(to, retrieved);
+        // Now the current balances match the cache, so no need to update the TWAR
+    }
+
+    /// Retrieve any fyTokens not accounted for in the cache
+    /// @param to Address of the recipient of the fyTokens.
+    /// @return retrieved The amount of fyTokens sent.
+    function retrieveFYToken(address to) external virtual override returns (uint128 retrieved) {
+        // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
+        retrieved = _getFYTokenBalance() - fyTokenCached; // Cache can never be above balances
+        fyToken.safeTransfer(to, retrieved);
+        // Now the balances match the cache, so no need to update the TWAR
+    }
+
+    /// Sets g1 numerator and denominator
+    /// @dev These numbers are converted to 64.64 and used to calculate g1 by dividing them, or g2 from 1/g1
+    function setFees(uint16 g1Fee_) public auth {
+        if (g1Fee_ > 10000) {
+            revert InvalidFee(g1Fee_);
+        }
+        g1Fee = g1Fee_;
+        emit FeesSet(g1Fee_);
     }
 }

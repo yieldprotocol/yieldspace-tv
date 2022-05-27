@@ -13,7 +13,8 @@ import {CastU128I128} from  "@yield-protocol/utils-v2/contracts/cast/CastU128I12
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
-import {WMul} from "@yield-protocol/utils-v2/contracts/math/WMul.sol";
+import {WDiv} from "@yield-protocol/utils-v2/contracts/math/WDiv.sol";
+import {RDiv} from "@yield-protocol/utils-v2/contracts/math/RDiv.sol";
 
 import {IPool} from "../interfaces/IPool.sol";
 import {IERC4626} from  "../interfaces/IERC4626.sol";

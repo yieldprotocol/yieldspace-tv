@@ -8,7 +8,7 @@ pragma solidity >=0.8.13;
 error AfterMaturity();
 
 /// The pool has already been initialized. What are you thinking?
-/// @dev To save gas, total supply == 0 is checked instead of a state variable
+/// @dev To save gas, total supply == 0 is checked instead of a state variable.
 error Initialized();
 
 /// Trade results in base balance > fyToken balance. We don't do that.
@@ -29,7 +29,7 @@ error MaturityOverflow();
 /// @param baseNeeded The amount of base tokens required for the mint.
 error NotEnoughBaseIn(uint256 baseAvailable, uint256 baseNeeded);
 
-/// Not enough fYTokens were found in the pool contract to complete the requested action. :( smh
+/// Not enough fYTokens were found in the pool contract to complete the requested action :( smh.
 /// @param fYTokensAvailable The amount of unaccounted for fYTokens.
 /// @param fYTokensNeeded The amount of fYToken tokens required for the mint.
 error NotEnoughFYTokenIn(uint256 fYTokensAvailable, uint256 fYTokensNeeded);
@@ -69,7 +69,7 @@ error SlippageDuringMint(uint256 newRatio, uint256 minRatio, uint256 maxRatio);
 error SlippageDuringSellBase(uint128 fyTokenOut, uint128 min);
 
 
-/// Minimum amount of base (per the min arg) would not be met for the trade. Come back later with more base.
+/// Minimum amount of base (per the min arg) would not be met for the trade. Maybe you'll get lucky next time.
 /// @param baseOut bases that would be obtained through the trade.
 /// @param min The minimum amount of bases as specified by the caller.
 error SlippageDuringSellFYToken(uint128 baseOut, uint128 min);
