@@ -336,7 +336,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
-                ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ < minRatio) ||
+                uint256(cache.baseCached).wdiv(realFYTokenCached_) < minRatio) ||
                 ((uint256(cache.baseCached).wmul(1e18)) / realFYTokenCached_ > maxRatio)
             ) revert SlippageDuringMint((uint256(cache.baseCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
         }
@@ -555,7 +555,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             -(lpTokensBurned.i256())
         );
 
-        if (_totalSupply == 0 && block.timestamp >= maturity) {
+        if (supply == lpTokensBurned && block.timestamp >= maturity) {
             emit gg();
         }
     }
@@ -1000,7 +1000,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
 
         // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-        currentCumulativeRatio_ = cumulativeRatioLast + ((uint256(fyTokenCached) * 1e27) * (timeElapsed)) / baseCached;
+        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(baseCached);
     }
 
     /// Retrieve any base tokens not accounted for in the cache
@@ -1051,7 +1051,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the c based on the current price
     function _getC() internal view returns (int128) {
-        return ((_getBaseCurrentPrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
+        return _getBaseCurrentPrice().wmul(scaleFactor).fromUInt();
     }
 
     /// Returns the "virtual" fyToken balance, which is the real balance plus the pool token supply.
@@ -1110,7 +1110,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (timeElapsed > 0 && fyTokenCached_ > 0 && baseCached_ > 0) {
             // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
             uint256 scaledFYTokenCached = uint256(fyTokenCached_) * 1e27;
-            newCumulativeRatioLast += (scaledFYTokenCached * timeElapsed) / baseCached_;
+            newCumulativeRatioLast += (fyTokenCached_ * timeElapsed).rdiv(baseCached_);
         }
 
         blockTimestampLast = blockTimestamp;
