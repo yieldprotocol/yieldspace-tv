@@ -1,0 +1,23 @@
+{
+  "name": "@yield-protocol/yieldspace-tv",
+  "version": "0.0.1",
+  "description": "Yieldspace for tokenized vaults",
+  "files": [
+    "src/*.sol",
+    "src/interfaces/*.sol",
+    "src/Pool/*.sol",
+    "src/Pool/Modules/*.sol"
+  ],
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yieldprotocol/yieldspace-tv.git"
+  },
+  "author": "Yield Inc.",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/yieldprotocol/yieldspace-tv/issues"
+  },
+  "homepage": "https://github.com/yieldprotocol/yieldspace-tv#readme"
+}
