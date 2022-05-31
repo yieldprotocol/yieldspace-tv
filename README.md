@@ -19,6 +19,11 @@ This repo includes:
  - [Foundry unit and fuzz tests](https://github.com/yieldprotocol/yieldspace-tv/tree/update-yieldmath/src/test)
 
 
+Additional notes:
+ - If too many base tokens are sent to the mint functions (`mint` or `mintWithBase`), the extra base tokens will be sent back to the `to` address
+ - If too many tokens are sent in to `buyFYToken` or `buyBase`, those tokens are not sent back.  The user can retrieve them with `retrieveFYToken` or `retrieveBase`.
+ - The remaining tokens in the buy functions will typically be small rounding differences and not worth the gas to send back.  Also, changing the behavior of the buy functions to match the mint functions would be a breaking change.  For that reason, we have chosen to leave the current behavior.
+
 As this repo is still under development, these smart contracts have not yet been deployed.
 
 Detailed documentation can be found in the [Yield docs](docs.yieldprotocol.com).

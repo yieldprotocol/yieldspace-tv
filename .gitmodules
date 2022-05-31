@@ -1,12 +1,15 @@
 [submodule "lib/vault-interfaces"]
 	path = lib/vault-interfaces
 	url = https://github.com/yieldprotocol/vault-interfaces
-[submodule "lib/yield-utils-v2"]
-	path = lib/yield-utils-v2
-	url = https://github.com/yieldprotocol/yield-utils-v2
 [submodule "lib/yieldspace-interfaces"]
 	path = lib/yieldspace-interfaces
 	url = https://github.com/yieldprotocol/yieldspace-interfaces
+[submodule "lib/yield-utils-v2"]
+	path = lib/yield-utils-v2
+	url = https://github.com/yieldprotocol/yield-utils-v2
+[submodule "lib/yieldspace-v2"]
+	path = lib/yieldspace-v2
+	url = https://github.com/yieldprotocol/yieldspace-v2
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std

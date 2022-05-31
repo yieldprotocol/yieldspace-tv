@@ -1,9 +1,9 @@
 {
     "workbench.colorCustomizations": {
-      "titleBar.activeBackground": "#dfd934",
-      "titleBar.inactiveBackground": "#dfd934",
-      "titleBar.activeForeground": "#5733c4",
-      "titleBar.inactiveForeground": "#5733c4"
+      "titleBar.activeForeground": "#dfd934",
+      "titleBar.inactiveForeground": "#dfd934",
+      "titleBar.activeBackground": "#5733c4",
+      "titleBar.inactiveBackground": "#5733c4"
     },
     "editor.tokenColorCustomizations": {
       "textMateRules": [
