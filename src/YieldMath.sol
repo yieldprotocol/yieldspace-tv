@@ -13,8 +13,6 @@ pragma solidity >=0.8.13;
 import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
 
-import "forge-std/console.sol";
-
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 library YieldMath {
     using Math64x64 for int128;
