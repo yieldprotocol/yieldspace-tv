@@ -16,7 +16,7 @@ import {YieldMath} from "../YieldMath.sol";
 import {WDiv} from "@yield-protocol/utils-v2/contracts/math/WDiv.sol";
 import {RDiv} from "@yield-protocol/utils-v2/contracts/math/RDiv.sol";
 
-import {IPool} from "../interfaces/IPool.sol";
+import {IPoolTV as IPool} from "../interfaces/IPool.sol";
 import {IERC4626} from  "../interfaces/IERC4626.sol";
 import {IFYToken} from  "@yield-protocol/vault-interfaces/src/IFYToken.sol";
 import {ERC20Permit} from  "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
