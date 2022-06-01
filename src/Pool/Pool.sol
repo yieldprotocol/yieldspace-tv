@@ -44,7 +44,7 @@ import "./PoolImports.sol"; /*
 /// See whitepaper and derived formulas: https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw
 /// @title  Pool.sol
 /// @dev    Uses ABDK 64.64 mathlib for precision and reduced gas. Deploy pool with 4626 token and associated fyToken.
-/// @author Adapted by @devtooligan from original work by @alcueca and UniswapV2. Maths and whitepaper by @aniemburg.
+/// @author Adapted by @devtooligan from original work by @alcueca and UniswapV2. Maths and whitepaper by @aniemerg.
 contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /* LIBRARIES
      *****************************************************************************************************************/
