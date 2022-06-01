@@ -96,10 +96,10 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
      *****************************************************************************************************************/
 
     struct Cache {
-            uint16 g1Fee;
-            uint104 baseCached;
-            uint104 fyTokenCached;
-            uint32 blockTimestampLast;
+        uint16 g1Fee;
+        uint104 baseCached;
+        uint104 fyTokenCached;
+        uint32 blockTimestampLast;
     }
 
     /* STORAGE
@@ -334,7 +334,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         uint256 supply = _totalSupply;
         Cache memory cache = _getCache();
         uint256 realFYTokenCached_ = cache.fyTokenCached - supply; // The fyToken cache includes the virtual fyToken, equal to the supply
-        uint baseBalance = base.balanceOf(address(this));
+        uint256 baseBalance = base.balanceOf(address(this));
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
@@ -357,7 +357,12 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
             // There is an optional virtual trade before the mint
             uint256 baseToSell;
             if (fyTokenToBuy != 0) {
-                baseToSell = _buyFYTokenPreview(fyTokenToBuy.u128(), cache.baseCached, cache.fyTokenCached, _computeG1(cache.g1Fee));
+                baseToSell = _buyFYTokenPreview(
+                    fyTokenToBuy.u128(),
+                    cache.baseCached,
+                    cache.fyTokenCached,
+                    _computeG1(cache.g1Fee)
+                );
             }
 
             // We use all the available fyTokens, plus optional virtual trade. Surplus is in base tokens.
@@ -734,16 +739,18 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     ) internal view beforeMaturity returns (uint128 baseIn) {
         uint96 scaleFactor_ = scaleFactor;
 
-        baseIn = YieldMath.sharesInForFYTokenOut(
-            baseBalance * scaleFactor_,
-            fyTokenBalance * scaleFactor_,
-            fyTokenOut * scaleFactor_,
-            maturity - uint32(block.timestamp), // This can't be called after maturity
-            ts,
-            g1_,
-            _getC(),
-            mu
-        ) / scaleFactor_;
+        baseIn =
+            YieldMath.sharesInForFYTokenOut(
+                baseBalance * scaleFactor_,
+                fyTokenBalance * scaleFactor_,
+                fyTokenOut * scaleFactor_,
+                maturity - uint32(block.timestamp), // This can't be called after maturity
+                ts,
+                g1_,
+                _getC(),
+                mu
+            ) /
+            scaleFactor_;
 
         if ((fyTokenBalance - fyTokenOut) < (baseBalance + baseIn)) {
             revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, baseBalance + baseIn);
@@ -822,16 +829,18 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     ) internal view beforeMaturity returns (uint128 fyTokenOut) {
         uint96 scaleFactor_ = scaleFactor;
 
-        fyTokenOut = YieldMath.fyTokenOutForSharesIn(
-            baseBalance * scaleFactor_,
-            fyTokenBalance * scaleFactor_,
-            baseIn * scaleFactor_,
-            maturity - uint32(block.timestamp), // This can't be called after maturity
-            ts,
-            g1_,
-            _getC(),
-            mu
-        ) / scaleFactor_;
+        fyTokenOut =
+            YieldMath.fyTokenOutForSharesIn(
+                baseBalance * scaleFactor_,
+                fyTokenBalance * scaleFactor_,
+                baseIn * scaleFactor_,
+                maturity - uint32(block.timestamp), // This can't be called after maturity
+                ts,
+                g1_,
+                _getC(),
+                mu
+            ) /
+            scaleFactor_;
 
         if (fyTokenBalance - fyTokenOut < baseBalance + baseIn) {
             revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, baseBalance + baseIn);
@@ -957,7 +966,6 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
 
         // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
         currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(baseCached);
-        // currentCumulativeRatio_ = cumulativeRatioLast + ((uint256(fyTokenCached) * 1e27) * (timeElapsed)) / baseCached;
     }
 
     /// Update cached values and, on the first call per block, cumulativeRatioLast.
@@ -1113,12 +1121,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// Cached virtual FY token balance which is the actual balance plus the pool token supply.
     /// Timestamp that balances were last cached.
 
-    function _getCache()
-        internal
-        view
-        virtual
-        returns (Cache memory cache)
-    {
+    function _getCache() internal view virtual returns (Cache memory cache) {
         cache = Cache(g1Fee, baseCached, fyTokenCached, blockTimestampLast);
     }
 

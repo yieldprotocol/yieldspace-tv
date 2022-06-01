@@ -36,14 +36,7 @@ contract PoolNonTv is Pool {
         address fyToken_,
         int128 ts_,
         uint16 g1Fee_
-    )
-        Pool(
-            base_,
-            fyToken_,
-            ts_,
-            g1Fee_
-        )
-    {}
+    ) Pool(base_, fyToken_, ts_, g1Fee_) {}
 
     /// Returns the base token current price.
     /// This function should be overriden by modules.
