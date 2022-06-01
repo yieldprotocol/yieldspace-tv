@@ -45,7 +45,7 @@ import "./PoolImports.sol"; /*
 /// @title  Pool.sol
 /// @dev    Uses ABDK 64.64 mathlib for precision and reduced gas. Deploy pool with 4626 token and associated fyToken.
 /// @author Adapted by @devtooligan from original work by @alcueca and UniswapV2. Maths and whitepaper by @aniemburg.
-contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
+contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /* LIBRARIES
      *****************************************************************************************************************/
 
