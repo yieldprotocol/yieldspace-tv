@@ -67,10 +67,10 @@ abstract contract TestCore is Test {
     uint256 public constant muDenominator = 100;
     int128 public mu;
 
-    string public underlyingName;
-    string public underlyingSymbol;
-    uint8 public underlyingDecimals;
-    ERC20Mock public underlying;
+    string public assetName;
+    string public assetSymbol;
+    uint8 public assetDecimals;
+    ERC20Mock public asset;
 
     string public fyName;
     string public fySymbol;

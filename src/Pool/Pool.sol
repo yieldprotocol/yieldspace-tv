@@ -78,9 +78,9 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// as an "IERC20Like" and only cast as an IERC4626 when that 4626 functionality is needed in _getBaseCurrentPrice()
     /// This wei, modules for non-4626 compliant base tokens can import this contract and override 4626 specific fn's.
     IERC20Like public immutable base;
-    /// The fyToken for the UNDERLYING of the base.  It's not fyYVDAI, it's still fyDAI.  Even though we hold base
+    /// The fyToken for the UNDERLYING asset of the base.  It's not fyYVDAI, it's still fyDAI.  Even though we hold base
     /// in this contract in a wrapped tokenized vault (e.g. Yearn Vault Dai), upon maturity, the fyToken is payable in
-    /// the underlying of the fyToken and tokenized vault, not the tokenized vault token itself.
+    /// the underlying asset of the fyToken and tokenized vault, not the tokenized vault token itself.
     IFYToken public immutable fyToken;
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)

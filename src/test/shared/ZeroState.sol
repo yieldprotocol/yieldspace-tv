@@ -25,9 +25,9 @@ import {AccessControl} from "@yield-protocol/utils-v2/contracts/access/AccessCon
 bytes4 constant ROOT = 0x00000000;
 
 struct ZeroStateParams {
-    string underlyingName;
-    string underlyingSymbol;
-    uint8 underlyingDecimals;
+    string assetName;
+    string assetSymbol;
+    uint8 assetDecimals;
     string baseType;
 }
 
@@ -47,22 +47,22 @@ abstract contract ZeroState is TestCore {
     constructor(ZeroStateParams memory params) {
         ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt()); // TODO: UPDATE ME
 
-        // Set underlying state variables.
-        underlyingName = params.underlyingName;
-        underlyingSymbol = params.underlyingSymbol;
-        underlyingDecimals = params.underlyingDecimals;
-        // Create and set underlying token.
-        underlying = new ERC20Mock(underlyingName, underlyingSymbol, underlyingDecimals);
+        // Set underlying asset state variables.
+        assetName = params.assetName;
+        assetSymbol = params.assetSymbol;
+        assetDecimals = params.assetDecimals;
+        // Create and set asset token.
+        asset = new ERC20Mock(assetName, assetSymbol, assetDecimals);
 
         // Set base token related variables.
         if (keccak256(abi.encodePacked(params.baseType)) == TYPE_NONTV) {
-            baseName = params.underlyingName;
-            baseSymbol = params.underlyingSymbol;
+            baseName = params.assetName;
+            baseSymbol = params.assetSymbol;
             baseType = keccak256(abi.encodePacked(params.baseType));
             baseTypeString = params.baseType;
         } else {
-            baseName = string.concat(params.baseType, underlyingName);
-            baseSymbol = string.concat(params.baseType, underlyingSymbol);
+            baseName = string.concat(params.baseType, assetName);
+            baseSymbol = string.concat(params.baseType, assetSymbol);
             baseType = keccak256(abi.encodePacked(params.baseType));
             baseTypeString = params.baseType;
 
@@ -73,27 +73,27 @@ abstract contract ZeroState is TestCore {
         fyName = string.concat("fyToken ", baseName, " maturity 1");
 
         // Set some state variables based on decimals, to use as constants.
-        aliceBaseInitialBalance = 1000 * 10**(underlyingDecimals);
-        bobBaseInitialBalance = 2_000_000 * 10**(underlyingDecimals);
+        aliceBaseInitialBalance = 1000 * 10**(assetDecimals);
+        bobBaseInitialBalance = 2_000_000 * 10**(assetDecimals);
 
-        initialBase = 1_100_000 * 10**(underlyingDecimals);
-        initialFYTokens = 1_500_000 * 10**(underlyingDecimals);
+        initialBase = 1_100_000 * 10**(assetDecimals);
+        initialFYTokens = 1_500_000 * 10**(assetDecimals);
     }
 
     function setUp() public virtual {
         // Create base token (e.g. yvDAI)
         if (baseType == TYPE_NONTV) {
-            base = IERC20Like(address(underlying));
+            base = IERC20Like(address(asset));
         } else {
             if (baseType == TYPE_4626) {
                 base = IERC20Like(
-                    address(new ERC4626TokenMock(baseName, baseSymbol, underlyingDecimals, address(underlying)))
+                    address(new ERC4626TokenMock(baseName, baseSymbol, assetDecimals, address(asset)))
                 );
             }
             if (baseType == TYPE_YV) {
-                base = IERC20Like(address(new YVTokenMock(baseName, baseSymbol, underlyingDecimals, address(underlying))));
+                base = IERC20Like(address(new YVTokenMock(baseName, baseSymbol, assetDecimals, address(asset))));
             }
-            setPrice(address(base), (muNumerator * (10**underlyingDecimals)) / muDenominator);
+            setPrice(address(base), (muNumerator * (10**assetDecimals)) / muDenominator);
         }
 
         // Create fyToken (e.g. "fyyvDAI").
