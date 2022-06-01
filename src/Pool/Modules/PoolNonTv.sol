@@ -53,4 +53,25 @@ contract PoolNonTv is Pool {
     function _getBaseCurrentPriceConstructor(address base_) internal view virtual override returns (uint256) {
         return uint256(10**IERC20Like(address(base_)).decimals());
     }
+
+    /// Internal function for wrapping underlying asset tokens.  This should be overridden by modules.
+    /// Since there is nothing to unwrap, we return the surplus balance.
+    /// @return shares The amount of wrapped tokens that are sent to the receiver.
+    function _wrap(address) internal virtual override returns (uint256 shares) {
+        shares = _getBaseBalance() - baseCached;
+
+    }
+
+    /// Internal function for unwrapping unaccounted for base in this contract.
+    /// Since there is nothing to unwrap, we return the surplus balance.
+    /// @return assets The amount of underlying asset assets sent to the receiver.
+    function _unwrap(address) internal virtual override returns (uint256 assets) {
+        assets = _getBaseBalance() - baseCached;
+    }
+
+    /// This is used by the constructor to set the base's underlying asset as immutable.
+    /// For Non-tokenized vaults, the base is the same as the underlying asset.
+    function _getBaseUnderlyingAsset(address base_) internal virtual override returns (IERC20Like) {
+        return IERC20Like(base_);
+    }
 }

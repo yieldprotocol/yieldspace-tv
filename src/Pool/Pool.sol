@@ -78,6 +78,11 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// as an "IERC20Like" and only cast as an IERC4626 when that 4626 functionality is needed in _getBaseCurrentPrice()
     /// This wei, modules for non-4626 compliant base tokens can import this contract and override 4626 specific fn's.
     IERC20Like public immutable base;
+
+    /// The underlying asset of the base (tokenized vault) token.
+    /// It is an ERC20 token.
+    IERC20Like public immutable baseUnderlyingAsset;
+
     /// The fyToken for the UNDERLYING asset of the base.  It's not fyYVDAI, it's still fyDAI.  Even though we hold base
     /// in this contract in a wrapped tokenized vault (e.g. Yearn Vault Dai), upon maturity, the fyToken is payable in
     /// the underlying asset of the fyToken and tokenized vault, not the tokenized vault token itself.
@@ -85,10 +90,13 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)
     int128 public immutable mu;
+
     /// Time stretch == 1 / seconds in 10 years (64.64)
     int128 public immutable ts;
+
     /// Pool's maturity date (not 64.64)
     uint32 public immutable maturity;
+
     /// Used to scale up to 18 decimals (not 64.64)
     uint96 public immutable scaleFactor;
 
@@ -110,10 +118,13 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// This number is used to calculate the fees for buying/selling fyTokens.
     /// @dev This is a fp4 that represents a ratio out 1, where 1 is represented by 10000.
     uint16 public g1Fee;
+
     /// Base token reserves, cached.
     uint104 internal baseCached;
+
     /// fyToken reserves, cached.
     uint104 internal fyTokenCached;
+
     /// block.timestamp of last time reserve caches were updated.
     uint32 internal blockTimestampLast;
 
@@ -147,6 +158,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
 
         // set immutables - initialize base and scale factor before calling _getC()
         uint256 decimals_ = IERC20Like(fyToken_).decimals();
+        baseUnderlyingAsset = _getBaseUnderlyingAsset(base_);
         base = IERC20Like(base_);
         scaleFactor = uint96(10**(18 - uint96(decimals_))); // No more than 18 decimals allowed, reverts on underflow.
 
@@ -185,14 +197,14 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
            │                     /│                               │\                ::/_____/_/      ::
                                  /│                               │\             '   :               :   `
          B A S E                  │                      \(^o^)/  │                   `-:::::::::::-'
-                                  │                     Pool.sol  │                 ,    `'''''''`     .
+    (underlying asset)            │                     Pool.sol  │                 ,    `'''''''`     .
                                   └───────────────────────────────┘
                                                                                        /            \
                                                                                               ^
     */
     /// Mint liquidity tokens in exchange for adding base and fyToken
     /// The amount of liquidity tokens to mint is calculated from the amount of unaccounted for fyToken in this contract.
-    /// A proportional amount of base tokens need to be present in this contract, also unaccounted for.
+    /// A proportional amount of base/underlyingAsset tokens need to be present in this contract, also unaccounted for.
     /// @dev _totalSupply > 0 check important here to prevent unauthorized initialization.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
@@ -261,7 +273,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                                  \│                               │/             `   :    __    ____ :   /
                                   │         mintWithBase          │                 ::   / /   / __ \::
          B A S E     ──────►      │                               │  ──────▶    _   ::  / /   / /_/ /::   _
-                                  │                               │                 :: / /___/ ____/ ::
+     (underlying asset)           │                               │                 :: / /___/ ____/ ::
                                  /│                               │\                ::/_____/_/      ::
                                  /│                               │\             '   :               :   `
                                   │                      \(^o^)/  │                   `-:::::::::::-'
@@ -271,7 +283,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     */
     /// Mint liquidity tokens in exchange for adding only base
     /// The amount of liquidity tokens is calculated from the amount of fyToken to buy from the pool.
-    /// The base tokens need to be present in this contract, unaccounted for.
+    /// The base/underlying asset tokens need to be present in this contract, unaccounted for.
     /// @dev _totalSupply > 0 check important here to prevent unauthorized initialization.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
@@ -305,7 +317,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// Mint liquidity tokens, with an optional internal trade to buy fyToken beforehand.
     /// The amount of liquidity tokens is calculated from the amount of fyTokenToBuy from the pool,
     /// plus the amount of extra, unaccounted for fyToken in this contract.
-    /// The base tokens also need to be present in this contract, unaccounted for.
+    /// The base/underlying asset tokens also need to be present in this contract, unaccounted for.
     /// @dev Warning: This fn does not check if supply > 0 like the external functions do.
     /// This function overloads the ERC20._mint(address, uint) function.
     /// @param to Wallet receiving the minted liquidity tokens.
@@ -330,6 +342,9 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
             uint256 tokensMinted
         )
     {
+        // Wrap any underlying vault assets found in contract.
+        _wrap(address(this));
+
         // Gather data
         uint256 supply = _totalSupply;
         Cache memory cache = _getCache();
@@ -385,9 +400,10 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         // Execute mint
         _mint(to, tokensMinted);
 
-        // Return any unused base
+        // Return any unused base tokens as underlying
         if (baseBalance > cache.baseCached + baseIn)
-            base.safeTransfer(remainder, baseBalance - (cache.baseCached + baseIn));
+            // TODO: Consider unwrapping it directly to the user? Security issue?
+            baseUnderlyingAsset.safeTransfer(remainder, _unwrap(address(this)));
 
         emit Liquidity(
             maturity,
@@ -410,7 +426,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                 /:  | __    ____/:      │
                 ::   / /   / __ \::  ───┤
                 ::  / /   / /_/ /::     │
-                :: / /___/ ____/ ::     └~~~~~~►  B A S E
+                :: / /___/ ____/ ::     └~~~~~~►  B A S E underlying asset
                 ::/_____/_/      ::
                  :               :
                   `-:::::::::::-'
@@ -452,7 +468,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                  ((  /     ))\))))\
                   )\(          |  )
                 /:  | __    ____/:
-                ::   / /   / __ \::   ~~~~~~~►   B A S E
+                ::   / /   / __ \::   ~~~~~~~►   B A S E underlying asset
                 ::  / /   / /_/ /::
                 :: / /___/ ____/ ::
                 ::/_____/_/      ::
@@ -475,7 +491,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         (lpTokensBurned, baseOut, ) = _burn(to, address(0), true, minRatio, maxRatio);
     }
 
-    /// Burn liquidity tokens in exchange for base.
+    /// Burn liquidity tokens in exchange for base/underlying asset.
     /// The liquidity provider needs to have called `pool.approve`.
     /// @dev This function overloads the ERC20._burn(address, uint) function.
     /// @param baseTo Wallet receiving the base.
@@ -526,7 +542,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         if (tradeToBase) {
             baseOut +=
                 YieldMath.sharesOutForFYTokenIn( //                                This is a virtual sell
-                    (cache.baseCached - baseOut.u128()) * scaleFactor_, //       Cache, minus virtual burn
+                    (cache.baseCached - baseOut.u128()) * scaleFactor_, //        Cache, minus virtual burn
                     (cache.fyTokenCached - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
                     fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
                     maturity - uint32(block.timestamp), //                         This can't be called after maturity
@@ -548,8 +564,11 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         );
 
         // Transfer assets
-        _burn(address(this), lpTokensBurned);
-        base.safeTransfer(baseTo, baseOut);
+        _burn(address(this), lpTokensBurned); // This is calling the actual ERC20 _burn.
+
+        // TODO: Consider unwrapping it directly to the user? Security issue?
+        baseUnderlyingAsset.safeTransfer(baseTo, _unwrap(address(this)));
+
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
 
         emit Liquidity(
@@ -572,7 +591,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
 
     /* buyBase
 
-                         I want to buy `uint128 baseOut` worth of base tokens.
+                         I want to buy `uint128 baseOut` worth of base underlying asset tokens.
              _______     I've transferred you some fyTokens -- that should be enough.
             /   GUY \         .:::::::::::::::::.
      (^^^|   \===========    :  _______  __   __ :                 ┌─────────┐
@@ -628,7 +647,8 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         _update(cache.baseCached - baseOut, cache.fyTokenCached + fyTokenIn, cache.baseCached, cache.fyTokenCached);
 
         // Transfer assets
-        base.safeTransfer(to, baseOut);
+        // TODO: Consider unwrapping it directly to the user? Security issue?
+        baseUnderlyingAsset.safeTransfer(to, _unwrap(address(this)));
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
@@ -665,15 +685,15 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /*buyFYToken
 
                          I want to buy `uint128 fyTokenOut` worth of fyTokens.
-             _______     I've transferred you some base -- that should be enough.
+             _______     I've transferred you some base/underlying tokens -- that should be enough.
             /   GUY \                                                 ┌─────────┐
      (^^^|   \===========  ┌──────────────┐                           │no       │
       \(\/    | _  _ |     │$            $│                           │lifeguard│
        \ \   (. o  o |     │ ┌────────────┴─┐                         └─┬─────┬─┘       ==+
         \ \   |   ~  |     │ │$            $│   hmm, let's see here     │     │    =======+
         \  \   \ == /      │ │   B A S E    │                      _____│_____│______    |+
-         \  \___|  |___    │$│              │                  .-'"___________________`-.|+
-          \ /   \__/   \   └─┤$            $│                 ( .'"                   '-.)+
+         \  \___|  |___    │$│  underlying  │                  .-'"___________________`-.|+
+          \ /   \__/   \   └─┤$   asset    $│                 ( .'"                   '-.)+
            \            \    └──────────────┘                 |`-..__________________..-'|+
             --|  GUY |\_/\  / /                               |                          |+
               |      | \  \/ /                                |                          |+
@@ -693,7 +713,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
             (_____[__)                `'''''''`               /      \    .: :.     /      \
                                                               '-..___|_..=:` `-:=.._|___..-'
     */
-    /// Buy fyToken with base
+    /// Buy fyToken with base/underlying asset
     /// The trader needs to have transferred in the correct amount of tokens in advance.
     /// @param to Wallet receiving the fyToken being bought.
     /// @param fyTokenOut Amount of fyToken being bought that will be deposited in `to` wallet.
@@ -704,6 +724,9 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         uint128 fyTokenOut,
         uint128 max
     ) external virtual override returns (uint128 baseIn) {
+        // Wrap any base underlying assets found in contract.
+        _wrap(address(this));
+
         // Calculate trade
         uint128 baseBalance = _getBaseBalance();
         Cache memory cache = _getCache();
@@ -789,11 +812,14 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                                                               '-..___|_..=:` `-:=.._|___..-'
     */
     /// Sell base for fyToken.
-    /// The trader needs to have transferred the amount of base to sell to the pool before calling this fn.
+    /// The trader needs to have transferred the amount of base/underlying to sell to the pool before calling this fn.
     /// @param to Wallet receiving the fyToken being bought.
     /// @param min Minimum accepted amount of fyToken.
     /// @return fyTokenOut Amount of fyToken that will be deposited on `to` wallet.
     function sellBase(address to, uint128 min) external virtual override returns (uint128 fyTokenOut) {
+        // Wrap any underlying vault assets found in contract.
+        _wrap(address(this));
+
         // Calculate trade
         Cache memory cache = _getCache();
         uint104 baseBalance = _getBaseBalance();
@@ -897,7 +923,8 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         _update(cache.baseCached - baseOut, fyTokenBalance, cache.baseCached, cache.fyTokenCached);
 
         // Transfer assets
-        base.safeTransfer(to, baseOut);
+        // TODO: Consider unwrapping it directly to the user? Security issue?
+        baseUnderlyingAsset.safeTransfer(to, _unwrap(address(this)));
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
@@ -930,6 +957,51 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                 _getC(),
                 mu
             ) / scaleFactor_;
+    }
+
+    /* WRAPPING FUNCTIONS
+     ****************************************************************************************************************/
+
+    /// Wraps any underlying asset tokens found in the contract, converting them to base tokenized vault shares.
+    /// @dev This is provided as a convenience and uses the 4626 deposit method.
+    /// @param receiver The address to which the wrapped tokens will be sent.
+    /// @return shares The amount of wrapped tokens sent to the receiver.
+    function wrap(address receiver) external returns (uint256 shares) {
+        shares = _wrap(receiver);
+    }
+
+    /// Internal function for wrapping underlying asset tokens.  This should be overridden by modules.
+    /// It wraps the entire balance of the underlying found in this contract.
+    /// @param receiver The address the wrapped tokens should be sent.
+    /// @return shares The amount of wrapped tokens that are sent to the receiver.
+    function _wrap(address receiver) internal virtual returns (uint256 shares) {
+        shares = IERC4626(address(base)).deposit(baseUnderlyingAsset.balanceOf(address(this)), receiver);
+    }
+
+    /// Unwraps base shares found unaccounted for in this contract, converting them to the underlying asset assets.
+    /// @dev This is provided as a convenience and uses the 4626 redeem method.
+    /// @param receiver The address to which the assets will be sent.
+    /// @return assets The amount of asset tokens sent to the receiver.
+    function unwrap(address receiver) external returns (uint256 assets) {
+        assets = _unwrap(receiver);
+    }
+
+    /// Internal function for unwrapping unaccounted for base in this contract.
+    /// @dev This should be overridden by modules.
+    /// @param receiver The address the wrapped tokens should be sent.
+    /// @return assets The amount of underlying asset assets sent to the receiver.
+    function _unwrap(address receiver) internal virtual returns (uint256 assets) {
+        uint256 surplus = _getBaseBalance() - baseCached;
+
+        // The third param of the 4626 redeem fn, `owner`, is always this contract address.
+        assets = IERC4626(address(base)).redeem(surplus, receiver, address(this));
+    }
+
+    /// This is used by the constructor to set the base's underlying asset as immutable.
+    /// This should be overridden by modules.
+    /// @dev We use the IERC20Like interface, but this should be an ERC20 asset per EIP4626.
+    function _getBaseUnderlyingAsset(address base_) internal virtual returns (IERC20Like) {
+        return IERC20Like(address(IERC4626(base_).asset()));
     }
 
     /* BALANCES MANAGEMENT AND ADMINISTRATIVE FUNCTIONS
