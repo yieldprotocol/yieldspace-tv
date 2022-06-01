@@ -4,7 +4,7 @@ pragma solidity >=0.8.13;
 import {IPoolTV} from "../../interfaces/IPool.sol";
 
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.
-interface ISyncablePool is IPool {
+interface ISyncablePool is IPoolTV {
     function sync() external;
 }
 
