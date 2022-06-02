@@ -1063,7 +1063,7 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
     function _getBaseCurrentPrice() internal view virtual returns (uint256) {
-        return IERC4626(address(base)).convertToAssets(10**decimals);
+        return IERC4626(address(base)).convertToAssets(10**base.decimals());
     }
 
     /// Returns the base token current price.

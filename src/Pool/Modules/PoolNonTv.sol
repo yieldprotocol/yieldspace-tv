@@ -49,7 +49,7 @@ contract PoolNonTv is Pool {
     /// This function should be overriden by modules.
     /// @return By always returning 1, we can use this module with any non-tokenized vault base such as WETH.
     function _getBaseCurrentPrice() internal view override virtual returns (uint256) {
-        return uint256(10**decimals);
+        return uint256(10**IERC20Like(address(base)).decimals());
     }
 
 
@@ -57,7 +57,7 @@ contract PoolNonTv is Pool {
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
-    function _getBaseCurrentPriceConstructor(address) internal view virtual override returns (uint256) {
-        return uint256(10**decimals);
+    function _getBaseCurrentPriceConstructor(address base_) internal view virtual override returns (uint256) {
+        return uint256(10**IERC20Like(address(base_)).decimals());
     }
 }

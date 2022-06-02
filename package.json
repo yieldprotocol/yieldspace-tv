@@ -1,6 +1,6 @@
 {
   "name": "@yield-protocol/yieldspace-tv",
-  "version": "0.0.6rc1",
+  "version": "0.0.6rc2",
   "description": "Yieldspace for tokenized vaults",
   "files": [
     "src/*.sol",
