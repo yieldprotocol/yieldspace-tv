@@ -111,31 +111,33 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         pool.sellFYToken(bob, type(uint128).max);
     }
 
-    function testUnit_tradeDAI03() public {
-        console.log("donating base does not affect cache balances when selling fyToken");
+    // TODO: Do we still need this test since update is removed?  If so needs to be rewritten.
+    // function testUnit_tradeDAI03() public {
+    //     console.log("donating base does not affect cache balances when selling fyToken");
 
-        uint256 baseDonation = WAD;
-        uint256 fyTokenIn = WAD;
+    //     uint256 baseDonation = WAD;
+    //     uint256 fyTokenIn = WAD;
 
-        // Donate base and fyToken to pool.
-        base.mint(address(pool), baseDonation);
-        fyToken.mint(address(pool), fyTokenIn);
+    //     // Donate base and fyToken to pool.
+    //     base.mint(address(pool), baseDonation);
+    //     fyToken.mint(address(pool), fyTokenIn);
 
-        // Bob calls sellFYToken
-        vm.prank(bob);
-        pool.sellFYToken(bob, 0);
+    //     // Bob calls sellFYToken
+    //     vm.prank(bob);
+    //     pool.sellFYToken(bob, 0);
 
-        // Check cached balances are udpated correctly.
-        (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance() - baseDonation);
-        require(fyTokenBal == pool.getFYTokenBalance());
-    }
+    //     // Check cached balances are udpated correctly.
+    //     (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
+    //     require(baseBal == pool.getBaseBalance() - baseDonation);
+    //     require(fyTokenBal == pool.getFYTokenBalance());
+    // }
 
     function testUnit_tradeDAI04() public {
         console.log("buys a certain amount base for fyToken");
         (, , uint104 fyTokenBalBefore,) = pool.getCache();
 
         uint256 userBaseBefore = base.balanceOf(bob);
+        uint256 userAssetBefore = asset.balanceOf(bob);
 
         uint128 baseOut = uint128(WAD);
 
@@ -169,7 +171,8 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
-        require(base.balanceOf(bob) == userBaseBefore + baseOut);
+        require(base.balanceOf(bob) == userBaseBefore);
+        require(asset.balanceOf(bob) == userAssetBefore + IERC4626Mock(address(base)).convertToAssets(baseOut));
 
         almostEqual(fyTokenIn, expectedFYTokenIn, baseOut / 1000000);
 
@@ -194,9 +197,12 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
     }
 
     function testUnit_tradeDAI06() public {
-        console.log("when buying base, donating fyToken and extra base doesn't get absorbed and can be retrieved");
+        console.log("when buying base, donating fyToken and extra base doesn't get absorbed and the base is unwrapped and sent back");
+        // TODO: Not sure this tests is necessary as the dynamics have changed.  Here is what the old test did:
+        // console.log("when buying base, donating fyToken and extra base doesn't get absorbed and can be retrieved");
         uint256 aliceBaseBefore = base.balanceOf(alice);
         uint256 bobBaseBefore = base.balanceOf(bob);
+        uint256 bobAssetBefore = asset.balanceOf(bob);
         uint256 aliceFYTokenBefore = fyToken.balanceOf(alice);
         uint128 baseOut = uint128(WAD * 10);
         uint128 expectedFYTokenIn = pool.buyBasePreview(baseOut);
@@ -211,18 +217,16 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         // Alice call buyBase, check balances are as expected.
         vm.startPrank(alice);
         pool.buyBase(bob, baseOut, uint128(MAX));
-        require(base.balanceOf(bob) == bobBaseBefore + baseOut);
+        require(base.balanceOf(bob) == bobBaseBefore);
         (, uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance() - extraBase);
+        require(baseBal == pool.getBaseBalance());
         require(fyTokenBal == pool.getFYTokenBalance() - extraFYToken);
-
+        require(asset.balanceOf(bob) == bobAssetBefore + IERC4626Mock(address(base)).convertToAssets(baseOut + extraBase));
         pool.retrieveFYToken(alice);
-        pool.retrieveBase(alice);
         require(baseBal == pool.getBaseBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
 
         require(fyToken.balanceOf(alice) == aliceFYTokenBefore + extraFYToken);
-        require(base.balanceOf(alice) == aliceBaseBefore + extraBase);
     }
 }
 

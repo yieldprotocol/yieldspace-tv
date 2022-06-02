@@ -32,7 +32,7 @@ contract ERC4626TokenMock is Mintable {
 
     function deposit(uint256 deposited, address to) public returns (uint256 minted) {
         asset.transferFrom(msg.sender, address(this), deposited);
-        minted = deposited * decimals / price;
+        minted = convertToShares(deposited);
         _mint(to, minted);
     }
 
@@ -43,13 +43,16 @@ contract ERC4626TokenMock is Mintable {
     }
 
     function withdraw(uint256 withdrawn, address to) public returns (uint256 obtained) {
-        obtained = withdrawn * price / decimals;
+        obtained = convertToAssets(withdrawn);
         _burn(msg.sender, withdrawn);
         asset.transfer(to, obtained);
     }
 
     function convertToAssets(uint256 amount) public view virtual returns (uint256) {
         return price * amount / (10 ** decimals);
+    }
+    function convertToShares(uint256 amount) public view virtual returns (uint256) {
+        return amount * (10 ** decimals) / price;
     }
 
     function setPrice(uint256 price_) public {

@@ -183,7 +183,8 @@ contract Mint__WithLiquidity is WithLiquidity {
 
         // Confirm minted amount is as expected.  Check balances and caches.
         almostEqual(minted, expectedMint, fyTokenIn / 10000);
-        almostEqual(base.balanceOf(bob), WAD + bobBaseInitialBalance, fyTokenIn / 10000);
+        almostEqual(base.balanceOf(bob),  bobBaseInitialBalance, fyTokenIn / 10000);
+        almostEqual(asset.balanceOf(bob),  pool.getBaseCurrentPrice(), fyTokenIn / 10000);
 
         (, uint104 baseBal, uint104 fyTokenBal, ) = pool.getCache();
         require(baseBal == pool.getBaseBalance());

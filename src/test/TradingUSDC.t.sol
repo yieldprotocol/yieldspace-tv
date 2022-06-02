@@ -90,28 +90,30 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         pool.sellFYToken(bob, type(uint128).max);
     }
 
-    function testUnit_tradeUSDC03() public {
-        console.log("donating base does not affect cache balances when selling fyToken");
+    // TODO: Do we still need this test?  If so needs to be rewritten.
+    // function testUnit_tradeUSDC03() public {
+    //     console.log("donating base does not affect cache balances when selling fyToken");
 
-        uint256 baseDonation = 1e6;
-        uint256 fyTokenIn = 1e6;
+    //     uint256 baseDonation = 1e6;
+    //     uint256 fyTokenIn = 1e6;
 
-        base.mint(address(pool), baseDonation);
-        fyToken.mint(address(pool), fyTokenIn);
+    //     base.mint(address(pool), baseDonation);
+    //     fyToken.mint(address(pool), fyTokenIn);
 
-        vm.prank(bob);
-        pool.sellFYToken(bob, 0);
+    //     vm.prank(bob);
+    //     pool.sellFYToken(bob, 0);
 
-        (,uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
-        require(baseBal == pool.getBaseBalance() - baseDonation);
-        require(fyTokenBal == pool.getFYTokenBalance());
-    }
+    //     (,uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
+    //     require(baseBal == pool.getBaseBalance() - baseDonation);
+    //     require(fyTokenBal == pool.getFYTokenBalance());
+    // }
 
     function testUnit_tradeUSDC04() public {
         console.log("buys a certain amount base for fyToken");
         (,, uint104 fyTokenBalBefore,) = pool.getCache();
 
         uint256 userBaseBefore = base.balanceOf(bob);
+        uint256 userAssetBefore = asset.balanceOf(bob);
         uint128 baseOut = uint128(1000 * 1e6);
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
@@ -138,7 +140,8 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
-        require(base.balanceOf(bob) == userBaseBefore + baseOut);
+        require(base.balanceOf(bob) == userBaseBefore);
+        require(asset.balanceOf(bob) == userAssetBefore + IERC4626Mock(address(base)).convertToAssets(baseOut));
 
         almostEqual(fyTokenIn, expectedFYTokenIn, 1);
 
@@ -161,6 +164,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
     function testUnit_tradeUSDC06() public {
         console.log("buys base and retrieves change");
         uint256 bobBaseBefore = base.balanceOf(bob);
+        uint256 bobAssetBefore = asset.balanceOf(bob);
         uint256 aliceFYTokenBefore = fyToken.balanceOf(alice);
         uint128 baseOut = uint128(1e6);
 
@@ -168,7 +172,8 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
         vm.prank(alice);
         pool.buyBase(bob, baseOut, uint128(MAX));
-        require(base.balanceOf(bob) == bobBaseBefore + baseOut);
+        require(base.balanceOf(bob) == bobBaseBefore);
+        require(asset.balanceOf(bob) == bobAssetBefore + IERC4626Mock(address(base)).convertToAssets(baseOut));
 
         (,uint104 baseBal, uint104 fyTokenBal,) = pool.getCache();
         require(baseBal == pool.getBaseBalance());
