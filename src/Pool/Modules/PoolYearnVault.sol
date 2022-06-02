@@ -26,7 +26,7 @@ import "../../interfaces/IYVToken.sol";
 /// Module for using non-4626 compliant Yearn Vault tokens as base for the Yield Protocol Pool.sol AMM contract.
 /// For example, Yearn Vault Dai: https://etherscan.io/address/0xC2cB1040220768554cf699b0d863A3cd4324ce32#readContract
 /// @dev Since Yearn Vault tokens are not currently ERC4626 compliant, this contract inherits the Yield Pool
-/// contract and overwrites the getBaseCurrentPrice() function to call the getPricePerFullShare() function that the
+/// contract and overwrites the getBaseCurrentPrice() function to call the pricePerShare() function that the
 /// Yearn Vault tokens currently use.  All other functionality of the Yield Pool remains the same.
 /// @title  PoolYearnVault.sol
 /// @dev Deploy pool with Yearn Vault token and associated fyToken.
@@ -40,18 +40,21 @@ contract PoolYearnVault is Pool {
         address fyToken_,
         int128 ts_,
         uint16 g1Fee_
-    )
-        Pool(
-            base_,
-            fyToken_,
-            ts_,
-            g1Fee_
-        )
-    {}
+    ) Pool(base_, fyToken_, ts_, g1Fee_) {}
 
     /// Returns the base token current price.
-    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
-    function _getBaseCurrentPrice() internal view override virtual returns (uint256) {
-        return IYVToken(address(base)).getPricePerFullShare();
+    /// This function should be overriden by modules.
+    /// @return The price of 1 share of a Yearn vault token in terms of its underlying.
+    function _getBaseCurrentPrice() internal view virtual override returns (uint256) {
+        return IYVToken(address(base)).pricePerShare();
+    }
+
+    /// Returns the base token current price.
+    /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
+    /// This function should be overriden by modules.
+    /// @param base_ Address of Yearn Vault contract to call pricePerShare
+    /// @return The price of 1 share of a tokenized vault token in terms of its underlying.
+    function _getBaseCurrentPriceConstructor(address base_) internal view virtual override returns (uint256) {
+        return IYVToken(base_).pricePerShare();
     }
 }

@@ -33,7 +33,7 @@ contract YVTokenMock is Mintable {
         token.transfer(to, obtained);
     }
 
-    function getPricePerFullShare() public view virtual returns (uint256) {
+    function pricePerShare() public view virtual returns (uint256) {
         return price;
     }
 

@@ -146,10 +146,11 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
         // set immutables - initialize base and scale factor before calling _getC()
+        uint256 decimals_ = IERC20Like(fyToken_).decimals();
         base = IERC20Like(base_);
-        scaleFactor = uint96(10**(18 - uint96(decimals))); // No more than 18 decimals allowed, reverts on underflow.
+        scaleFactor = uint96(10**(18 - uint96(decimals_))); // No more than 18 decimals allowed, reverts on underflow.
 
-        mu = _getC();
+        mu = ((_getBaseCurrentPriceConstructor(base_) * uint96(10**(18 - uint96(decimals_))))).fromUInt().div(uint256(1e18).fromUInt());
         ts = ts_;
         fyToken = IFYToken(fyToken_);
 
@@ -1052,15 +1053,25 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     }
 
     /// Returns the base token current price.
-    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
+    /// @return The price of 1 share of a tokenized vault token in terms of its underlying asset cast as uint256.
     function getBaseCurrentPrice() external view returns (uint256) {
         return _getBaseCurrentPrice();
     }
 
     /// Returns the base token current price.
-    /// @return The price of 1 base token in terms of its underlying as fp18 cast as uint256.
+    /// @dev This assumes the shares, base, and lp tokens all use the same decimals.
+    /// This function should be overriden by modules.
+    /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
     function _getBaseCurrentPrice() internal view virtual returns (uint256) {
-        return IERC4626(address(base)).convertToAssets(10**base.decimals());
+        return IERC4626(address(base)).convertToAssets(10**decimals);
+    }
+
+    /// Returns the base token current price.
+    /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
+    /// This function should be overriden by modules.
+    /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
+    function _getBaseCurrentPriceConstructor(address base_) internal view virtual returns (uint256) {
+        return IERC4626(base_).convertToAssets(10**IERC20Like(base_).decimals());
     }
 
     /// Returns current price of 1 share in 64bit.

@@ -236,7 +236,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedBaseOut = YieldMath.sharesOutForFYTokenIn(
@@ -296,7 +296,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -374,7 +374,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         // Transfer base for sale to the pool
         base.mint(address(pool), baseIn);
@@ -440,7 +440,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(base)).getPricePerFullShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (YVTokenMock(address(base)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
 
         // Transfer base for sale to the pool
         base.mint(address(pool), initialBase);
