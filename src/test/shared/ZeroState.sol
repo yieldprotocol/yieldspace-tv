@@ -40,6 +40,9 @@ struct ZeroStateParams {
 // If baseType is YearnVault:
 //   - The base token is a YVTokenMock cast as IERC20Like.
 //   - The pool is a SyncablePoolYearnVault.sol cast as ISyncablePool.
+// If baseType is NonTv (not tokenized vault -- regular token):
+//   - The base token is is the underlying asset token cast as IERC20Like.
+//   - The pool is a SyncablePoolNonTv.sol cast as ISyncablePool.
 abstract contract ZeroState is TestCore {
     using Math64x64 for int128;
     using Math64x64 for uint256;
@@ -94,6 +97,7 @@ abstract contract ZeroState is TestCore {
                 base = IERC20Like(address(new YVTokenMock(baseName, baseSymbol, assetDecimals, address(asset))));
             }
             setPrice(address(base), (muNumerator * (10**assetDecimals)) / muDenominator);
+            asset.mint(address(base), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 
         // Create fyToken (e.g. "fyyvDAI").
@@ -117,7 +121,6 @@ abstract contract ZeroState is TestCore {
         if (baseType == TYPE_NONTV) {
             pool = new SyncablePoolNonTv(address(base), address(fyToken), ts, g1Fee);
         }
-
         // Alice: init
         AccessControl(address(pool)).grantRole(bytes4(pool.init.selector), alice);
         // Bob  : setFees.

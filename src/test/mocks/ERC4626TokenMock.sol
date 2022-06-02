@@ -22,24 +22,30 @@ abstract contract Mintable is ERC20 {
     }
 }
 contract ERC4626TokenMock is Mintable {
-    IERC20Metadata public token;
+    IERC20Metadata public asset;
     uint256 public price;
 
-    constructor(string memory name, string memory symbol, uint8 decimals, address token_) ERC20(name, symbol, decimals) {
-        token = IERC20Metadata(token_);
+    constructor(string memory name, string memory symbol, uint8 decimals, address asset_) ERC20(name, symbol, decimals) {
+        asset = IERC20Metadata(asset_);
     }
 
 
     function deposit(uint256 deposited, address to) public returns (uint256 minted) {
-        token.transferFrom(msg.sender, address(this), deposited);
+        asset.transferFrom(msg.sender, address(this), deposited);
         minted = deposited * decimals / price;
         _mint(to, minted);
+    }
+
+    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets) {
+        assets = convertToAssets(shares);
+        _burn(owner, shares);
+        asset.transfer(receiver, assets);
     }
 
     function withdraw(uint256 withdrawn, address to) public returns (uint256 obtained) {
         obtained = withdrawn * price / decimals;
         _burn(msg.sender, withdrawn);
-        token.transfer(to, obtained);
+        asset.transfer(to, obtained);
     }
 
     function convertToAssets(uint256 amount) public view virtual returns (uint256) {

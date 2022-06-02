@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.13;
-
 import "./PoolImports.sol"; /*
 
    __     ___      _     _
@@ -128,20 +127,17 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
     /// block.timestamp of last time reserve caches were updated.
     uint32 internal blockTimestampLast;
 
-    /// ╔═╗┬ ┬┌┬┐┬ ┬┬  ┌─┐┌┬┐┬┬  ┬┌─┐  ╦═╗┌─┐┌┬┐┬┌─┐  ╦  ┌─┐┌─┐┌┬┐
-    /// ║  │ │││││ ││  ├─┤ │ │└┐┌┘├┤   ╠╦╝├─┤ │ ││ │  ║  ├─┤└─┐ │
-    /// ╚═╝└─┘┴ ┴└─┘┴─┘┴ ┴ ┴ ┴ └┘ └─┘  ╩╚═┴ ┴ ┴ ┴└─┘  ╩═╝┴ ┴└─┘ ┴
-    /// a LAGGING, time weighted sum of the fyToken:base reserves ratio measured in ratio seconds.
-    ///
+    /// cumulativeRatioLast
+    /// A LAGGING, time weighted sum of the fyToken:base reserves ratio measured in ratio seconds.
     /// @dev Footgun 🔫 alert!  Be careful, this number is probably not what you need and it should normally be
     /// considered with blockTimestampLast. Use currentCumulativeRatio() for consumption as a TWAR observation.
     /// In future pools, this function's visibility may be changed to internal.
     /// @return a fixed point factor with 27 decimals (ray).
     uint256 public cumulativeRatioLast;
 
+
     /* CONSTRUCTOR
      *****************************************************************************************************************/
-
     constructor(
         address base_, //     address of base token
         address fyToken_, //  address of fyToken
@@ -154,8 +150,11 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
             IERC20Like(fyToken_).decimals()
         )
     {
-        if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
+        /*  __   __        __  ___  __        __  ___  __   __
+           /  ` /  \ |\ | /__`  |  |__) |  | /  `  |  /  \ |__)
+           \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
+        if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
         // set immutables - initialize base and scale factor before calling _getC()
         uint256 decimals_ = IERC20Like(fyToken_).decimals();
         baseUnderlyingAsset = _getBaseUnderlyingAsset(base_);
@@ -524,7 +523,6 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
         uint96 scaleFactor_ = scaleFactor;
 
         uint256 realFYTokenCached_ = cache.fyTokenCached - supply; // The fyToken cache includes the virtual fyToken, equal to the supply
-
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
@@ -534,7 +532,6 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                 revert SlippageDuringBurn(uint256(cache.baseCached).wdiv(realFYTokenCached_), minRatio, maxRatio);
             }
         }
-
         // Calculate trade
         baseOut = (lpTokensBurned * cache.baseCached) / supply;
         fyTokenOut = (lpTokensBurned * realFYTokenCached_) / supply;
@@ -554,7 +551,6 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
                 scaleFactor_;
             fyTokenOut = 0;
         }
-
         // Update TWAR
         _update(
             (cache.baseCached - baseOut).u128(),
@@ -562,7 +558,6 @@ contract Pool is PoolEvents, IPoolTV, ERC20Permit, AccessControl {
             cache.baseCached,
             cache.fyTokenCached
         );
-
         // Transfer assets
         _burn(address(this), lpTokensBurned); // This is calling the actual ERC20 _burn.
 

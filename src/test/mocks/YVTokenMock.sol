@@ -6,6 +6,8 @@ import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Met
 
 import {IYVToken} from "../../interfaces/IYVToken.sol";
 
+import "forge-std/console.sol";
+
 abstract contract Mintable is ERC20 {
     /// @dev Give tokens to whoever asks for them.
     function mint(address to, uint256 amount) public virtual {
