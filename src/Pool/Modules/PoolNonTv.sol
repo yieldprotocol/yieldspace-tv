@@ -38,11 +38,11 @@ contract PoolNonTv is Pool {
         uint16 g1Fee_
     ) Pool(base_, fyToken_, ts_, g1Fee_) {}
 
-    /// Returns the base token current price.
+    /// Returns the current price of one share.  For non-tokenized vaults this is always 1..
     /// This function should be overriden by modules.
     /// @return By always returning 1, we can use this module with any non-tokenized vault base such as WETH.
-    function _getBaseCurrentPrice() internal view override virtual returns (uint256) {
-        return uint256(10**IERC20Like(address(base)).decimals());
+    function _getShareCurrentPrice() internal view override virtual returns (uint256) {
+        return uint256(10**IERC20Like(address(sharesToken)).decimals());
     }
 
 
@@ -50,15 +50,15 @@ contract PoolNonTv is Pool {
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
-    function _getBaseCurrentPriceConstructor(address base_) internal view virtual override returns (uint256) {
-        return uint256(10**IERC20Like(address(base_)).decimals());
+    function _getShareCurrentPriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
+        return uint256(10**IERC20Like(address(sharesToken_)).decimals());
     }
 
     /// Internal function for wrapping underlying asset tokens.  This should be overridden by modules.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address) internal virtual override returns (uint256 shares) {
-        shares = _getBaseBalance() - baseCached;
+        shares = _getSharesBalance() - sharesCached;
 
     }
 
@@ -66,12 +66,12 @@ contract PoolNonTv is Pool {
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return assets The amount of underlying asset assets sent to the receiver.
     function _unwrap(address) internal virtual override returns (uint256 assets) {
-        assets = _getBaseBalance() - baseCached;
+        assets = _getSharesBalance() - sharesCached;
     }
 
     /// This is used by the constructor to set the base's underlying asset as immutable.
     /// For Non-tokenized vaults, the base is the same as the underlying asset.
-    function _getBaseUnderlyingAsset(address base_) internal virtual override returns (IERC20Like) {
-        return IERC20Like(base_);
+    function _getBaseUnderlyingAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
+        return IERC20Like(sharesToken_);
     }
 }

@@ -72,7 +72,7 @@ library YieldMath {
                 /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 y = fyToken reserves
-                z = base reserves
+                z = shares reserves
                 x = Δz (sharesIn)
 
                      y - (                         sum                           )^(   invA   )
@@ -103,7 +103,7 @@ library YieldMath {
                     "YieldMath: Rate overflow (nsi)"
                 );
 
-                // zx = normalizedBaseReserves + sharesIn * μ
+                // zx = normalizedSharesReserves + sharesIn * μ
                 uint256 zx;
                 require((zx = normalizedSharesReserves + normalizedSharesIn) <= MAX, "YieldMath: Too many shares in");
 
@@ -196,7 +196,7 @@ library YieldMath {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
             y = fyToken reserves
-            z = base reserves
+            z = shares reserves
             x = Δy (fyTokenIn)
 
                  z - (                                rightTerm                                              )
@@ -279,7 +279,7 @@ library YieldMath {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 y = fyToken reserves
-                z = base reserves
+                z = shares reserves
                 x = Δz (sharesOut)
 
                      (                  sum                                )^(   invA    ) - y
@@ -318,7 +318,7 @@ library YieldMath {
                     "YieldMath: Rate overflow (nso)"
                 );
 
-                // zx = normalizedBaseReserves + sharesOut * μ
+                // zx = normalizedSharesReserves + sharesOut * μ
                 require(normalizedSharesReserves >= normalizedSharesOut, "YieldMath: Too many shares in");
                 uint256 zx = normalizedSharesReserves - normalizedSharesOut;
 
@@ -402,7 +402,7 @@ library YieldMath {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
         y = fyToken reserves
-        z = base reserves
+        z = shares reserves
         x = Δy (fyTokenOut)
 
              1/μ * (                 subtotal                            )^(   invA    ) - z

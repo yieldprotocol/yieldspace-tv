@@ -20,7 +20,7 @@ interface PoolEvents {
         address indexed from,
         address indexed to,
         address indexed fyTokenTo,
-        int256 bases,
+        int256 base,
         int256 fyTokens,
         int256 poolTokens
     );
@@ -33,5 +33,5 @@ interface PoolEvents {
     /// - sellBase
     /// - buyFYToken
     /// - sellFYToken
-    event Trade(uint32 maturity, address indexed from, address indexed to, int256 bases, int256 fyTokens);
+    event Trade(uint32 maturity, address indexed from, address indexed to, int256 base, int256 fyTokens);
 }

@@ -30,13 +30,13 @@ abstract contract WithLiquidity is ZeroState {
 
     function setUp() public virtual override {
         super.setUp();
-        base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
+        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
 
         vm.prank(alice);
         pool.init(alice, bob, 0, MAX);
 
-        setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
+        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
+        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
         // Skew the balances without using trading functions
         fyToken.mint(address(pool), additionalFYToken);
@@ -48,25 +48,25 @@ abstract contract WithLiquidity is ZeroState {
 contract Admin__WithLiquidity is WithLiquidity {
     function testUnit_admin1() public {
         console.log("balance management getters return correct values");
-        require(pool.getBaseBalance() == base.balanceOf(address(pool)));
-        require(pool.getBaseCurrentPrice() == ERC4626TokenMock(address(base)).convertToAssets(10**base.decimals()));
+        require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
+        require(pool.getShareCurrentPrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals()));
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
-        (uint16 g1fee_, uint104 baseCached, uint104 fyTokenCached, uint32 blockTimeStampLast) = pool.getCache();
+        (uint16 g1fee_, uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast) = pool.getCache();
         require(g1fee_ == g1Fee);
-        require(baseCached == 1100000000000000000000000);
+        require(sharesCached == 1100000000000000000000000);
         require(fyTokenCached == 1222222222222222222222222);
         require(blockTimeStampLast > 0);
         uint256 expectedCurrentCumulativeRatio = pool.cumulativeRatioLast() +
             ((uint256(fyTokenCached) * 1e27) * (block.timestamp - blockTimeStampLast)) /
-            baseCached;
+            sharesCached;
         (uint256 actualCurrentCumulativeRatio, ) = pool.currentCumulativeRatio();
         require(actualCurrentCumulativeRatio == expectedCurrentCumulativeRatio);
-        base.mint(address(pool), 1e18);
+        shares.mint(address(pool), 1e18);
         pool.sync();
-        console.log(baseCached);
-        (, uint104 baseCachedNew, , ) = pool.getCache();
-        console.log(baseCachedNew);
-        require(baseCachedNew == baseCached + 1e18);
+        console.log(sharesCached);
+        (, uint104 sharesCachedNew, , ) = pool.getCache();
+        console.log(sharesCachedNew);
+        require(sharesCachedNew == sharesCached + 1e18);
     }
 
     function testUnit_admin2() public {

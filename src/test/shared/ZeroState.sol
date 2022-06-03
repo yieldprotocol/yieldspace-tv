@@ -28,20 +28,20 @@ struct ZeroStateParams {
     string assetName;
     string assetSymbol;
     uint8 assetDecimals;
-    string baseType;
+    string sharesType;
 }
 
 // ZeroState is the initial state of the protocol without any testable actions or state changes having taken place.
 // Mocks are created, roles are granted, balances and initial prices are set.
-// There is some complexity around baseType ("4626" or "YearnVault").
-// If baseType is 4626:
-//   - The base token is a ERC4626TokenMock cast as IERC20Like.
+// There is some complexity around sharesType ("4626" or "YearnVault").
+// If sharesType is 4626:
+//   - The shares token is a ERC4626TokenMock cast as IERC20Like.
 //   - The pool is a SyncablePool.sol cast as ISyncablePool.
-// If baseType is YearnVault:
-//   - The base token is a YVTokenMock cast as IERC20Like.
+// If sharesType is YearnVault:
+//   - The shares token is a YVTokenMock cast as IERC20Like.
 //   - The pool is a SyncablePoolYearnVault.sol cast as ISyncablePool.
-// If baseType is NonTv (not tokenized vault -- regular token):
-//   - The base token is is the underlying asset token cast as IERC20Like.
+// If sharesType is NonTv (not tokenized vault -- regular token):
+//   - The shares token is is the underlying asset token cast as IERC20Like.
 //   - The pool is a SyncablePoolNonTv.sol cast as ISyncablePool.
 abstract contract ZeroState is TestCore {
     using Math64x64 for int128;
@@ -57,69 +57,69 @@ abstract contract ZeroState is TestCore {
         // Create and set asset token.
         asset = new ERC20Mock(assetName, assetSymbol, assetDecimals);
 
-        // Set base token related variables.
-        if (keccak256(abi.encodePacked(params.baseType)) == TYPE_NONTV) {
-            baseName = params.assetName;
-            baseSymbol = params.assetSymbol;
-            baseType = keccak256(abi.encodePacked(params.baseType));
-            baseTypeString = params.baseType;
+        // Set shares token related variables.
+        if (keccak256(abi.encodePacked(params.sharesType)) == TYPE_NONTV) {
+            sharesName = params.assetName;
+            sharesSymbol = params.assetSymbol;
+            sharesType = keccak256(abi.encodePacked(params.sharesType));
+            sharesTypeString = params.sharesType;
         } else {
-            baseName = string.concat(params.baseType, assetName);
-            baseSymbol = string.concat(params.baseType, assetSymbol);
-            baseType = keccak256(abi.encodePacked(params.baseType));
-            baseTypeString = params.baseType;
+            sharesName = string.concat(params.sharesType, assetName);
+            sharesSymbol = string.concat(params.sharesType, assetSymbol);
+            sharesType = keccak256(abi.encodePacked(params.sharesType));
+            sharesTypeString = params.sharesType;
 
         }
 
         // Set fyToken related variables.
-        fySymbol = string.concat("fy", baseSymbol);
-        fyName = string.concat("fyToken ", baseName, " maturity 1");
+        fySymbol = string.concat("fy", sharesSymbol);
+        fyName = string.concat("fyToken ", sharesName, " maturity 1");
 
         // Set some state variables based on decimals, to use as constants.
-        aliceBaseInitialBalance = 1000 * 10**(assetDecimals);
-        bobBaseInitialBalance = 2_000_000 * 10**(assetDecimals);
+        aliceSharesInitialBalance = 1000 * 10**(assetDecimals);
+        bobSharesInitialBalance = 2_000_000 * 10**(assetDecimals);
 
-        initialBase = 1_100_000 * 10**(assetDecimals);
+        initialShares = 1_100_000 * 10**(assetDecimals);
         initialFYTokens = 1_500_000 * 10**(assetDecimals);
     }
 
     function setUp() public virtual {
-        // Create base token (e.g. yvDAI)
-        if (baseType == TYPE_NONTV) {
-            base = IERC20Like(address(asset));
+        // Create shares token (e.g. yvDAI)
+        if (sharesType == TYPE_NONTV) {
+            shares = IERC20Like(address(asset));
         } else {
-            if (baseType == TYPE_4626) {
-                base = IERC20Like(
-                    address(new ERC4626TokenMock(baseName, baseSymbol, assetDecimals, address(asset)))
+            if (sharesType == TYPE_4626) {
+                shares = IERC20Like(
+                    address(new ERC4626TokenMock(sharesName, sharesSymbol, assetDecimals, address(asset)))
                 );
             }
-            if (baseType == TYPE_YV) {
-                base = IERC20Like(address(new YVTokenMock(baseName, baseSymbol, assetDecimals, address(asset))));
+            if (sharesType == TYPE_YV) {
+                shares = IERC20Like(address(new YVTokenMock(sharesName, sharesSymbol, assetDecimals, address(asset))));
             }
-            setPrice(address(base), (muNumerator * (10**assetDecimals)) / muDenominator);
-            asset.mint(address(base), 500_000_000 * 10**assetDecimals); // this is the vault reserves
+            setPrice(address(shares), (muNumerator * (10**assetDecimals)) / muDenominator);
+            asset.mint(address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 
         // Create fyToken (e.g. "fyyvDAI").
-        fyToken = new FYTokenMock(fyName, fySymbol, address(base), maturity);
+        fyToken = new FYTokenMock(fyName, fySymbol, address(shares), maturity);
 
-        // Setup users, and give them some base.
+        // Setup users, and give them some shares.
         alice = address(0xbabe);
         vm.label(alice, "alice");
-        base.mint(alice, aliceBaseInitialBalance);
+        shares.mint(alice, aliceSharesInitialBalance);
         bob = address(0xb0b);
         vm.label(bob, "bob");
-        base.mint(bob, bobBaseInitialBalance);
+        shares.mint(bob, bobSharesInitialBalance);
 
         // Setup pool and grant roles:
-        if (baseType == TYPE_4626) {
-            pool = new SyncablePool(address(base), address(fyToken), ts, g1Fee);
+        if (sharesType == TYPE_4626) {
+            pool = new SyncablePool(address(shares), address(fyToken), ts, g1Fee);
         }
-        if (baseType == TYPE_YV) {
-            pool = new SyncablePoolYearnVault(address(base), address(fyToken), ts, g1Fee);
+        if (sharesType == TYPE_YV) {
+            pool = new SyncablePoolYearnVault(address(shares), address(fyToken), ts, g1Fee);
         }
-        if (baseType == TYPE_NONTV) {
-            pool = new SyncablePoolNonTv(address(base), address(fyToken), ts, g1Fee);
+        if (sharesType == TYPE_NONTV) {
+            pool = new SyncablePoolNonTv(address(shares), address(fyToken), ts, g1Fee);
         }
         // Alice: init
         AccessControl(address(pool)).grantRole(bytes4(pool.init.selector), alice);

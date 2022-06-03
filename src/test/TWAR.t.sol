@@ -32,8 +32,8 @@ abstract contract ZeroStateDai is ZeroState{
 
 }
 
-function calcRatioSeconds(uint128 fyTokenReserves, uint128 baseReserves, uint256 secondsElapsed) returns(uint256) {
-        return (uint256(fyTokenReserves) * 1e27 * secondsElapsed) / baseReserves;
+function calcRatioSeconds(uint128 fyTokenReserves, uint128 sharesReserves, uint256 secondsElapsed) returns(uint256) {
+        return (uint256(fyTokenReserves) * 1e27 * secondsElapsed) / sharesReserves;
 }
 
 
@@ -42,11 +42,11 @@ contract TWAR__ZeroState is ZeroStateDai {
         console.log("twar values updated and returned correctly after initial mint");
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // initialize pool, add initial liquidity and set new price on base
-        base.mint(address(pool), INITIAL_YVDAI);
+        // initialize pool, add initial liquidity and set new price on shares
+        shares.mint(address(pool), INITIAL_YVDAI);
         vm.prank(alice);
         pool.init(bob, bob, 0, MAX);
-        setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
+        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
@@ -63,8 +63,8 @@ contract TWAR__ZeroState is ZeroStateDai {
         assertEq(pool.cumulativeRatioLast(), 0);
 
         // since time has lapsed, currentCumRat should be increased
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         (uint256 currCumRat2, uint256 btimestamp2) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
         assertEq(btimestamp2, btimestamp1 + timewarp);
@@ -77,8 +77,8 @@ abstract contract PoolInitialized is ZeroStateDai {
     function setUp() public virtual override {
         super.setUp();
 
-        // Send some base to the pool.
-        base.mint(address(pool), INITIAL_BASE * 10**(base.decimals()));
+        // Send some shares to the pool.
+        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
 
         // Alice calls init.
         vm.prank(alice);
@@ -87,9 +87,9 @@ abstract contract PoolInitialized is ZeroStateDai {
         // elapse some time after initialization
         vm.warp(block.timestamp + 60);
 
-        // Update the price of base to value of state variables: cNumerator/cDenominator
-        setPrice(address(base), (cNumerator * (10**base.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_BASE * 10**(base.decimals())) / 9;
+        // Update the price of shares to value of state variables: cNumerator/cDenominator
+        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
+        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
     }
 }
 
@@ -103,8 +103,8 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // Send some base to the pool.
-        base.mint(address(pool), 10e18); // send an extra wad of base
+        // Send some shares to the pool.
+        shares.mint(address(pool), 10e18); // send an extra wad of shares
 
 
         // Alice calls mint to Bob.
@@ -121,13 +121,13 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
     }
 
     function testUnit_twar3() public {
-        console.log("twar values updated and returned correctly a buy of base tokens");
+        console.log("twar values updated and returned correctly a buy of shares tokens");
 
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
@@ -135,8 +135,8 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // Send FYToken, sync, and calc expected FYTokenIn
         fyToken.mint(address(pool), 5e18);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
-        uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(base)).convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
+        uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
+        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10 ** shares.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
 
         uint128 expectedFYTokenIn = YieldMath.fyTokenInForSharesOut(
             sharesReserves,
@@ -150,7 +150,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         );
 
         // Send some fyToken to the pool.
-        fyToken.mint(address(pool), expectedFYTokenIn); // send an extra wad of base
+        fyToken.mint(address(pool), expectedFYTokenIn); // send an extra wad of shares
 
 
         // Alice calls mint to Bob.
@@ -167,32 +167,32 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves_, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves_, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, baseReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 
     }
 
     function testUnit_twar4() public {
-        console.log("twar values updated and returned correctly a sell of base tokens");
+        console.log("twar values updated and returned correctly a sell of shares tokens");
 
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
         // skew the pool to represent some trades
-        (, uint104 baseReserves0, uint104 fyTokenReserves0, ) = pool.getCache();
+        (, uint104 sharesReserves0, uint104 fyTokenReserves0, ) = pool.getCache();
 
         fyToken.mint(address(pool), 2_000_000 * 1e18);
         pool.sync();
 
 
         // sellBase
-        base.mint(address(pool), 1e18);
+        shares.mint(address(pool), 1e18);
         vm.startPrank(alice);
         pool.sellBase(alice, 0);
 
@@ -205,12 +205,12 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, baseReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 
@@ -223,15 +223,15 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // Send some base to the pool.
-        fyToken.mint(address(pool), 10e18); // send an extra wad of base
+        // Send some shares to the pool.
+        fyToken.mint(address(pool), 10e18); // send an extra wad of shares
 
         // calc expected FYTokenIn
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
-        uint128 sharesReserves = uint128(base.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(base)).convertToAssets(10 ** base.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
+        uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
+        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10 ** shares.decimals()).fromUInt()).div(uint256(1e18).fromUInt());
 
-        uint128 expectedBaseOut = YieldMath.sharesOutForFYTokenIn(
+        uint128 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
             sharesReserves,
             virtFYTokenBal,
             3e18,
@@ -244,7 +244,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // Alice calls mint to Bob.
         vm.startPrank(alice);
-        pool.sellFYToken(alice, expectedBaseOut);
+        pool.sellFYToken(alice, expectedSharesOut);
 
         // fast forward time
         uint256 timewarp = 100;
@@ -256,12 +256,12 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves_, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves_, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, baseReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 
@@ -273,14 +273,14 @@ contract TWAR__PoolInitialized is PoolInitialized {
         assertEq(pool.cumulativeRatioLast(), 0);
 
         // skew the pool to represent some trades
-        (, uint104 baseReserves0, uint104 fyTokenReserves0, ) = pool.getCache();
+        (, uint104 sharesReserves0, uint104 fyTokenReserves0, ) = pool.getCache();
 
         fyToken.mint(address(pool), 2_000_000 * 1e18);
         pool.sync();
 
 
-        // send over base and buy fytoken
-        base.mint(address(pool), 5e18);
+        // send over shares and buy fytoken
+        shares.mint(address(pool), 5e18);
         vm.prank(alice);
         pool.buyFYToken(alice, 3e18, type(uint128).max);
 
@@ -294,12 +294,12 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, baseReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 
@@ -311,8 +311,8 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);
 
-        // Send some base to the pool.
-        base.mint(address(pool), 10e18); // send an extra wad of base
+        // Send some shares to the pool.
+        shares.mint(address(pool), 10e18); // send an extra wad of shares
 
         // Alice calls mint to Bob.
         vm.startPrank(alice);
@@ -330,12 +330,12 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 baseReserves, uint104 fyTokenReserves, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, baseReserves, timewarp);
+        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, baseReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 

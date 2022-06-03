@@ -28,14 +28,14 @@ abstract contract TestCore is Test {
         address indexed from,
         address indexed to,
         address indexed fyTokenTo,
-        int256 bases,
+        int256 shares,
         int256 fyTokens,
         int256 poolTokens
     );
 
-    event Sync(uint112 baseCached, uint112 fyTokenCached, uint256 cumulativeBalancesRatio);
+    event Sync(uint112 sharesCached, uint112 fyTokenCached, uint256 cumulativeBalancesRatio);
 
-    event Trade(uint32 maturity, address indexed from, address indexed to, int256 bases, int256 fyTokens);
+    event Trade(uint32 maturity, address indexed from, address indexed to, int256 shares, int256 fyTokens);
 
     using Math64x64 for int128;
     using Math64x64 for uint128;
@@ -75,16 +75,16 @@ abstract contract TestCore is Test {
     string public fyName;
     string public fySymbol;
 
-    bytes32 public baseType; // TYPE_4626 or TYPE_YV
-    string public baseTypeString; // TYPE_4626 or TYPE_YV
-    string public baseName;
-    string public baseSymbol;
-    IERC20Like public base;
+    bytes32 public sharesType; // TYPE_4626 or TYPE_YV
+    string public sharesTypeString; // TYPE_4626 or TYPE_YV
+    string public sharesName;
+    string public sharesSymbol;
+    IERC20Like public shares;
 
-    uint256 public aliceBaseInitialBalance;
-    uint256 public bobBaseInitialBalance;
+    uint256 public aliceSharesInitialBalance;
+    uint256 public bobSharesInitialBalance;
 
-    uint256 public initialBase;
+    uint256 public initialShares;
     uint256 public initialFYTokens;
 
 
