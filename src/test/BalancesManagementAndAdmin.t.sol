@@ -49,7 +49,8 @@ contract Admin__WithLiquidity is WithLiquidity {
     function testUnit_admin1() public {
         console.log("balance management getters return correct values");
         require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
-        require(pool.getShareCurrentPrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals()));
+        console.log('here');
+        require(pool.getCurrentSharePrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals()));
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
         (uint16 g1fee_, uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast) = pool.getCache();
         require(g1fee_ == g1Fee);

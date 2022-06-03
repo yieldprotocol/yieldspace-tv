@@ -6,7 +6,7 @@ import "@yield-protocol/vault-interfaces/src/IFYToken.sol";
 import {IERC20Metadata} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 
 interface IPool is IERC20, IERC2612 {
-    // function base() external view returns(IERC20Metadata);  TODO: Alberto?
+    // function base() external view returns(IERC20Metadata);  TODO: Alberto is this ok??
     function baseToken() external view returns(IERC20Metadata);
     function burn(address baseTo, address fyTokenTo, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
     function burnForBase(address to, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256);
@@ -19,10 +19,10 @@ interface IPool is IERC20, IERC2612 {
     function fyToken() external view returns(IFYToken);
     function g1() external view returns(int128);
     function g2() external view returns(int128);
-    function getSharesBalance() external view returns(uint104);
-    function getShareCurrentPrice() external view returns (uint256);
+    function getCurrentSharePrice() external view returns (uint256);
     function getCache() external view returns (uint16 g1Fee_, uint104 baseCached, uint104 fyTokenCached, uint32 blockTimestampLast);
     function getFYTokenBalance() external view returns(uint104);
+    function getSharesBalance() external view returns(uint104);
     function init(
         address to,
         address remainder,

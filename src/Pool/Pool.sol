@@ -165,7 +165,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         sharesToken = IERC20Like(shares);
         scaleFactor = uint96(10**(18 - uint96(decimals_))); // No more than 18 decimals allowed, reverts on underflow.
 
-        mu = ((_getShareCurrentPriceConstructor(shares) * uint96(10**(18 - uint96(decimals_))))).fromUInt().div(
+        mu = ((_getCurrentSharePriceConstructor(shares) * uint96(10**(18 - uint96(decimals_))))).fromUInt().div(
             uint256(1e18).fromUInt()
         );
         ts = ts_;
@@ -202,7 +202,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            │                     /│                               │\                ::/_____/_/      ::
                                  /│                               │\             '   :               :   `
          B A S E                  │                      \(^o^)/  │                   `-:::::::::::-'
-    (underlying asset)            │                     Pool.sol  │                 ,    `'''''''`     .
+                                  │                     Pool.sol  │                 ,    `'''''''`     .
                                   └───────────────────────────────┘
                                                                                        /            \
                                                                                               ^
@@ -432,7 +432,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 /:  | __    ____/:      │
                 ::   / /   / __ \::  ───┤
                 ::  / /   / /_/ /::     │
-                :: / /___/ ____/ ::     └~~~~~~►  B A S E underlying asset
+                :: / /___/ ____/ ::     └~~~~~~►  B A S E
                 ::/_____/_/      ::
                  :               :
                   `-:::::::::::-'
@@ -474,7 +474,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                  ((  /     ))\))))\
                   )\(          |  )
                 /:  | __    ____/:
-                ::   / /   / __ \::   ~~~~~~~►   B A S E underlying asset
+                ::   / /   / __ \::   ~~~~~~~►   B A S E
                 ::  / /   / /_/ /::
                 :: / /___/ ____/ ::
                 ::/_____/_/      ::
@@ -1152,15 +1152,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the base token current price.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying asset cast as uint256.
-    function getShareCurrentPrice() external view returns (uint256) {
-        return _getShareCurrentPrice();
+    function getCurrentSharePrice() external view returns (uint256) {
+        return _getCurrentSharePrice();
     }
 
     /// Returns the base token current price.
     /// @dev This assumes the shares, base, and lp tokens all use the same decimals.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
-    function _getShareCurrentPrice() internal view virtual returns (uint256) {
+    function _getCurrentSharePrice() internal view virtual returns (uint256) {
         return IERC4626(address(baseToken)).convertToAssets(10**baseToken.decimals());
     }
 
@@ -1168,7 +1168,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
-    function _getShareCurrentPriceConstructor(address base_) internal view virtual returns (uint256) {
+    function _getCurrentSharePriceConstructor(address base_) internal view virtual returns (uint256) {
         return IERC4626(base_).convertToAssets(10**IERC20Like(base_).decimals());
     }
 
@@ -1181,7 +1181,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the c based on the current price
     function _getC() internal view returns (int128) {
-        return ((_getShareCurrentPrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
+        return ((_getCurrentSharePrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast

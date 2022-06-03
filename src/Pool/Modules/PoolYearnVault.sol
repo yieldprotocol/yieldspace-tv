@@ -45,7 +45,7 @@ contract PoolYearnVault is Pool {
     /// Returns the base token current price.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a Yearn vault token in terms of its underlying.
-    function _getShareCurrentPrice() internal view virtual override returns (uint256) {
+    function _getCurrentSharePrice() internal view virtual override returns (uint256) {
         return IYVToken(address(sharesToken)).pricePerShare();
     }
 
@@ -54,7 +54,7 @@ contract PoolYearnVault is Pool {
     /// This function should be overriden by modules.
     /// @param sharesToken_ Address of Yearn Vault contract to call pricePerShare
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying.
-    function _getShareCurrentPriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
+    function _getCurrentSharePriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
         return IYVToken(sharesToken_).pricePerShare();
     }
 

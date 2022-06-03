@@ -41,7 +41,7 @@ contract PoolNonTv is Pool {
     /// Returns the current price of one share.  For non-tokenized vaults this is always 1..
     /// This function should be overriden by modules.
     /// @return By always returning 1, we can use this module with any non-tokenized vault base such as WETH.
-    function _getShareCurrentPrice() internal view override virtual returns (uint256) {
+    function _getCurrentSharePrice() internal view override virtual returns (uint256) {
         return uint256(10**IERC20Like(address(sharesToken)).decimals());
     }
 
@@ -50,7 +50,7 @@ contract PoolNonTv is Pool {
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
-    function _getShareCurrentPriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
+    function _getCurrentSharePriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
         return uint256(10**IERC20Like(address(sharesToken_)).decimals());
     }
 
