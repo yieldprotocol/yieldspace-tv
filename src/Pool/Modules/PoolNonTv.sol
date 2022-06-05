@@ -41,10 +41,9 @@ contract PoolNonTv is Pool {
     /// Returns the current price of one share.  For non-tokenized vaults this is always 1..
     /// This function should be overriden by modules.
     /// @return By always returning 1, we can use this module with any non-tokenized vault base such as WETH.
-    function _getCurrentSharePrice() internal view override virtual returns (uint256) {
+    function _getCurrentSharePrice() internal view virtual override returns (uint256) {
         return uint256(10**IERC20Like(address(sharesToken)).decimals());
     }
-
 
     /// Returns the base token current price.
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
@@ -59,7 +58,13 @@ contract PoolNonTv is Pool {
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address) internal virtual override returns (uint256 shares) {
         shares = _getSharesBalance() - sharesCached;
+    }
 
+    /// Internal function to preview how many shares will be received when depositing a given amount of assets.
+    /// @param assets The amount of base asset tokens to preview the deposit.
+    /// @return shares The amount of shares that would be returned from depositing.
+    function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
+        shares = assets;
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
@@ -67,6 +72,14 @@ contract PoolNonTv is Pool {
     /// @return assets The amount of underlying asset assets sent to the receiver.
     function _unwrap(address) internal virtual override returns (uint256 assets) {
         assets = _getSharesBalance() - sharesCached;
+    }
+
+    /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.
+    /// @dev This should be overridden by modules.
+    /// @param shares The amount of shares to preview a redemption.
+    /// @return assets The amount of base asset tokens that would be returned from redeeming.
+    function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
+        assets = shares;
     }
 
     /// This is used by the constructor to set the base's underlying asset as immutable.

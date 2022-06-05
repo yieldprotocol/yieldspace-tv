@@ -8,6 +8,7 @@ import {IERC20Metadata} from  "@yield-protocol/utils-v2/contracts/token/ERC20.so
 interface IPool is IERC20, IERC2612 {
     // function base() external view returns(IERC20Metadata);  TODO: Alberto is this ok??
     function baseToken() external view returns(IERC20Metadata);
+    function base() external view returns(IERC20);
     function burn(address baseTo, address fyTokenTo, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
     function burnForBase(address to, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256);
     function buyBase(address to, uint128 baseOut, uint128 max) external returns(uint128);
@@ -45,4 +46,8 @@ interface IPool is IERC20, IERC2612 {
     function sellFYTokenPreview(uint128 fyTokenIn) external view returns(uint128);
     function setFees(uint16 g1Fee_) external;
     function ts() external view returns(int128);
+    function wrap(address receiver) external returns (uint256 shares);
+    function wrapPreview(uint256 assets) external view returns (uint256 shares);
+    function unwrap(address receiver) external returns (uint256 assets);
+    function unwrapPreview(uint256 shares) external view returns (uint256 assets);
 }

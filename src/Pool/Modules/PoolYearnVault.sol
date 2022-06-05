@@ -62,7 +62,17 @@ contract PoolYearnVault is Pool {
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
-        shares = IYVToken(address(sharesToken)).deposit(baseToken.balanceOf(address(this)), receiver);
+        uint256 baseOut = baseToken.balanceOf(address(this));
+        baseToken.approve(address(sharesToken), baseOut);
+        shares = IYVToken(address(sharesToken)).deposit(baseOut, receiver);
+    }
+
+    /// Internal function to preview how many shares will be received when depositing a given amount of assets.
+    /// @param assets The amount of base asset tokens to preview the deposit.
+    /// @return shares The amount of shares that would be returned from depositing.
+    function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
+        shares  = assets * 10**IYVToken(address(sharesToken)).decimals() / _getCurrentSharePrice();
+
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
@@ -72,6 +82,14 @@ contract PoolYearnVault is Pool {
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
         assets = IYVToken(address(sharesToken)).withdraw(surplus, receiver);
+    }
+
+    /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.
+    /// @dev This should be overridden by modules.
+    /// @param shares The amount of shares to preview a redemption.
+    /// @return assets The amount of base asset tokens that would be returned from redeeming.
+    function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
+        assets = shares * _getCurrentSharePrice() / 10**IYVToken(address(sharesToken)).decimals();
     }
 
     /// This is used by the constructor to set the base's underlying asset as immutable.

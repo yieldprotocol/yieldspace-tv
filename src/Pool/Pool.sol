@@ -39,15 +39,16 @@ import "./PoolImports.sol"; /*
 */
 
 /// A Yieldspace AMM implementation for pools which provide liquidity and trading of fyTokens vs base tokens.
-/// **The base tokens in this implementation are ERC4626 compliant tokenized vault shares.**
+/// **The base tokens in this implementation are converted to ERC4626 compliant tokenized vault shares.**
 /// See whitepaper and derived formulas: https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw
 //
 //  Useful terminology:
-//    base - The underlying token of the fyToken. Also referred to as "assets" or "baseAsset" internally.  Example: DAI
-//    shares - Upon receipt, baseAsset is deposited (wrapped) in a tokenized vault.  Example: yvDAI
+//    base - Example: DAI. The underlying token of the fyToken. Sometimes referred to as "asset" or "base".
+//    shares - Example: yvDAI. Upon receipt, baseAsset is deposited (wrapped) in a tokenized vault.
+//    Reserves are tracked in shares
 //
 /// @title  Pool.sol
-/// @dev    Uses ABDK 64.64 mathlib for precision and reduced gas. Deploy pool with 4626 token and associated fyToken.
+/// @dev    Uses ABDK 64.64 mathlib for precision and reduced gas.
 /// @author Adapted by @devtooligan from original work by @alcueca and UniswapV2. Maths and whitepaper by @aniemerg.
 contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* LIBRARIES
@@ -80,7 +81,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This pool accepts a pair of base (asset) tokens and related fyToken.
     /// Whent these are deposited into a tokenized vault they become shares.
     /// It is an ERC20 token.
-    IERC20Like public immutable baseToken; // base asset
+    IERC20Like public immutable baseToken; // base
 
     /// The fyToken for the UNDERLYING asset of the base.  It's not fyYVDAI, it's still fyDAI.  Even though we hold base
     /// in this contract in a wrapped tokenized vault (e.g. Yearn Vault Dai), upon maturity, the fyToken is payable in
@@ -133,7 +134,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// block.timestamp of last time reserve caches were updated.
     uint32 internal blockTimestampLast;
 
-    /// `cumulativeRatioLast` is a LAGGING, time weighted sum of the fyToken:shares reserves ratio in ratio seconds.
+    /// This is a LAGGING, time weighted sum of the fyToken:shares reserves ratio measured in ratio seconds.
     /// @dev Footgun 🔫 alert!  Be careful, this number is probably not what you need and it should normally be
     /// considered with blockTimestampLast. For consumption as a TWAR observation, use currentCumulativeRatio().
     /// In future pools, this function's visibility may be changed to internal.
@@ -143,7 +144,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* CONSTRUCTOR
      *****************************************************************************************************************/
     constructor(
-        address shares, //    address of shares token
+        address sharesToken_, //    address of shares token
         address fyToken_, //  address of fyToken
         int128 ts_, //        time stretch(64.64)
         uint16 g1Fee_ //      fees (in bps) when buying fyToken
@@ -158,20 +159,28 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            /  ` /  \ |\ | /__`  |  |__) |  | /  `  |  /  \ |__)
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
+        // Set immutables
+
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
-        // set immutables - initialize base and scale factor before calling _getC()
+
         uint256 decimals_ = IERC20Like(fyToken_).decimals();
-        baseToken = _getBaseUnderlyingAsset(shares);
-        sharesToken = IERC20Like(shares);
+
+        // NOTE: This contract assumes that baseToken and sharesToken both use the same decimals.
+        baseToken = _getBaseUnderlyingAsset(sharesToken_);
+        sharesToken = IERC20Like(sharesToken_);
+
         scaleFactor = uint96(10**(18 - uint96(decimals_))); // No more than 18 decimals allowed, reverts on underflow.
 
-        mu = ((_getCurrentSharePriceConstructor(shares) * uint96(10**(18 - uint96(decimals_))))).fromUInt().div(
+        // This is _getC inlined because we can't access immutables in the constructor.
+        mu = ((_getCurrentSharePriceConstructor(sharesToken_) * uint96(10**(18 - uint96(decimals_))))).fromUInt().div(
             uint256(1e18).fromUInt()
         );
+
         ts = ts_;
+
         fyToken = IFYToken(fyToken_);
 
-        // set fee
+        // set fees
         if (g1Fee_ > 10000) revert InvalidFee(g1Fee_);
         g1Fee = g1Fee_;
         emit FeesSet(g1Fee_);
@@ -215,7 +224,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param remainder Wallet receiving any surplus base.
     /// @param minRatio Minimum ratio of shares to fyToken in the pool.
     /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
-    /// @return baseIn The amount of base assets found in the contract that was used for the mint.
+    /// @return baseIn The amount of bases found in the contract that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
     function mint(
@@ -247,7 +256,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param remainder Wallet receiving any surplus base.
     /// @param minRatio Minimum ratio of shares to fyToken in the pool.
     /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
-    /// @return baseIn The amount of base asset found that was used for the mint.
+    /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
     function init(
@@ -286,7 +295,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                                   └───────────────────────────────┘                    /           \
                                                                                             ^
     */
-    /// Mint liquidity tokens in exchange for adding only base
+    /// Mint liquidity tokens in exchange for adding only base.
     /// The amount of liquidity tokens is calculated from the amount of fyToken to buy from the pool.
     /// The base tokens need to be previously transferred and present in this contract.
     /// @dev _totalSupply > 0 check important here to prevent minting before initialization.
@@ -347,7 +356,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             uint256 lpTokensMinted
         )
     {
-        // Wrap any base assets found in contract.
+        // Wrap all bases found in this contract.
         _wrap(address(this));
 
         // Gather data
@@ -355,7 +364,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         Cache memory cache = _getCache();
         uint256 realFYTokenCached_ = cache.fyTokenCached - supply; // The fyToken cache includes the virtual fyToken, equal to the supply
         uint256 sharesBalance = sharesToken.balanceOf(address(this));
-
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
             if (
@@ -363,7 +371,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 uint256(cache.sharesCached).wdiv(realFYTokenCached_) > maxRatio
             ) revert SlippageDuringMint((uint256(cache.sharesCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
         }
-
         uint256 sharesIn;
         // Calculate token amounts
         if (supply == 0) {
@@ -395,7 +402,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 revert NotEnoughBaseIn(_unwrapPreview(sharesBalance - cache.sharesCached), _unwrapPreview(sharesIn));
             }
         }
-
         // Update TWAR
         _update(
             (cache.sharesCached + sharesIn).u128(),
@@ -408,8 +414,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _mint(to, lpTokensMinted);
 
         // Return any unused base tokens as underlying
-        if (sharesBalance > cache.sharesCached + sharesIn)
-            baseToken.safeTransfer(remainder, _unwrap(address(this)));
+        if (sharesBalance > cache.sharesCached + sharesIn) baseToken.safeTransfer(remainder, _unwrap(address(this)));
 
         emit Liquidity(
             maturity,
@@ -497,7 +502,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         (lpTokensBurned, baseOut, ) = _burn(to, address(0), true, minRatio, maxRatio);
     }
 
-    /// Burn liquidity tokens in exchange for base asset.
+    /// Burn liquidity tokens in exchange for base.
     /// The liquidity provider needs to have called `pool.approve`.
     /// @dev This function overloads the ERC20._burn(address, uint) function.
     /// @param baseTo Wallet receiving the base.
@@ -593,7 +598,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /* buyBase
 
-                         I want to buy `uint128 baseOut` worth of base underlying asset tokens.
+                         I want to buy `uint128 baseOut` worth of base tokens.
              _______     I've transferred you some fyTokens -- that should be enough.
             /   GUY \         .:::::::::::::::::.
      (^^^|   \===========    :  _______  __   __ :                 ┌─────────┐
@@ -623,7 +628,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                                                            /      \    .: :.     /      \
                                                            '-..___|_..=:` `-:=.._|___..-'
     */
-    /// Buy base with fyToken
+    /// Buy base with fyToken.
     /// The trader needs to have transferred in the correct amount of fyTokens in advance.
     /// @param to Wallet receiving the base being bought.
     /// @param baseOut Amount of base being bought that will be deposited in `to` wallet.
@@ -694,8 +699,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
        \ \   (. o  o |     │ ┌────────────┴─┐                         └─┬─────┬─┘       ==+
         \ \   |   ~  |     │ │$            $│   hmm, let's see here     │     │    =======+
         \  \   \ == /      │ │   B A S E    │                      _____│_____│______    |+
-         \  \___|  |___    │$│  underlying  │                  .-'"___________________`-.|+
-          \ /   \__/   \   └─┤$   asset    $│                 ( .'"                   '-.)+
+         \  \___|  |___    │$│              │                  .-'"___________________`-.|+
+          \ /   \__/   \   └─┤$            $│                 ( .'"                   '-.)+
            \            \    └──────────────┘                 |`-..__________________..-'|+
             --|  GUY |\_/\  / /                               |                          |+
               |      | \  \/ /                                |                          |+
@@ -715,7 +720,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             (_____[__)                `'''''''`               /      \    .: :.     /      \
                                                               '-..___|_..=:` `-:=.._|___..-'
     */
-    /// Buy fyToken with base asset
+    /// Buy fyToken with base
     /// The trader needs to have transferred in the correct amount of tokens in advance.
     /// @param to Wallet receiving the fyToken being bought.
     /// @param fyTokenOut Amount of fyToken being bought that will be deposited in `to` wallet.
@@ -978,14 +983,24 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual returns (uint256 shares) {
-        shares = IERC4626(address(sharesToken)).deposit(baseToken.balanceOf(address(this)), receiver);
+        uint256 baseOut = baseToken.balanceOf(address(this));
+        baseToken.approve(address(sharesToken), baseOut);
+        shares = IERC4626(address(sharesToken)).deposit(baseOut, receiver);
     }
 
-    /// Internal function to preview how much shares will be received when depositing a given amount of assets.
-    /// @param assets The amount of base asset tokens to preview the deposit.
+    /// Preview how many shares will be received when depositing a given amount of assets.
+    /// @dev This should be overridden by modules.
+    /// @param assets The amount of base tokens to preview the deposit.
     /// @return shares The amount of shares that would be returned from depositing.
-    function _wrapPreview(uint256 assets) internal virtual returns (uint256 shares) {
-        shares = IERC4626(address(sharesToken)).convertToShares(shares);
+    function wrapPreview(uint256 assets) external view returns (uint256 shares) {
+        shares = IERC4626(address(sharesToken)).convertToShares(assets);
+    }
+
+    /// Internal function to preview how many shares will be received when depositing a given amount of assets.
+    /// @param assets The amount of base tokens to preview the deposit.
+    /// @return shares The amount of shares that would be returned from depositing.
+    function _wrapPreview(uint256 assets) internal view virtual returns (uint256 shares) {
+        shares = IERC4626(address(sharesToken)).convertToShares(assets);
     }
 
     /// Unwraps base shares found unaccounted for in this contract, converting them to the underlying asset assets.
@@ -1004,22 +1019,29 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 surplus = _getSharesBalance() - sharesCached;
 
         // The third param of the 4626 redeem fn, `owner`, is always this contract address.
-        assets = IERC4626(address(baseToken)).redeem(surplus, receiver, address(this));
+        assets = IERC4626(address(sharesToken)).redeem(surplus, receiver, address(this));
     }
 
-    /// Internal function to preview how much shares will be received when depositing a given amount of assets.
+    /// Preview how many asset tokens will be received when unwrapping a given amount of shares.
     /// @param shares The amount of shares to preview a redemption.
-    /// @return assets The amount of base asset tokens that would be returned from redeeming.
-    function _unwrapPreview(uint256 shares) internal virtual returns (uint256 assets) {
+    /// @return assets The amount of base tokens that would be returned from redeeming.
+    function unwrapPreview(uint256 shares) external view returns (uint256 assets) {
+        assets = _unwrapPreview(shares);
+    }
+
+    /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.
+    /// @dev This should be overridden by modules.
+    /// @param shares The amount of shares to preview a redemption.
+    /// @return assets The amount of base tokens that would be returned from redeeming.
+    function _unwrapPreview(uint256 shares) internal view virtual returns (uint256 assets) {
         assets = IERC4626(address(sharesToken)).convertToAssets(shares);
     }
-
 
     /// This is used by the constructor to set the base's underlying asset as immutable.
     /// This should be overridden by modules.
     /// @dev We use the IERC20Like interface, but this should be an ERC20 asset per EIP4626.
-    function _getBaseUnderlyingAsset(address base_) internal virtual returns (IERC20Like) {
-        return IERC20Like(address(IERC4626(base_).asset()));
+    function _getBaseUnderlyingAsset(address sharesToken_) internal virtual returns (IERC20Like) {
+        return IERC20Like(address(IERC4626(sharesToken_).asset()));
     }
 
     /* BALANCES MANAGEMENT AND ADMINISTRATIVE FUNCTIONS
@@ -1161,15 +1183,16 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
     function _getCurrentSharePrice() internal view virtual returns (uint256) {
-        return IERC4626(address(baseToken)).convertToAssets(10**baseToken.decimals());
+        uint256 scalar = 10**baseToken.decimals();
+        return IERC4626(address(sharesToken)).convertToAssets(scalar);
     }
 
     /// Returns the base token current price.
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its underlying cast as uint256.
-    function _getCurrentSharePriceConstructor(address base_) internal view virtual returns (uint256) {
-        return IERC4626(base_).convertToAssets(10**IERC20Like(base_).decimals());
+    function _getCurrentSharePriceConstructor(address sharesToken_) internal view virtual returns (uint256) {
+        return IERC4626(sharesToken_).convertToAssets(10**IERC20Like(sharesToken_).decimals());
     }
 
     /// Returns current price of 1 share in 64bit.
@@ -1257,5 +1280,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
         g1Fee = g1Fee_;
         emit FeesSet(g1Fee_);
+    }
+
+    /// Returns baseToken.
+    /// @dev This has been deprecated and may be removed in future pools.
+    /// @return baseToken The base token for this pool.  The underlying asset of the shares and the fyToken.
+    function base() external view returns (IERC20) {
+        // Returns IERC20 instead of IERC20Like (IERC20Metadata) for backwards compatability.
+        return IERC20(address(baseToken));
     }
 }

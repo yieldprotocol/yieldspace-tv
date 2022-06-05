@@ -25,13 +25,11 @@ import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
 
-abstract contract ZeroStateDai is ZeroState{
+abstract contract ZeroStateDai is ZeroState {
     constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
-
 }
 
 abstract contract WithLiquidity is ZeroStateDai {
-
     function setUp() public virtual override {
         super.setUp();
 
@@ -55,7 +53,6 @@ abstract contract WithLiquidity is ZeroStateDai {
 
         // elapse some time after initialization
         vm.warp(block.timestamp + 60);
-
     }
 }
 
@@ -83,18 +80,11 @@ contract Mint__ZeroState is ZeroStateDai {
 
         // Bob transfers some shares to the pool.
         vm.prank(bob);
-        shares.transfer(address(pool), INITIAL_YVDAI);
+        uint256 baseIn = pool.unwrapPreview(INITIAL_YVDAI);
+        asset.mint(address(pool), baseIn);
 
         vm.expectEmit(true, true, true, true);
-        emit Liquidity(
-            maturity,
-            alice,
-            bob,
-            address(0),
-            int256(-1 * int256(INITIAL_YVDAI)),
-            int256(0),
-            int256(INITIAL_YVDAI)
-        );
+        emit Liquidity(maturity, alice, bob, address(0), int256(-1 * int256(baseIn)), int256(0), int256(INITIAL_YVDAI));
 
         // Alice calls init.
         vm.prank(alice);
@@ -161,17 +151,19 @@ contract Mint__ZeroState is ZeroStateDai {
 
 contract Mint__WithLiquidity is WithLiquidity {
     function testUnit_mint4() public {
-        console.log("mints liquidity tokens, returning shares surplus");
+        console.log("mints liquidity tokens, returning surplus");
 
         // Calculate expected Mint and SharesIn for 1 WAD fyToken in.
         uint256 fyTokenIn = WAD;
         uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e18;
-        uint256 expectedSharesIn = (shares.balanceOf(address(pool)) * expectedMint) / pool.totalSupply();
-
+        uint256 expectedSharesIn = ((shares.balanceOf(address(pool)) * expectedMint) / pool.totalSupply());
+         // send base for an extra wad of shares
+        uint256 extraSharesIn = 1e18;
+        uint256 expectedBaseIn = pool.unwrapPreview(expectedSharesIn + extraSharesIn);
         uint256 poolTokensBefore = pool.balanceOf(bob);
 
         // Send some shares to the pool.
-        shares.mint(address(pool), expectedSharesIn + 1e18); // send an extra wad of shares
+        asset.mint(address(pool), expectedBaseIn);
         // Send some fyToken to the pool.
         fyToken.mint(address(pool), fyTokenIn);
 
@@ -183,8 +175,8 @@ contract Mint__WithLiquidity is WithLiquidity {
 
         // Confirm minted amount is as expected.  Check balances and caches.
         almostEqual(minted, expectedMint, fyTokenIn / 10000);
-        almostEqual(shares.balanceOf(bob),  bobSharesInitialBalance, fyTokenIn / 10000);
-        almostEqual(asset.balanceOf(bob),  pool.getCurrentSharePrice(), fyTokenIn / 10000);
+        almostEqual(shares.balanceOf(bob), bobSharesInitialBalance, fyTokenIn / 10000);
+        almostEqual(asset.balanceOf(bob), pool.getCurrentSharePrice(), fyTokenIn / 10000);
 
         (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
@@ -195,7 +187,7 @@ contract Mint__WithLiquidity is WithLiquidity {
         console.log("cannot initialize twice");
         vm.expectRevert(abi.encodeWithSelector(Initialized.selector));
 
-       // Alice calls init.
+        // Alice calls init.
         vm.startPrank(alice);
         pool.init(address(0), address(0), 0, MAX);
     }
@@ -233,7 +225,6 @@ contract Burn__WithLiquidity is WithLiquidity {
         // Alice calls burn.
         vm.prank(alice);
         pool.burn(bob, address(charlie), 0, MAX);
-
 
         // Confirm shares and fyToken out as expected and check balances pool and users.
         uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));

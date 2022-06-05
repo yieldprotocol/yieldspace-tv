@@ -153,7 +153,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         fyToken.mint(address(pool), expectedFYTokenIn); // send an extra wad of shares
 
 
-        // Alice calls mint to Bob.
+        // Alice buys base
         vm.startPrank(alice);
         pool.buyBase(alice, 3e18, type(uint128).max);
 
@@ -172,7 +172,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves_, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 
@@ -261,7 +261,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         assertEq(currCumRat1, expectedCurrCumRat);
 
         vm.warp(block.timestamp + 1000);
-        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
+        expectedCurrCumRat += calcRatioSeconds(fyTokenReserves, sharesReserves_, 1000);
         (uint256 currCumRat2,) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
 

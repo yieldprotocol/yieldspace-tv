@@ -43,7 +43,6 @@ abstract contract ZeroStateNonTv is ZeroState {
 abstract contract WithLiquidityNonTv is ZeroStateNonTv {
     function setUp() public virtual override {
         super.setUp();
-
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
         pool.init(alice, bob, 0, MAX);

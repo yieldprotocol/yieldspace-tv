@@ -391,7 +391,6 @@ contract YieldMathTest is Test {
     //         c,
     //         mu
     //     ) / 1e18;
-
     //     int128 bumpedG = uint256(975).fromUInt().div((10 * gDenominator).fromUInt());
     //     uint128 result2 = YieldMath.fyTokenOutForSharesIn(
     //         sharesReserves,
@@ -403,8 +402,6 @@ contract YieldMathTest is Test {
     //         c,
     //         mu
     //     ) / 1e18;
-    //     console.log("+ + file: YieldMath.t.sol + line 400 + testUnit_fyTokenOutForSharesIn__increaseG + result1", result1);
-    //     console.log("+ + file: YieldMath.t.sol + line 400 + testUnit_fyTokenOutForSharesIn__increaseG + result2", result2);
     //     require(result2 >= result1);
     // }
 

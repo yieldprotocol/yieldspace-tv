@@ -62,7 +62,8 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
         console.log("adds initial liquidity");
 
         vm.prank(bob);
-        shares.transfer(address(pool), INITIAL_YVDAI);
+        uint256 baseIn = pool.unwrapPreview(INITIAL_YVDAI);
+        asset.mint(address(pool), baseIn);
 
         vm.expectEmit(true, true, true, true);
         emit Liquidity(
@@ -70,7 +71,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
             alice,
             bob,
             address(0),
-            int256(-1 * int256(INITIAL_YVDAI)),
+            int256(-1 * int256(baseIn)),
             int256(0),
             int256(INITIAL_YVDAI)
         );
