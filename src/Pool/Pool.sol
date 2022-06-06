@@ -166,25 +166,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 decimals_ = IERC20Like(fyToken_).decimals();
 
         // NOTE: This contract assumes that baseToken and sharesToken both use the same decimals.
-        baseToken = _getBaseAsset(sharesToken_);
         sharesToken = IERC20Like(sharesToken_);
+        baseToken = _getBaseAsset(sharesToken_);
         fyToken = IFYToken(fyToken_);
 
         ts = ts_;
         scaleFactor = uint96(10**(18 - uint96(decimals_))); // No more than 18 decimals allowed, reverts on underflow.
 
-        // The result of this is the same as calling _getC but because we can't access immutables in the constructor
-        // we do it this way.
-        //  1. Get current share price with _getCurrentSharePriceConstructor(sharesToken_).
-        //  2. Scale to 18 decimals.
-        //  3. Convert to 64bit.
-        //  4. Divide by 64bit WAD.
-        // NOTE: We use a different fn here than the normal `getCurrentSharePrice` because we cannot access immutables
-        // in the constructor.  The reason for creating a new fn instead of inlining it here is because modules need to
-        // overwrite this function.
-        mu = ((_getCurrentSharePriceConstructor(sharesToken_) * uint96(10**(18 - uint96(decimals_))))).fromUInt().div(
-            uint256(1e18).fromUInt()
-        );
+        mu = _getC();
 
         // set fees
         if (g1Fee_ > 10000) revert InvalidFee(g1Fee_);
@@ -1231,14 +1220,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     function _getCurrentSharePrice() internal view virtual returns (uint256) {
         uint256 scalar = 10**baseToken.decimals();
         return IERC4626(address(sharesToken)).convertToAssets(scalar);
-    }
-
-    /// Returns the base token current price.
-    /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
-    /// This function should be overriden by modules.
-    /// @return The price of 1 share of a tokenized vault token in terms of its base asset cast as uint256.
-    function _getCurrentSharePriceConstructor(address sharesToken_) internal view virtual returns (uint256) {
-        return IERC4626(sharesToken_).convertToAssets(10**IERC20Like(sharesToken_).decimals());
     }
 
     /// Returns current price of 1 share in 64bit.

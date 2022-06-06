@@ -49,15 +49,6 @@ contract PoolYearnVault is Pool {
         return IYVToken(address(sharesToken)).pricePerShare();
     }
 
-    /// Returns the base token current price.
-    /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
-    /// This function should be overriden by modules.
-    /// @param sharesToken_ Address of Yearn Vault contract to call pricePerShare
-    /// @return The price of 1 share of a tokenized vault token in terms of its underlying base asset.
-    function _getCurrentSharePriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
-        return IYVToken(sharesToken_).pricePerShare();
-    }
-
     /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
