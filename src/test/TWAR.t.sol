@@ -127,7 +127,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
     }
 
     function testUnit_twar3() public {
-        console.log("twar values updated and returned correctly a buy of shares tokens");
+        console.log("twar values updated and returned correctly a buy of base tokens");
 
         // since cumRatLast is on a lag, it should still be zero.
         assertEq(pool.cumulativeRatioLast(), 0);

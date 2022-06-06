@@ -41,16 +41,16 @@ struct ZeroStateParams {
 //   - The shares token is a YVTokenMock cast as IERC20Like.
 //   - The pool is a SyncablePoolYearnVault.sol cast as ISyncablePool.
 // If sharesType is NonTv (not tokenized vault -- regular token):
-//   - The shares token is is the underlying asset token cast as IERC20Like.
+//   - The shares token is is the base asset token cast as IERC20Like.
 //   - The pool is a SyncablePoolNonTv.sol cast as ISyncablePool.
 abstract contract ZeroState is TestCore {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
     constructor(ZeroStateParams memory params) {
-        ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt()); // TODO: UPDATE ME
+        ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
 
-        // Set underlying asset state variables.
+        // Set base asset state variables.
         assetName = params.assetName;
         assetSymbol = params.assetSymbol;
         assetDecimals = params.assetDecimals;

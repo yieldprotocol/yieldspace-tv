@@ -196,6 +196,7 @@ contract Mint__WithLiquidity is WithLiquidity {
 contract Burn__WithLiquidity is WithLiquidity {
     function testUnit_burn1() public {
         console.log("burns liquidity tokens");
+        uint256 bobAssetBefore = asset.balanceOf(address(bob));
         uint256 sharesBalance = shares.balanceOf(address(pool));
         uint256 fyTokenBalance = fyToken.balanceOf(address(pool));
         uint256 poolSup = pool.totalSupply();
@@ -205,6 +206,8 @@ contract Burn__WithLiquidity is WithLiquidity {
 
         // Calculate expected shares and fytokens from the burn.
         uint256 expectedSharesOut = (lpTokensIn * sharesBalance) / poolSup;
+        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
+
         uint256 expectedFYTokenOut = (lpTokensIn * fyTokenBalance) / poolSup;
 
         // Alice transfers in lp tokens then burns them.
@@ -217,7 +220,7 @@ contract Burn__WithLiquidity is WithLiquidity {
             alice,
             bob,
             charlie,
-            int256(expectedSharesOut),
+            int256(expectedAssetsOut),
             int256(expectedFYTokenOut),
             -int256(lpTokensIn)
         );
@@ -227,15 +230,16 @@ contract Burn__WithLiquidity is WithLiquidity {
         pool.burn(bob, address(charlie), 0, MAX);
 
         // Confirm shares and fyToken out as expected and check balances pool and users.
-        uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
+        uint256 assetsOut = asset.balanceOf(address(bob)) - bobAssetBefore;
         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
+        uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
         almostEqual(sharesOut, expectedSharesOut, sharesOut / 10000);
+        almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
         (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
-        // require(shares.balanceOf(bob) - bobSharesInitialBalance == sharesOut);
-        // require(fyToken.balanceOf(address(charlie)) == fyTokenOut);
+        require(fyToken.balanceOf(address(charlie)) == fyTokenOut);
     }
 }

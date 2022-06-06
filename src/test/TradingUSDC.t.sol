@@ -20,6 +20,7 @@ import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
+import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
 import {almostEqual, setPrice} from "./shared/Utils.sol";
 import {IERC4626Mock} from "./mocks/ERC4626TokenMock.sol";
@@ -65,9 +66,11 @@ abstract contract WithExtraFYTokenUSDC is WithLiquidity {
 contract TradeUSDC__WithLiquidity is WithLiquidity {
     using Math64x64 for uint256;
     using Math64x64 for int128;
+    using CastU256U128 for uint256;
+
 
     function testUnit_tradeUSDC01() public {
-        console.log("sells a certain amount of fyToken for shares");
+        console.log("sells a certain amount of fyToken for base");
         uint256 fyTokenIn = 25_000 * 1e6;
 
         fyToken.mint(address(pool), fyTokenIn);
@@ -85,7 +88,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint256 fyTokenIn = 1e6;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 908325, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999157, 340282366920938463463374607431768211455)
         );
         pool.sellFYToken(bob, type(uint128).max);
     }
@@ -109,12 +112,13 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
     // }
 
     function testUnit_tradeUSDC04() public {
-        console.log("buys a certain amount shares for fyToken");
+        console.log("buys a certain amount base for fyToken");
         (,, uint104 fyTokenBalBefore,) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
         uint256 userAssetBefore = asset.balanceOf(bob);
         uint128 sharesOut = uint128(1000 * 1e6);
+        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
@@ -134,7 +138,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         ) / 1e12;
 
         vm.prank(bob);
-        pool.buyBase(bob, uint128(sharesOut), type(uint128).max);
+        pool.buyBase(bob, assetsOut, type(uint128).max);
 
         (,, uint104 fyTokenBal,) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
@@ -152,26 +156,28 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
     }
 
     function testUnit_tradeUSDC05() public {
-        console.log("does not buy shares beyond slippage");
+        console.log("does not buy base beyond slippage");
         uint128 sharesOut = 1e6;
+        uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
         fyToken.mint(address(pool), initialFYTokens);
         vm.expectRevert(
             abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100926, 0)
         );
-        pool.buyBase(bob, sharesOut, 0);
+        pool.buyBase(bob, baseOut, 0);
     }
 
     function testUnit_tradeUSDC06() public {
-        console.log("buys shares and retrieves change");
+        console.log("buys base and retrieves change");
         uint256 bobSharesBefore = shares.balanceOf(bob);
         uint256 bobAssetBefore = asset.balanceOf(bob);
         uint256 aliceFYTokenBefore = fyToken.balanceOf(alice);
         uint128 sharesOut = uint128(1e6);
+        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
 
         fyToken.mint(address(pool), initialFYTokens);
 
         vm.prank(alice);
-        pool.buyBase(bob, sharesOut, uint128(MAX));
+        pool.buyBase(bob, assetsOut, uint128(MAX));
         require(shares.balanceOf(bob) == bobSharesBefore);
         require(asset.balanceOf(bob) == bobAssetBefore + IERC4626Mock(address(shares)).convertToAssets(sharesOut));
 
@@ -224,9 +230,10 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
     }
 
     function testUnit_tradeUSDC08() public {
-        console.log("does not sell shares beyond slippage");
+        console.log("does not sell base beyond slippage");
         uint128 sharesIn = uint128(1e6);
-        shares.mint(address(pool), sharesIn);
+        uint128 assetsIn = uint128(pool.unwrapPreview(sharesIn));
+        asset.mint(address(pool), assetsIn);
         vm.expectRevert(
             abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100837, 340282366920938463463374607431768211455)
         );
@@ -235,12 +242,12 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
     }
 
     function testUnit_tradeUSDC09() public {
-        console.log("donating fyToken does not affect cache balances when selling shares");
-        uint128 sharesIn = uint128(1e6);
+        console.log("donating fyToken does not affect cache balances when selling base");
+        uint128 baseIn = uint128(1e6);
         uint128 fyTokenDonation = uint128(1e6);
 
         fyToken.mint(address(pool), fyTokenDonation);
-        shares.mint(address(pool), sharesIn);
+        asset.mint(address(pool), baseIn);
 
         vm.prank(alice);
         pool.sellBase(bob, 0);
@@ -252,7 +259,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
     }
 
     function testUnit_tradeUSDC10() public {
-        console.log("buys a certain amount of fyTokens with shares");
+        console.log("buys a certain amount of fyTokens with base");
         (,uint104 sharesCachedBefore,,) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(1e6);
@@ -262,7 +269,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10 ** shares.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
 
         // Transfer shares for sale to the pool
-        shares.mint(address(pool), initialShares);
+        asset.mint(address(pool), pool.unwrapPreview(initialShares));
 
         uint256 expectedSharesIn = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -297,9 +304,9 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         console.log("does not buy fyToken beyond slippage");
         uint128 fyTokenOut = uint128(1e6);
 
-        shares.mint(address(pool), initialShares);
+        asset.mint(address(pool), pool.wrapPreview(initialShares));
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 908400, 0)
+            abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999240, 0)
         );
         pool.buyFYToken(alice, fyTokenOut, 0);
     }

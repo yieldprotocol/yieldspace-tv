@@ -44,7 +44,7 @@ contract PoolYearnVault is Pool {
 
     /// Returns the base token current price.
     /// This function should be overriden by modules.
-    /// @return The price of 1 share of a Yearn vault token in terms of its underlying.
+    /// @return The price of 1 share of a Yearn vault token in terms of its underlying base asset.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
         return IYVToken(address(sharesToken)).pricePerShare();
     }
@@ -53,12 +53,12 @@ contract PoolYearnVault is Pool {
     /// @dev This fn is called from the constructor and avoids the use of unitialized immutables.
     /// This function should be overriden by modules.
     /// @param sharesToken_ Address of Yearn Vault contract to call pricePerShare
-    /// @return The price of 1 share of a tokenized vault token in terms of its underlying.
+    /// @return The price of 1 share of a tokenized vault token in terms of its underlying base asset.
     function _getCurrentSharePriceConstructor(address sharesToken_) internal view virtual override returns (uint256) {
         return IYVToken(sharesToken_).pricePerShare();
     }
 
-    /// Internal function for wrapping underlying asset tokens.  This should be overridden by modules.
+    /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
@@ -78,13 +78,13 @@ contract PoolYearnVault is Pool {
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
-    /// @return assets The amount of underlying asset assets sent to the receiver.
+    /// @return assets The amount of base assets sent to the receiver.
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
         assets = IYVToken(address(sharesToken)).withdraw(surplus, receiver);
     }
 
-    /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.
+    /// Internal function to preview how many base tokens will be received when unwrapping a given amount of shares.
     /// @dev This should be overridden by modules.
     /// @param shares The amount of shares to preview a redemption.
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
@@ -92,8 +92,8 @@ contract PoolYearnVault is Pool {
         assets = shares * _getCurrentSharePrice() / 10**IYVToken(address(sharesToken)).decimals();
     }
 
-    /// This is used by the constructor to set the base's underlying asset as immutable.
-    function _getBaseUnderlyingAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
+    /// This is used by the constructor to set the base asset token as immutable.
+    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
         return IERC20Like(address(IYVToken(sharesToken_).token()));
     }
 

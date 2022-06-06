@@ -6,7 +6,6 @@ import "@yield-protocol/vault-interfaces/src/IFYToken.sol";
 import {IERC20Metadata} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 
 interface IPool is IERC20, IERC2612 {
-    // function base() external view returns(IERC20Metadata);  TODO: Alberto is this ok??
     function baseToken() external view returns(IERC20Metadata);
     function base() external view returns(IERC20);
     function burn(address baseTo, address fyTokenTo, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
