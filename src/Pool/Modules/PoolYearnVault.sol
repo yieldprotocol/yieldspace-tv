@@ -14,27 +14,28 @@ import "../../interfaces/IYVToken.sol";
      |_|  |_|\___|_|\__,_|
        yieldprotocol.com
 
-   ██████╗  ██████╗  ██████╗ ██╗  ██╗   ██╗███████╗ █████╗ ██████╗ ███╗   ██╗██╗   ██╗ █████╗ ██╗   ██╗██╗  ████████╗
-   ██╔══██╗██╔═══██╗██╔═══██╗██║  ╚██╗ ██╔╝██╔════╝██╔══██╗██╔══██╗████╗  ██║██║   ██║██╔══██╗██║   ██║██║  ╚══██╔══╝
-   ██████╔╝██║   ██║██║   ██║██║   ╚████╔╝ █████╗  ███████║██████╔╝██╔██╗ ██║██║   ██║███████║██║   ██║██║     ██║
-   ██╔═══╝ ██║   ██║██║   ██║██║    ╚██╔╝  ██╔══╝  ██╔══██║██╔══██╗██║╚██╗██║╚██╗ ██╔╝██╔══██║██║   ██║██║     ██║
-   ██║     ╚██████╔╝╚██████╔╝███████╗██║   ███████╗██║  ██║██║  ██║██║ ╚████║ ╚████╔╝ ██║  ██║╚██████╔╝███████╗██║
-   ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝.SOL
+  ██████╗  ██████╗  ██████╗ ██╗  ██╗   ██╗███████╗ █████╗ ██████╗ ███╗   ██╗██╗   ██╗ █████╗ ██╗   ██╗██╗  ████████╗
+  ██╔══██╗██╔═══██╗██╔═══██╗██║  ╚██╗ ██╔╝██╔════╝██╔══██╗██╔══██╗████╗  ██║██║   ██║██╔══██╗██║   ██║██║  ╚══██╔══╝
+  ██████╔╝██║   ██║██║   ██║██║   ╚████╔╝ █████╗  ███████║██████╔╝██╔██╗ ██║██║   ██║███████║██║   ██║██║     ██║
+  ██╔═══╝ ██║   ██║██║   ██║██║    ╚██╔╝  ██╔══╝  ██╔══██║██╔══██╗██║╚██╗██║╚██╗ ██╔╝██╔══██║██║   ██║██║     ██║
+  ██║     ╚██████╔╝╚██████╔╝███████╗██║   ███████╗██║  ██║██║  ██║██║ ╚████║ ╚████╔╝ ██║  ██║╚██████╔╝███████╗██║
+  ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝.SOL
 
 */
 
 /// Module for using non-4626 compliant Yearn Vault tokens as base for the Yield Protocol Pool.sol AMM contract.
 /// For example, Yearn Vault Dai: https://etherscan.io/address/0xC2cB1040220768554cf699b0d863A3cd4324ce32#readContract
 /// @dev Since Yearn Vault tokens are not currently ERC4626 compliant, this contract inherits the Yield Pool
-/// contract and overwrites the getBaseCurrentPrice() function to call the pricePerShare() function that the
-/// Yearn Vault tokens currently use.  All other functionality of the Yield Pool remains the same.
+/// contract and overwrites the functions that are unique to Yearn Vaults.  For example getBaseCurrentPrice() function
+/// calls the pricePerShare() function.  There is also logic to wrap/unwrap (deposit/redeem) Yearn Vault Tokens.
 /// @title  PoolYearnVault.sol
 /// @dev Deploy pool with Yearn Vault token and associated fyToken.
 /// @author @devtooligan
 contract PoolYearnVault is Pool {
+    using MinimalTransferHelper for IERC20Like;
+
     /* CONSTRUCTOR
      *****************************************************************************************************************/
-
     constructor(
         address base_,
         address fyToken_,
@@ -42,48 +43,50 @@ contract PoolYearnVault is Pool {
         uint16 g1Fee_
     ) Pool(base_, fyToken_, ts_, g1Fee_) {}
 
-    /// Returns the base token current price.
+    /// Returns the current price of one share.
     /// This function should be overriden by modules.
-    /// @return The price of 1 share of a Yearn vault token in terms of its underlying base asset.
+    /// @return The price of 1 share of a Yearn vault token in terms of its underlying base.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
         return IYVToken(address(sharesToken)).pricePerShare();
     }
 
-    /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
+    /// Internal function for wrapping base tokens.  This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
         uint256 baseOut = baseToken.balanceOf(address(this));
+        if (baseOut == 0) return 0;
         baseToken.approve(address(sharesToken), baseOut);
         shares = IYVToken(address(sharesToken)).deposit(baseOut, receiver);
     }
 
-    /// Internal function to preview how many shares will be received when depositing a given amount of assets.
-    /// @param assets The amount of base asset tokens to preview the deposit.
+    /// Internal function to preview how many shares will be received when depositing a given amount of base.
+    /// @param base The amount of base tokens to preview the deposit.
     /// @return shares The amount of shares that would be returned from depositing.
-    function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
-        shares  = assets * 10**IYVToken(address(sharesToken)).decimals() / _getCurrentSharePrice();
+    function _wrapPreview(uint256 base) internal view virtual override returns (uint256 shares) {
+        shares  = base * 10**IYVToken(address(sharesToken)).decimals() / _getCurrentSharePrice();
 
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
-    /// @return assets The amount of base assets sent to the receiver.
-    function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
+    /// @return base The amount of base base sent to the receiver.
+    function _unwrap(address receiver) internal virtual override returns (uint256 base) {
         uint256 surplus = _getSharesBalance() - sharesCached;
-        assets = IYVToken(address(sharesToken)).withdraw(surplus, receiver);
+        if (surplus == 0) return 0;
+        base = IYVToken(address(sharesToken)).withdraw(surplus, receiver);
     }
 
     /// Internal function to preview how many base tokens will be received when unwrapping a given amount of shares.
     /// @dev This should be overridden by modules.
     /// @param shares The amount of shares to preview a redemption.
-    /// @return assets The amount of base asset tokens that would be returned from redeeming.
-    function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
-        assets = shares * _getCurrentSharePrice() / 10**IYVToken(address(sharesToken)).decimals();
+    /// @return base The amount of base tokens that would be returned from redeeming.
+    function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 base) {
+        base = shares * _getCurrentSharePrice() / 10**IYVToken(address(sharesToken)).decimals();
     }
 
-    /// This is used by the constructor to set the base asset token as immutable.
+    /// This is used by the constructor to set the base token as immutable.
     function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
         return IERC20Like(address(IYVToken(sharesToken_).token()));
     }

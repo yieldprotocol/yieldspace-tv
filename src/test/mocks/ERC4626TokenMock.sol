@@ -52,8 +52,15 @@ contract ERC4626TokenMock is Mintable {
     function convertToAssets(uint256 amount) public view virtual returns (uint256) {
         return price * amount / (10 ** decimals);
     }
+    function previewRedeem(uint256 amount) public view virtual returns (uint256) {
+        return convertToAssets(amount);
+    }
     function convertToShares(uint256 amount) public view virtual returns (uint256) {
         return amount * (10 ** decimals) / price;
+    }
+
+    function previewDeposit(uint256 amount) public view virtual returns (uint256) {
+        return convertToShares(amount);
     }
 
     function setPrice(uint256 price_) public {

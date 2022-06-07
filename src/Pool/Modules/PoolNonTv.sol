@@ -14,12 +14,12 @@ import "../../interfaces/IYVToken.sol";
      |_|  |_|\___|_|\__,_|
        yieldprotocol.com
 
- ██████╗  ██████╗  ██████╗ ██╗     ███╗   ██╗ ██████╗ ███╗   ██╗████████╗██╗   ██╗
- ██╔══██╗██╔═══██╗██╔═══██╗██║     ████╗  ██║██╔═══██╗████╗  ██║╚══██╔══╝██║   ██║
- ██████╔╝██║   ██║██║   ██║██║     ██╔██╗ ██║██║   ██║██╔██╗ ██║   ██║   ██║   ██║
- ██╔═══╝ ██║   ██║██║   ██║██║     ██║╚██╗██║██║   ██║██║╚██╗██║   ██║   ╚██╗ ██╔╝
- ██║     ╚██████╔╝╚██████╔╝███████╗██║ ╚████║╚██████╔╝██║ ╚████║   ██║    ╚████╔╝
- ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝     ╚═══╝ .SOL
+  ██████╗  ██████╗  ██████╗ ██╗     ███╗   ██╗ ██████╗ ███╗   ██╗████████╗██╗   ██╗
+  ██╔══██╗██╔═══██╗██╔═══██╗██║     ████╗  ██║██╔═══██╗████╗  ██║╚══██╔══╝██║   ██║
+  ██████╔╝██║   ██║██║   ██║██║     ██╔██╗ ██║██║   ██║██╔██╗ ██║   ██║   ██║   ██║
+  ██╔═══╝ ██║   ██║██║   ██║██║     ██║╚██╗██║██║   ██║██║╚██╗██║   ██║   ╚██╗ ██╔╝
+  ██║     ╚██████╔╝╚██████╔╝███████╗██║ ╚████║╚██████╔╝██║ ╚████║   ██║    ╚████╔╝
+  ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝     ╚═══╝ .SOL
 */
 
 /// Module for using non tokenized vault tokens as "shares" for the Yield Protocol Pool.sol AMM contract.
@@ -28,9 +28,10 @@ import "../../interfaces/IYVToken.sol";
 /// @dev Deploy pool with base token and associated fyToken.
 /// @author @devtooligan
 contract PoolNonTv is Pool {
+    using MinimalTransferHelper for IERC20Like;
+
     /* CONSTRUCTOR
      *****************************************************************************************************************/
-
     constructor(
         address base_,
         address fyToken_,
@@ -48,8 +49,11 @@ contract PoolNonTv is Pool {
     /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
-    function _wrap(address) internal virtual override returns (uint256 shares) {
+    function _wrap(address receiver) internal virtual override returns (uint256 shares) {
         shares = _getSharesBalance() - sharesCached;
+        if (receiver != address(this)) {
+            sharesToken.safeTransfer(receiver, shares);
+        }
     }
 
     /// Internal function to preview how many shares will be received when depositing a given amount of assets.
@@ -62,8 +66,11 @@ contract PoolNonTv is Pool {
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return assets The amount of base assets sent to the receiver.
-    function _unwrap(address) internal virtual override returns (uint256 assets) {
+    function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
         assets = _getSharesBalance() - sharesCached;
+        if (receiver != address(this)) {
+            sharesToken.safeTransfer(receiver, assets);
+        }
     }
 
     /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.

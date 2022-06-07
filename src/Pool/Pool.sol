@@ -416,7 +416,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _mint(to, lpTokensMinted);
 
         // Return any unused base tokens
-        if (sharesBalance > cache.sharesCached + sharesIn) baseToken.safeTransfer(remainder, _unwrap(address(this)));
+        if (sharesBalance > cache.sharesCached + sharesIn) _unwrap(remainder);
 
         emit Liquidity(
             maturity,
@@ -579,10 +579,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Burn and transfer
         _burn(address(this), lpTokensBurned); // This is calling the actual ERC20 _burn.
-
-        // TODO: Consider unwrapping it directly to the user? Security issue?
-        baseOut = _unwrap(address(this));
-        baseToken.safeTransfer(baseTo, baseOut);
+        baseOut = _unwrap(baseTo);
 
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
 
@@ -664,8 +661,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _update(cache.sharesCached - sharesOut, cache.fyTokenCached + fyTokenIn, cache.sharesCached, cache.fyTokenCached);
 
         // Transfer
-        // TODO: Consider unwrapping it directly to the user? Security issue?
-        baseToken.safeTransfer(to, _unwrap(address(this)));
+        _unwrap(to);
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
@@ -966,8 +962,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
 
         // Transfer
-        // TODO: Consider unwrapping it directly to the user? Security issue?
-        baseToken.safeTransfer(to, _unwrap(address(this)));
+        _unwrap(to);
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
@@ -1018,9 +1013,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual returns (uint256 shares) {
-        uint256 baseOut = baseToken.balanceOf(address(this));
-        baseToken.approve(address(sharesToken), baseOut);
-        shares = IERC4626(address(sharesToken)).deposit(baseOut, receiver);
+        uint256 assets = baseToken.balanceOf(address(this));
+        if (assets == 0) {
+            shares = 0;
+        } else {
+            baseToken.approve(address(sharesToken), assets);
+            shares = IERC4626(address(sharesToken)).deposit(assets, receiver);
+        }
     }
 
     /// Preview how many shares will be received when depositing a given amount of base.
@@ -1035,7 +1034,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param assets The amount of base tokens to preview the deposit.
     /// @return shares The amount of shares that would be returned from depositing.
     function _wrapPreview(uint256 assets) internal view virtual returns (uint256 shares) {
-        shares = IERC4626(address(sharesToken)).convertToShares(assets);
+        if (assets == 0) {
+            shares = 0;
+        } else {
+            shares = IERC4626(address(sharesToken)).previewDeposit(assets);
+        }
     }
 
     /// Unwraps base shares found unaccounted for in this contract, converting them to the base assets.
@@ -1052,9 +1055,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return assets The amount of base assets sent to the receiver.
     function _unwrap(address receiver) internal virtual returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
-
-        // The third param of the 4626 redeem fn, `owner`, is always this contract address.
-        assets = IERC4626(address(sharesToken)).redeem(surplus, receiver, address(this));
+        if (surplus == 0) {
+            assets = 0;
+        } else {
+            // The third param of the 4626 redeem fn, `owner`, is always this contract address.
+            assets = IERC4626(address(sharesToken)).redeem(surplus, receiver, address(this));
+        }
     }
 
     /// Preview how many asset tokens will be received when unwrapping a given amount of shares.
@@ -1069,7 +1075,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param shares The amount of shares to preview a redemption.
     /// @return assets The amount of base tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual returns (uint256 assets) {
-        assets = IERC4626(address(sharesToken)).convertToAssets(shares);
+        if (shares == 0) {
+            assets = 0;
+        } else {
+            assets = IERC4626(address(sharesToken)).previewRedeem(shares);
+        }
     }
 
     /// This is used by the constructor to set the base token as immutable.
@@ -1236,7 +1246,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the all storage vars except for cumulativeRatioLast
     /// @return g1Fee  This is a fp4 number where 10_000 is 1.
-    /// @return Cached base token balance.
+    /// @return Cached shares token balance.
     /// @return Cached virtual FY token balance which is the actual balance plus the pool token supply.
     /// @return Timestamp that balances were last cached.
     function getCache()
