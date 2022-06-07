@@ -1217,6 +1217,17 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return sharesToken.balanceOf(address(this)).u104();
     }
 
+    /// Returns the base balance.
+    /// @return The current balance of the pool's base tokens.
+    function getBaseBalance() external view returns (uint256) {
+        return _getBaseBalance();
+    }
+
+    /// Returns the base balance
+    function _getBaseBalance() internal view virtual returns (uint256) {
+        return _getSharesBalance() * _getCurrentSharePrice() / decimals;
+    }
+
     /// Returns the base token current price.
     /// @return The price of 1 share of a tokenized vault token in terms of its base cast as uint256.
     function getCurrentSharePrice() external view returns (uint256) {
