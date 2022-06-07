@@ -68,18 +68,18 @@ contract PoolEuler is Pool {
     }
 
     /// Internal function to preview how many shares will be received when depositing a given amount of assets.
-    /// @param base The amount of base asset tokens to preview the deposit.
+    /// @param assets The amount of base asset tokens to preview the deposit.
     /// @return shares The amount of shares that would be returned from depositing.
-    function _wrapPreview(uint256 base) internal view virtual override returns (uint256 shares) {
+    function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
         // The fn takes amount of shares "in accounting units" which means fp18.
-        shares = (base * 10**IEToken(address(sharesToken)).decimals()) / _getCurrentSharePrice();
+        shares = (assets * 10**IEToken(address(sharesToken)).decimals()) / _getCurrentSharePrice();
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
-    /// @return base The amount of base assets sent to the receiver.
-    function _unwrap(address receiver) internal virtual override returns (uint256 base) {
+    /// @return assets The amount of assets sent to the receiver.
+    function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
         if (surplus == 0) return 0;
 
