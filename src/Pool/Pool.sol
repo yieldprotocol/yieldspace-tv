@@ -1206,14 +1206,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
     }
 
-    /// Returns the base balance.
-    /// @return The current balance of the pool's base tokens.
-    function getSharesBalance() public view virtual override returns (uint104) {
+    /// Returns the shares balance.
+    /// @return The current balance of the pool's shares tokens.
+    function getSharesBalance() external view returns (uint256) {
         return _getSharesBalance();
     }
 
-    /// Returns the base balance
-    function _getSharesBalance() internal view returns (uint104) {
+    /// Returns the shares balance
+    function _getSharesBalance() internal view virtual returns (uint104) {
         return sharesToken.balanceOf(address(this)).u104();
     }
 
