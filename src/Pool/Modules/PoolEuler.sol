@@ -58,12 +58,10 @@ contract PoolEuler is Pool {
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
         uint256 baseOut = baseToken.balanceOf(address(this));
         if (baseOut == 0) return 0;
-        uint256 expectedSharesIn = _wrapPreview(baseOut);
 
         baseToken.approve(address(sharesToken), baseOut);
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
         uint256 sharesReceived = _getSharesBalance() - sharesCached;
-        require(sharesReceived >= expectedSharesIn, "Not enough shares in"); // TODO: ?? rounding?
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, sharesReceived);
         }
@@ -84,14 +82,13 @@ contract PoolEuler is Pool {
     function _unwrap(address receiver) internal virtual override returns (uint256 base) {
         uint256 surplus = _getSharesBalance() - sharesCached;
         if (surplus == 0) return 0;
-        uint256 expectedBaseIn = _unwrapPreview(surplus);
 
         // convert to base
+        uint256 expectedBaseIn = _unwrapPreview(surplus);
         IEToken(address(sharesToken)).withdraw(0, expectedBaseIn); // first param is subaccount, 0 for primary
-        uint256 baseReceived = baseToken.balanceOf(address(this));
-        require(baseReceived >= expectedBaseIn, "Not enough base in"); // TODO: ?? rounding?
+
         if (receiver != address(this)) {
-            baseToken.safeTransfer(receiver, baseReceived);
+            baseToken.safeTransfer(receiver, baseToken.balanceOf(address(this)));
         }
     }
 
