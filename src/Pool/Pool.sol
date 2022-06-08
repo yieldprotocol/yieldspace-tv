@@ -1291,7 +1291,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw
     /// @return The current balance of the pool's fyTokens plus the current balance of the pool's
     /// total supply of LP tokens as a uint104
-    function getFYTokenBalance() public view virtual override returns (uint104) {
+    function getFYTokenBalance() public view virtual override returns (uint256) {
         return _getFYTokenBalance();
     }
 
