@@ -466,7 +466,7 @@ library YieldMath {
     /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
     /// @return result the invariant value
     function invariant(uint128 baseReserves, uint128 fyTokenReserves, uint256 totalSupply, uint128 timeTillMaturity, int128 k)
-        public pure returns(uint128)
+        public pure returns(uint128 result)
     {
         if (totalSupply == 0) return 0;
 
