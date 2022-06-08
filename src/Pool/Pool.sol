@@ -1210,7 +1210,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev Returns uint128 for consistency with getBaseBalance and getFYTokenBalance
     /// @return The current balance of the pool's shares tokens.
     function getSharesBalance() external view returns (uint128) {
-        return _getSharesBalance().u128();
+        return _getSharesBalance;
     }
 
     /// Returns the shares balance
