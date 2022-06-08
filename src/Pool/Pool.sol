@@ -1225,7 +1225,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the base balance
     function _getBaseBalance() internal view virtual returns (uint256) {
-        return _getSharesBalance() * _getCurrentSharePrice() / decimals;
+        return _getSharesBalance() * _getCurrentSharePrice() / 10**baseToken.decimals();
     }
 
     /// Returns the base token current price.

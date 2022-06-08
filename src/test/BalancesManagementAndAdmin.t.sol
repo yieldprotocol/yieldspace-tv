@@ -49,8 +49,7 @@ contract Admin__WithLiquidity is WithLiquidity {
     function testUnit_admin1() public {
         console.log("balance management getters return correct values");
         require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
-        console.log(ERC4626TokenMock(address(shares)).price());
-        console.log(ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals()));
+        require(pool.getBaseBalance() > pool.getSharesBalance());
         require(pool.getCurrentSharePrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals()));
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
         (uint16 g1fee_, uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast) = pool.getCache();
@@ -65,9 +64,7 @@ contract Admin__WithLiquidity is WithLiquidity {
         require(actualCurrentCumulativeRatio == expectedCurrentCumulativeRatio);
         shares.mint(address(pool), 1e18);
         pool.sync();
-        console.log(sharesCached);
         (, uint104 sharesCachedNew, , ) = pool.getCache();
-        console.log(sharesCachedNew);
         require(sharesCachedNew == sharesCached + 1e18);
     }
 
@@ -80,4 +77,5 @@ contract Admin__WithLiquidity is WithLiquidity {
         vm.prank(bob);
         pool.setFees(600);
     }
+
 }
