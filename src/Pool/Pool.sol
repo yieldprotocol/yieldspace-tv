@@ -1210,7 +1210,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev Returns uint128 for consistency with getBaseBalance and getFYTokenBalance
     /// @return The current balance of the pool's shares tokens.
     function getSharesBalance() external view returns (uint128) {
-        return _getSharesBalance;
+        return _getSharesBalance();
     }
 
     /// Returns the shares balance
@@ -1222,7 +1222,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev Returs uint128 for backwards compatibility
     /// @return The current balance of the pool's base tokens.
     function getBaseBalance() external view returns (uint128) {
-        return _getBaseBalance().u128();
+        return _getBaseBalance();
     }
 
     /// Returns the base balance
@@ -1295,7 +1295,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return The current balance of the pool's fyTokens plus the current balance of the pool's
     /// total supply of LP tokens as a uint104
     function getFYTokenBalance() public view virtual override returns (uint128) {
-        return _getFYTokenBalance().u128();
+        return uint128(_getFYTokenBalance());
     }
 
     /// Returns the "virtual" fyToken balance, which is the real balance plus the pool token supply.
