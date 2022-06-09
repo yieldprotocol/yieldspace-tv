@@ -13,7 +13,7 @@ interface IPoolTV is IERC20, IERC2612 {
     function buyBasePreview(uint128 baseOut) external view returns(uint128);
     function buyFYToken(address to, uint128 fyTokenOut, uint128 max) external returns(uint128);
     function buyFYTokenPreview(uint128 fyTokenOut) external view returns(uint128);
-    function currentCumulativeRatio() external returns (uint256 currentCumulativeRatio_, uint256 blockTimestampCurrent);
+    function currentCumulativeRatio() external view returns (uint256 currentCumulativeRatio_, uint256 blockTimestampCurrent);
     function cumulativeRatioLast() external view returns (uint256);
     function fyToken() external view returns(IFYToken);
     function g1() external view returns(int128);
