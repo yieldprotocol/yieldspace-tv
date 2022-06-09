@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.13;
 
-import {IPoolTV as IPool} from "../interfaces/IPool.sol";
+import {IPool} from "../interfaces/IPool.sol";
 import {IPoolOracle} from "../interfaces/IPoolOracle.sol";
 
 /**
