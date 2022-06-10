@@ -37,11 +37,15 @@ contract PoolEuler is Pool {
     /* CONSTRUCTOR
      *****************************************************************************************************************/
     constructor(
+        address eulerAddress,   // The main Euler contract address
         address base_,
         address fyToken_,
         int128 ts_,
         uint16 g1Fee_
-    ) Pool(base_, fyToken_, ts_, g1Fee_) {}
+    ) Pool(base_, fyToken_, ts_, g1Fee_) {
+        // Approve the main Euler contract to take base from the Pool, used on `deposit`.
+        IERC20(base_).approve(eulerAddress, type(uint256).max);
+    }
 
     /// Returns the base token current price.
     /// This function should be overriden by modules.
