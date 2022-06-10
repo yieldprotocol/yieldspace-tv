@@ -86,7 +86,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This pool accepts a pair of base and fyToken tokens.
     /// Whent these are deposited into a tokenized vault they become shares.
     /// It is an ERC20 token.
-    IERC20Like public immutable baseToken; // base
+    IERC20Like public immutable baseToken;
+
+    /// Decimals of base tokens (and shares token, and fyToken).
+    uint256 public immutable baseDecimals;
 
     /// When base comes into this contract it is deposited into a tokenized vault in return for shares.
     /// @dev For most of this contract, only the ERC20 functionality of the shares tokens is required. As such, shares
@@ -163,16 +166,18 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
-        uint256 decimals_ = IERC20Like(fyToken_).decimals();
-
-        // NOTE: This contract assumes that baseToken and sharesToken both use the same decimals.
+        // NOTE: This contract assumes that baseToken, sharesToken and fyToken all use the same decimals.
         sharesToken = IERC20Like(sharesToken_);
-        baseToken = _getBaseAsset(sharesToken_);
+
+        IERC20Like baseToken_ = _getBaseAsset(sharesToken_);
+        baseToken_.approve(sharesToken_, type(uint256).max);
+        baseDecimals = baseToken_.decimals();
+        baseToken = baseToken_;
+
         fyToken = IFYToken(fyToken_);
 
         ts = ts_;
-        scaleFactor = uint96(10**(18 - uint96(decimals_))); // No more than 18 decimals allowed, reverts on underflow.
-
+        scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
         mu = _getC();
 
         // set fees
@@ -1017,7 +1022,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (assets == 0) {
             shares = 0;
         } else {
-            baseToken.approve(address(sharesToken), assets);
             shares = IERC4626(address(sharesToken)).deposit(assets, receiver);
         }
     }
@@ -1227,7 +1231,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the base balance
     function _getBaseBalance() internal view virtual returns (uint256) {
-        return _getSharesBalance() * _getCurrentSharePrice() / 10**baseToken.decimals();
+        return _getSharesBalance() * _getCurrentSharePrice() / 10**baseDecimals;
     }
 
     /// Returns the base token current price.
@@ -1241,7 +1245,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its base asset cast as uint256.
     function _getCurrentSharePrice() internal view virtual returns (uint256) {
-        uint256 scalar = 10**baseToken.decimals();
+        uint256 scalar = 10**baseDecimals;
         return IERC4626(address(sharesToken)).convertToAssets(scalar);
     }
 

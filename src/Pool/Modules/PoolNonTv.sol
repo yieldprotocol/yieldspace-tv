@@ -43,7 +43,7 @@ contract PoolNonTv is Pool {
     /// This function should be overriden by modules.
     /// @return By always returning 1, we can use this module with any non-tokenized vault base such as WETH.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
-        return uint256(10**IERC20Like(address(sharesToken)).decimals());
+        return uint256(10**baseDecimals);
     }
 
     /// Internal function for wrapping base asset tokens.  This should be overridden by modules.

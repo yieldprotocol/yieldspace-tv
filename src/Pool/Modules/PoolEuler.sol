@@ -59,7 +59,6 @@ contract PoolEuler is Pool {
         uint256 baseOut = baseToken.balanceOf(address(this));
         if (baseOut == 0) return 0;
 
-        baseToken.approve(address(sharesToken), baseOut);
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
         uint256 sharesReceived = _getSharesBalance() - sharesCached;
         if (receiver != address(this)) {
@@ -72,7 +71,7 @@ contract PoolEuler is Pool {
     /// @return shares The amount of shares that would be returned from depositing.
     function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
         // The fn takes amount of shares "in accounting units" which means fp18.
-        shares = (assets * 10**IEToken(address(sharesToken)).decimals()) / _getCurrentSharePrice();
+        shares = (assets * 10**decimals) / _getCurrentSharePrice();
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
@@ -97,7 +96,7 @@ contract PoolEuler is Pool {
     /// @param shares The amount of shares to preview a redemption.
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
-        assets = (shares * _getCurrentSharePrice()) / 10**IEToken(address(sharesToken)).decimals();
+        assets = (shares * _getCurrentSharePrice()) / 10**decimals;
     }
 
     /// This is used by the constructor to set the base asset token as immutable.
