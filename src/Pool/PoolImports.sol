@@ -21,5 +21,5 @@ import {IERC4626} from  "../interfaces/IERC4626.sol";
 import {IFYToken} from  "@yield-protocol/vault-interfaces/src/IFYToken.sol";
 import {ERC20Permit} from  "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
 import {AccessControl} from  "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
-import {ERC20, IERC20Metadata as IERC20Like} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
+import {ERC20, IERC20Metadata as IERC20Like, IERC20} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 import {MinimalTransferHelper} from  "@yield-protocol/utils-v2/contracts/token/MinimalTransferHelper.sol";

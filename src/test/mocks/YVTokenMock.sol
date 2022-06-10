@@ -6,6 +6,8 @@ import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Met
 
 import {IYVToken} from "../../interfaces/IYVToken.sol";
 
+import "forge-std/console.sol";
+
 abstract contract Mintable is ERC20 {
     /// @dev Give tokens to whoever asks for them.
     function mint(address to, uint256 amount) public virtual {
@@ -23,17 +25,17 @@ contract YVTokenMock is Mintable {
 
     function deposit(uint256 deposited, address to) public returns (uint256 minted) {
         token.transferFrom(msg.sender, address(this), deposited);
-        minted = deposited * decimals / price;
+        minted = deposited * 10**decimals / price;
         _mint(to, minted);
     }
 
     function withdraw(uint256 withdrawn, address to) public returns (uint256 obtained) {
-        obtained = withdrawn * price / decimals;
+        obtained = withdrawn * price / 10**decimals;
         _burn(msg.sender, withdrawn);
         token.transfer(to, obtained);
     }
 
-    function getPricePerFullShare() public view virtual returns (uint256) {
+    function pricePerShare() public view virtual returns (uint256) {
         return price;
     }
 

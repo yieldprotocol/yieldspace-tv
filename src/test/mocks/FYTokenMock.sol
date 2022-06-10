@@ -17,8 +17,8 @@ contract FYTokenMock is ERC20Permit, Mintable {
         uint32 maturity_
     )
         ERC20Permit(
-            name_, // should this be generated based on YVToken metadata?
-            symbol_, // should this be generated based on YVToken metadata?
+            name_,
+            symbol_,
             IERC20Metadata(yearnVault_).decimals()
     ) {
         yearnVault = YVTokenMock(yearnVault_);
