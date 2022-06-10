@@ -21,7 +21,7 @@ function almostEqual(
 }
 
 function setPrice(address token, uint256 price) {
-    // setPrice() appears on both ERC4626TokenMock and YVTokenMock
+    // setPrice() appears on both ERC4626TokenMock and other mocks
     // so this fn can be used to set price on either
     IERC4626Mock(token).setPrice(price);
 

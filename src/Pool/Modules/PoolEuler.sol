@@ -26,8 +26,7 @@ import "../../interfaces/IEToken.sol";
 /// Module for using non-4626 compliant Euler etokens as base for the Yield Protocol Pool.sol AMM contract.
 /// Adapted from: https://docs.euler.finance/developers/integration-guide
 /// @dev Since Euler "eTokens" are not currently ERC4626 compliant, this contract inherits the Yield Pool
-/// contract and overwrites the functions that are unique to Yearn Vaults.  For example getBaseCurrentPrice() function
-/// calls the convertUnderlyingToBalance() fn. There is also logic to wrap/unwrap (deposit/withdraw) eTokens.
+/// contract and overwrites the functions that are unique to Euler.
 /// @title  PoolEuler.sol
 /// @dev Deploy pool with Euler Pool contract and associated fyToken.
 /// @author @devtooligan
@@ -47,9 +46,8 @@ contract PoolEuler is Pool {
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a Euler token in terms of its underlying base asset.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
-        // The fn takes amount of shares "in accounting units" which means fp18.
         // The return is in the decimals of the underlying.
-        return IEToken(address(sharesToken)).convertBalanceToUnderlying(1e18);
+        return IEToken(address(sharesToken)).convertBalanceToUnderlying(10**baseDecimals);
     }
 
     /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
@@ -70,8 +68,7 @@ contract PoolEuler is Pool {
     /// @param assets The amount of base asset tokens to preview the deposit.
     /// @return shares The amount of shares that would be returned from depositing.
     function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
-        // The fn takes amount of shares "in accounting units" which means fp18.
-        shares = (assets * 10**decimals) / _getCurrentSharePrice();
+        shares = IEToken(address(sharesToken)).convertUnderlyingToBalance(assets);
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
@@ -83,8 +80,8 @@ contract PoolEuler is Pool {
         if (surplus == 0) return 0;
 
         // convert to base
-        uint256 expectedBaseIn = _unwrapPreview(surplus);
-        IEToken(address(sharesToken)).withdraw(0, expectedBaseIn); // first param is subaccount, 0 for primary
+        assets = _unwrapPreview(surplus);
+        IEToken(address(sharesToken)).withdraw(0, assets); // first param is subaccount, 0 for primary
 
         if (receiver != address(this)) {
             baseToken.safeTransfer(receiver, baseToken.balanceOf(address(this)));
@@ -96,7 +93,7 @@ contract PoolEuler is Pool {
     /// @param shares The amount of shares to preview a redemption.
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
-        assets = (shares * _getCurrentSharePrice()) / 10**decimals;
+        assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(shares);
     }
 
     /// This is used by the constructor to set the base asset token as immutable.

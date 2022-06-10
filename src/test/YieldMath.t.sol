@@ -1056,7 +1056,6 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        console.log("+ + file: YieldMath.t.sol + line 1060 + testUnit_fyTokenInForSharesOut__noFees2 + result", result);
         uint128 result2 = YieldMath.fyTokenOutForSharesIn(
             sharesReserves - sharesAmount,
             fyTokenReserves + result,

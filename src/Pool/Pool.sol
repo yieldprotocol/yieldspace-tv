@@ -1031,7 +1031,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param assets The amount of base tokens to preview the deposit.
     /// @return shares The amount of shares that would be returned from depositing.
     function wrapPreview(uint256 assets) external view returns (uint256 shares) {
-        shares = IERC4626(address(sharesToken)).convertToShares(assets);
+        shares = _wrapPreview(assets);
     }
 
     /// Internal function to preview how many shares will be received when depositing a given amount of assets.

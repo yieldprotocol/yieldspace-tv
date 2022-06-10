@@ -16,10 +16,12 @@ import {SyncablePool} from "../mocks/SyncablePool.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {YVTokenMock} from "../mocks/YVTokenMock.sol";
+import {ETokenMock} from "../mocks/ETokenMock.sol";
 import {IERC20Like} from "../../interfaces/IERC20Like.sol";
 import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
 import {SyncablePoolNonTv} from "../mocks/SyncablePoolNonTv.sol";
 import {SyncablePoolYearnVault} from "../mocks/SyncablePoolYearnVault.sol";
+import {SyncablePoolEuler} from "../mocks/SyncablePoolEuler.sol";
 import {AccessControl} from "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
 
 bytes4 constant ROOT = 0x00000000;
@@ -33,13 +35,16 @@ struct ZeroStateParams {
 
 // ZeroState is the initial state of the protocol without any testable actions or state changes having taken place.
 // Mocks are created, roles are granted, balances and initial prices are set.
-// There is some complexity around sharesType ("4626" or "YearnVault").
+// There is some complexity around sharesType ("4626" "EulerVault" "YearnVault").
 // If sharesType is 4626:
 //   - The shares token is a ERC4626TokenMock cast as IERC20Like.
 //   - The pool is a SyncablePool.sol cast as ISyncablePool.
 // If sharesType is YearnVault:
 //   - The shares token is a YVTokenMock cast as IERC20Like.
 //   - The pool is a SyncablePoolYearnVault.sol cast as ISyncablePool.
+// If sharesType is Euler:
+//   - The shares token is a ETokenMock cast as IERC20Like.
+//   - The pool is a SyncablePoolEuler.sol cast as ISyncablePool.
 // If sharesType is NonTv (not tokenized vault -- regular token):
 //   - The shares token is is the base asset token cast as IERC20Like.
 //   - The pool is a SyncablePoolNonTv.sol cast as ISyncablePool.
@@ -96,11 +101,14 @@ abstract contract ZeroState is TestCore {
             if (sharesType == TYPE_YV) {
                 shares = IERC20Like(address(new YVTokenMock(sharesName, sharesSymbol, assetDecimals, address(asset))));
             }
+            if (sharesType == TYPE_EULER) {
+                shares = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, assetDecimals, address(asset))));
+            }
             setPrice(address(shares), (muNumerator * (10**assetDecimals)) / muDenominator);
             asset.mint(address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 
-        // Create fyToken (e.g. "fyyvDAI").
+        // Create fyToken (e.g. "fyDAI").
         fyToken = new FYTokenMock(fyName, fySymbol, address(shares), maturity);
 
         // Setup users, and give them some shares.
@@ -117,6 +125,9 @@ abstract contract ZeroState is TestCore {
         }
         if (sharesType == TYPE_YV) {
             pool = new SyncablePoolYearnVault(address(shares), address(fyToken), ts, g1Fee);
+        }
+        if (sharesType == TYPE_EULER) {
+            pool = new SyncablePoolEuler(address(shares), address(fyToken), ts, g1Fee);
         }
         if (sharesType == TYPE_NONTV) {
             pool = new SyncablePoolNonTv(address(shares), address(fyToken), ts, g1Fee);
