@@ -267,22 +267,10 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
     }
 
 
-    // TODO: Do we still need this test?  If so needs to be rewritten.
+    // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
+    // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_NonTv_tradeDAI03() public {
     //     console.log("donating shares does not affect cache balances when selling fyToken");
-    //     uint256 sharesDonation = WAD;
-    //     uint256 fyTokenIn = WAD;
-
-    //     shares.mint(address(pool), sharesDonation);
-    //     fyToken.mint(address(pool), fyTokenIn);
-
-    //     vm.prank(bob);
-    //     pool.sellFYToken(bob, 0);
-
-    //     (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
-    //     require(sharesBal == pool.getSharesBalance());
-    //     require(fyTokenBal == pool.getFYTokenBalance());
-    // }
 
     function testUnit_NonTv_tradeDAI04() public {
         console.log("buys a certain amount shares for fyToken");

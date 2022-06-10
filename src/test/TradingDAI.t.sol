@@ -115,26 +115,10 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         pool.sellFYToken(bob, type(uint128).max);
     }
 
-    // TODO: Do we still need this test since update is removed?  If so needs to be rewritten.
+    // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
+    // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_tradeDAI03() public {
     //     console.log("donating shares does not affect cache balances when selling fyToken");
-
-    //     uint256 sharesDonation = WAD;
-    //     uint256 fyTokenIn = WAD;
-
-    //     // Donate shares and fyToken to pool.
-    //     shares.mint(address(pool), sharesDonation);
-    //     fyToken.mint(address(pool), fyTokenIn);
-
-    //     // Bob calls sellFYToken
-    //     vm.prank(bob);
-    //     pool.sellFYToken(bob, 0);
-
-    //     // Check cached balances are udpated correctly.
-    //     (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
-    //     require(sharesBal == pool.getSharesBalance() - sharesDonation);
-    //     require(fyTokenBal == pool.getFYTokenBalance());
-    // }
 
     function testUnit_tradeDAI04() public {
         console.log("buys a certain amount base for fyToken");
@@ -203,40 +187,10 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         pool.buyBase(bob, baseOut, 0);
     }
 
-    // TODO: Do we still need this test since update is removed?  If so needs to be rewritten.
+    // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
+    // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_tradeDAI06() public {
     //     console.log("when buying shares, donating fyToken and extra shares doesn't get absorbed and the shares is unwrapped and sent back");
-    //     // TODO: Not sure this tests is necessary as the dynamics have changed.  Here is what the old test did:
-    //     // console.log("when buying shares, donating fyToken and extra shares doesn't get absorbed and can be retrieved");
-    //     uint256 aliceSharesBefore = shares.balanceOf(alice);
-    //     uint256 bobSharesBefore = shares.balanceOf(bob);
-    //     uint256 bobAssetBefore = asset.balanceOf(bob);
-    //     uint256 aliceFYTokenBefore = fyToken.balanceOf(alice);
-    //     uint128 sharesOut = uint128(WAD * 10);
-    //     uint128 baseOut = pool.wrapPreview(uint256(sharesOut)).u128();
-    //     uint128 expectedFYTokenIn = pool.buyBasePreview(sharesOut);
-    //     uint128 extraFYToken = uint128(5 * 1e17); // half wad
-    //     uint128 extraShares = uint128(WAD) * 5;
-
-
-    //     // Send some fyTokens to the pool.
-    //     fyToken.mint(address(pool), expectedFYTokenIn + extraFYToken);
-    //     shares.mint(address(pool), extraShares);
-
-    //     // Alice call buyBase, check balances are as expected.
-    //     vm.startPrank(alice);
-    //     pool.buyBase(bob, baseOut, uint128(MAX));
-    //     require(shares.balanceOf(bob) == bobSharesBefore);
-    //     (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
-    //     require(sharesBal == pool.getSharesBalance());
-    //     require(fyTokenBal == pool.getFYTokenBalance() - extraFYToken);
-    //     require(asset.balanceOf(bob) == bobAssetBefore + IERC4626Mock(address(shares)).convertToAssets(sharesOut + extraShares));
-    //     pool.retrieveFYToken(alice);
-    //     require(sharesBal == pool.getSharesBalance());
-    //     require(fyTokenBal == pool.getFYTokenBalance());
-
-    //     require(fyToken.balanceOf(alice) == aliceFYTokenBefore + extraFYToken);
-    // }
 }
 
 contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
@@ -381,34 +335,10 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 
-    // TODO: Do we still need this test since update is removed?  If so needs to be rewritten.
+    // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
+    // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_tradeDAI12() public {
     //     console.log("donating fyToken and extra shares doesn't get absorbed into the cache when buying fyTokens");
-    //     uint256 sharesBalance = pool.getSharesBalance();
-    //     uint256 fyTokenBalance = pool.getFYTokenBalance();
-    //     (, uint104 sharesCachedBefore,,) = pool.getCache();
-
-    //     uint128 fyTokenOut = uint128(WAD * 10);
-    //     uint128 expectedSharesIn = pool.buyFYTokenPreview(fyTokenOut);
-    //     uint128 extraShares = uint128(WAD) * 5;
-    //     uint128 extraFYToken = uint128(5 * 1e17); // half wad
-
-    //    // Send some shares to the pool.
-    //     shares.mint(address(pool), expectedSharesIn + extraShares);
-    //     fyToken.mint(address(pool), extraFYToken);
-    //     require(pool.getSharesBalance() == sharesBalance + extraShares + expectedSharesIn);
-
-    //     // Alice does buyFYToken. Confirm caches and balances.
-    //     vm.prank(alice);
-    //     pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
-    //     require(pool.getSharesBalance() == sharesBalance + extraShares + expectedSharesIn);
-    //     (, uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,) = pool.getCache();
-    //     uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
-    //     require(sharesCachedCurrent == sharesBalance + sharesIn);
-    //     require(sharesCachedCurrent + extraShares == pool.getSharesBalance());
-    //     require(fyTokenCachedCurrent == fyTokenBalance - fyTokenOut);
-    //     require(fyTokenCachedCurrent + extraFYToken== pool.getFYTokenBalance());
-    // }
 }
 
 
