@@ -83,7 +83,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -105,7 +105,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
 
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -122,7 +122,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
         vm.prank(alice);
         pool.sync();
 
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -150,7 +150,7 @@ contract Mint__WithLiquidityYearnVault is WithLiquidityYearnVault {
         require(shares.balanceOf(bob) == bobSharesInitialBalance);
         require(asset.balanceOf(bob) == bobAssetBefore + YVTokenMock(address(shares)).pricePerShare()); // 1wad converted
 
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
 
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
@@ -195,7 +195,7 @@ contract Burn__WithLiquidityYearnVault is WithLiquidityYearnVault {
         almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
         require(shares.balanceOf(bob) == bobSharesInitialBalance);
@@ -262,7 +262,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         vm.prank(alice);
         pool.sellFYToken(bob, 0);
 
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -284,7 +284,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
     function testUnit_YearnVault_tradeDAI04() public {
         console.log("buys a certain amount base for fyToken");
-        (, , uint104 fyTokenBalBefore,) = pool.getCache();
+        (,uint104 fyTokenBalBefore,,) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
         uint256 userAssetBefore = asset.balanceOf(bob);
@@ -313,7 +313,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         vm.prank(bob);
         pool.buyBase(bob, uint128(assetsOut), type(uint128).max);
 
-        (, , uint104 fyTokenBal,) = pool.getCache();
+        (, uint104 fyTokenBal,,) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
@@ -322,7 +322,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         almostEqual(fyTokenIn, expectedFYTokenIn, sharesOut / 1000000);
 
-        (, uint104 sharesBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
@@ -354,7 +354,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         require(shares.balanceOf(bob) == userSharesBefore);
         require(asset.balanceOf(bob) == userAssetBefore + assetsOut);
 
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal != pool.getFYTokenBalance());
 
@@ -402,7 +402,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
         require(fyTokenOut == expectedFYTokenOut);
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -431,7 +431,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.prank(alice);
         pool.sellBase(bob, 0);
 
-        (, uint104 sharesBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
@@ -439,7 +439,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
     function testUnit_YearnVault_tradeDAI10() public {
         console.log("buys a certain amount of fyTokens with base");
-        (, uint104 sharesCachedBefore,,) = pool.getCache();
+        (uint104 sharesCachedBefore,,,) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(WAD);
 
@@ -469,7 +469,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (, uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
 
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
         uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
@@ -499,7 +499,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         console.log("donates base and buys fyToken");
         uint256 sharesBalances = pool.getSharesBalance();
         uint256 fyTokenBalances = pool.getFYTokenBalance();
-        (, uint104 sharesCachedBefore,,) = pool.getCache();
+        (uint104 sharesCachedBefore,,,) = pool.getCache();
 
         uint128 fyTokenOut = uint128(WAD);
         uint128 baseDonation = pool.unwrapPreview(uint128(WAD)).u128();
@@ -508,7 +508,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (, uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
 
         require(sharesCachedCurrent == sharesBalances + sharesIn);
