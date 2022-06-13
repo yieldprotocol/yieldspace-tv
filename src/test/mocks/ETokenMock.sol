@@ -2,6 +2,7 @@
 pragma solidity >=0.8.13;
 import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
+import {EulerMock} from "./EulerMock.sol";
 
 abstract contract Mintable is ERC20 {
     /// @dev Give tokens to whoever asks for them.
@@ -12,14 +13,17 @@ abstract contract Mintable is ERC20 {
 
 contract ETokenMock is Mintable {
     IERC20Metadata internal _underlyingAsset;
+    EulerMock public euler;
     uint256 public price;
 
     constructor(
         string memory name,
         string memory symbol,
         uint8 decimals,
+        address euler_,
         address underlyingAsset_
     ) ERC20(name, symbol, decimals) {
+        euler = EulerMock(euler_);
         _underlyingAsset = IERC20Metadata(underlyingAsset_);
     }
 
@@ -42,7 +46,7 @@ contract ETokenMock is Mintable {
     /// @param amount In underlying units (use max uint256 for full underlying token balance).
     /// subAccountId is the id of optional subaccounts that can be used by the depositor.
     function deposit(uint256, uint256 amount) external {
-        _underlyingAsset.transferFrom(msg.sender, address(this), amount);
+        euler.move(_underlyingAsset, msg.sender, address(this), amount);
         uint256 minted = convertUnderlyingToBalance(amount);
         _mint(msg.sender, minted);
     }
