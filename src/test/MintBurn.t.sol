@@ -95,7 +95,7 @@ contract Mint__ZeroState is ZeroStateDai {
 
         // Confirm balance of pool as expected, as well as cached balances.
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
-        (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -122,7 +122,7 @@ contract Mint__ZeroState is ZeroStateDai {
 
         // Confirm balance of pool as expected, as well as cached balances.
         require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
-        (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -143,7 +143,7 @@ contract Mint__ZeroState is ZeroStateDai {
         pool.sync();
 
         // Confirm balance of pool as expected, as well as cached balances.
-        (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -178,7 +178,7 @@ contract Mint__WithLiquidity is WithLiquidity {
         almostEqual(shares.balanceOf(bob), bobSharesInitialBalance, fyTokenIn / 10000);
         almostEqual(asset.balanceOf(bob), pool.getCurrentSharePrice(), fyTokenIn / 10000);
 
-        (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -237,7 +237,7 @@ contract Burn__WithLiquidity is WithLiquidity {
         almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
-        (, uint104 sharesBal, uint104 fyTokenBal, ) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
         require(fyToken.balanceOf(address(charlie)) == fyTokenOut);

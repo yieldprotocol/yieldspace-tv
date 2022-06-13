@@ -98,7 +98,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         pool.sellFYToken(bob, 0);
 
         // Confirm cached balances are updated properly.
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -122,7 +122,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
 
     function testUnit_tradeDAI04() public {
         console.log("buys a certain amount base for fyToken");
-        (, , uint104 fyTokenBalBefore,) = pool.getCache();
+        (, uint104 fyTokenBalBefore,,) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
         uint256 userAssetBefore = asset.balanceOf(bob);
@@ -157,7 +157,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         pool.buyBase(bob, uint128(baseOut), type(uint128).max);
 
         // Check cached balances are udpated correctly.
-        (, , uint104 fyTokenBal,) = pool.getCache();
+        (, uint104 fyTokenBal,,) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
@@ -166,7 +166,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
 
         almostEqual(fyTokenIn, expectedFYTokenIn, sharesOut / 1000000);
 
-        (, uint104 sharesBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
@@ -235,7 +235,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
         require(aliceBeginningSharesBal == shares.balanceOf(alice), "'From' wallet should have not increase shares tokens");
         require(fyTokenOut == expectedFYTokenOut);
-        (, uint104 sharesBal, uint104 fyTokenBal,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -268,7 +268,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         vm.prank(alice);
         pool.sellBase(bob, 0);
 
-        (, uint104 sharesBalAfter, uint104 fyTokenBalAfter,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
@@ -276,7 +276,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
 
     function testUnit_tradeDAI10() public {
         console.log("buys a certain amount of fyTokens with base");
-        (, uint104 sharesCachedBefore,,) = pool.getCache();
+        (uint104 sharesCachedBefore,,,) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(WAD);
 
@@ -306,7 +306,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (, uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
 
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
         uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;

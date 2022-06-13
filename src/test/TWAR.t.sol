@@ -63,7 +63,7 @@ contract TWAR__ZeroState is ZeroStateDai {
         assertEq(pool.cumulativeRatioLast(), 0);
 
         // since time has lapsed, currentCumRat should be increased
-        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         (uint256 currCumRat2, uint256 btimestamp2) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
@@ -121,7 +121,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
     }
@@ -167,7 +167,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 sharesReserves_, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves_, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves_, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
@@ -205,7 +205,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
@@ -256,7 +256,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 sharesReserves_, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves_, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves_, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
@@ -294,7 +294,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 
@@ -330,7 +330,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
-        (, uint104 sharesReserves, uint104 fyTokenReserves, ) = pool.getCache();
+        (uint104 sharesReserves, uint104 fyTokenReserves,, ) = pool.getCache();
         uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
 

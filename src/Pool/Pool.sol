@@ -1262,22 +1262,22 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
-    /// @return g1Fee  This is a fp4 number where 10_000 is 1.
     /// @return Cached shares token balance.
     /// @return Cached virtual FY token balance which is the actual balance plus the pool token supply.
     /// @return Timestamp that balances were last cached.
+    /// @return g1Fee  This is a fp4 number where 10_000 is 1.
     function getCache()
         public
         view
         virtual
         returns (
-            uint16,
             uint104,
             uint104,
-            uint32
+            uint32,
+            uint16
         )
     {
-        return (g1Fee, sharesCached, fyTokenCached, blockTimestampLast);
+        return (sharesCached, fyTokenCached, blockTimestampLast, g1Fee);
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
