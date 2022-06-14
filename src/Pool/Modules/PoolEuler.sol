@@ -33,8 +33,6 @@ import "../../interfaces/IEToken.sol";
 contract PoolEuler is Pool {
     using MinimalTransferHelper for IERC20Like;
 
-    /* CONSTRUCTOR
-     *****************************************************************************************************************/
     constructor(
         address euler_,   // The main Euler contract address
         address eToken_,
@@ -44,6 +42,17 @@ contract PoolEuler is Pool {
     ) Pool(eToken_, fyToken_, ts_, g1Fee_) {
         // Approve the main Euler contract to take base from the Pool, used on `deposit`.
         _getBaseAsset(eToken_).approve(euler_, type(uint256).max);
+    }
+
+    /// **This function is intentionally empty to overwrite the Pool._approveSharesToken fn.**
+    /// This is normally used by Pool.constructor give max approval to sharesToken, but Euler tokens require approval
+    /// of the main Euler contract -- not of the individual sharesToken contracts. The required approval is given above
+    /// in the constructor.
+    function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual override {}
+
+    /// This is used by the constructor to set the base asset token as immutable.
+    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
+        return IERC20Like(address(IEToken(sharesToken_).underlyingAsset()));
     }
 
     /// Returns the base token current price.
@@ -98,10 +107,5 @@ contract PoolEuler is Pool {
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
         assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(shares);
-    }
-
-    /// This is used by the constructor to set the base asset token as immutable.
-    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
-        return IERC20Like(address(IEToken(sharesToken_).underlyingAsset()));
     }
 }

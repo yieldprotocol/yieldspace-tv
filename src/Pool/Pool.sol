@@ -144,7 +144,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return a fixed point factor with 27 decimals (ray).
     uint256 public cumulativeRatioLast;
 
-    /* CONSTRUCTOR
+    /* CONSTRUCTOR FUNCTIONS
      *****************************************************************************************************************/
     constructor(
         address sharesToken_, //    address of shares token
@@ -162,28 +162,44 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            /  ` /  \ |\ | /__`  |  |__) |  | /  `  |  /  \ |__)
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
-        // Set immutables
 
+        // Set maturity and check to make sure its not 2107 yet.
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
-        // NOTE: This contract assumes that baseToken, sharesToken and fyToken all use the same decimals.
+        // Set sharesToken. NOTE: This contract assumes that baseToken, sharesToken and fyToken all use the same decimals.
         sharesToken = IERC20Like(sharesToken_);
 
+        // Cache baseToken to save loads of SLOADs.
         IERC20Like baseToken_ = _getBaseAsset(sharesToken_);
-        baseToken_.approve(sharesToken_, type(uint256).max);
+
+        // Call approve hook for sharesToken.
+        _approveSharesToken(baseToken_, sharesToken_);
+
+        // Set remaining immutables.
         baseDecimals = baseToken_.decimals();
         baseToken = baseToken_;
-
         fyToken = IFYToken(fyToken_);
-
         ts = ts_;
         scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
         mu = _getC();
 
-        // set fees
+        // Set g1Fee state variable.
         if (g1Fee_ > 10000) revert InvalidFee(g1Fee_);
         g1Fee = g1Fee_;
         emit FeesSet(g1Fee_);
+    }
+
+    /// This is used by the constructor to set the base token as immutable.
+    /// @dev This should be overridden by modules.
+    /// We use the IERC20Like interface, but this should be an ERC20 asset per EIP4626.
+    function _getBaseAsset(address sharesToken_) internal virtual returns (IERC20Like) {
+        return IERC20Like(address(IERC4626(sharesToken_).asset()));
+    }
+
+    /// This is used by the constructor give max approval to sharesToken.
+    /// @dev This should be overridden by modules if neeeded.
+    function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
+        baseToken_.approve(sharesToken_, type(uint256).max);
     }
 
     /* LIQUIDITY FUNCTIONS
@@ -1013,8 +1029,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         shares = _wrap(receiver);
     }
 
-    /// Internal function for wrapping base tokens.  This should be overridden by modules.
-    /// It wraps the entire balance of base found in this contract.
+    /// Internal function for wrapping base tokens whichwraps the entire balance of base found in this contract.
+    /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual returns (uint256 shares) {
@@ -1084,13 +1100,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         } else {
             assets = IERC4626(address(sharesToken)).previewRedeem(shares);
         }
-    }
-
-    /// This is used by the constructor to set the base token as immutable.
-    /// This should be overridden by modules.
-    /// @dev We use the IERC20Like interface, but this should be an ERC20 asset per EIP4626.
-    function _getBaseAsset(address sharesToken_) internal virtual returns (IERC20Like) {
-        return IERC20Like(address(IERC4626(sharesToken_).asset()));
     }
 
     /* BALANCES MANAGEMENT AND ADMINISTRATIVE FUNCTIONS

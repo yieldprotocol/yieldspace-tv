@@ -34,14 +34,17 @@ import "../../interfaces/IYVToken.sol";
 contract PoolYearnVault is Pool {
     using MinimalTransferHelper for IERC20Like;
 
-    /* CONSTRUCTOR
-     *****************************************************************************************************************/
     constructor(
         address base_,
         address fyToken_,
         int128 ts_,
         uint16 g1Fee_
     ) Pool(base_, fyToken_, ts_, g1Fee_) {}
+
+    /// This is used by the constructor to set the base token as immutable.
+    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
+        return IERC20Like(address(IYVToken(sharesToken_).token()));
+    }
 
     /// Returns the current price of one share.
     /// This function should be overriden by modules.
@@ -84,10 +87,4 @@ contract PoolYearnVault is Pool {
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 base_) {
         base_ = shares * _getCurrentSharePrice() / 10**baseDecimals;
     }
-
-    /// This is used by the constructor to set the base token as immutable.
-    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
-        return IERC20Like(address(IYVToken(sharesToken_).token()));
-    }
-
 }
