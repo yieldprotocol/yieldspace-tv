@@ -189,17 +189,17 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         emit FeesSet(g1Fee_);
     }
 
+    /// This is used by the constructor give max approval to sharesToken.
+    /// @dev This should be overridden by modules if neeeded.
+    function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
+        baseToken_.approve(sharesToken_, type(uint256).max);
+    }
+
     /// This is used by the constructor to set the base token as immutable.
     /// @dev This should be overridden by modules.
     /// We use the IERC20Like interface, but this should be an ERC20 asset per EIP4626.
     function _getBaseAsset(address sharesToken_) internal virtual returns (IERC20Like) {
         return IERC20Like(address(IERC4626(sharesToken_).asset()));
-    }
-
-    /// This is used by the constructor give max approval to sharesToken.
-    /// @dev This should be overridden by modules if neeeded.
-    function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
-        baseToken_.approve(sharesToken_, type(uint256).max);
     }
 
     /* LIQUIDITY FUNCTIONS
@@ -397,9 +397,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 sharesIn;
         if (supply == 0) {
             // **First mint**
-            // Initialize at 1 pool token minted per share
+            // Initialize at 1 pool token TODO: UPDATE ME minted per share
             sharesIn = sharesBalance;
-            lpTokensMinted = sharesIn;
+            lpTokensMinted = sharesIn * (mu.mul(uint(1e18).fromUInt()).toUInt()) / 1e18;
         } else if (realFYTokenCached_ == 0) {
             // Edge case, no fyToken in the Pool after initialization
             sharesIn = sharesBalance - cache.sharesCached;
