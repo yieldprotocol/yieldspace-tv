@@ -81,17 +81,17 @@ contract YieldMathTest is Test {
 
     int128 immutable k;
 
-    uint256 public constant gNumerator = 95;
+    uint256 public constant gNumerator = 75;
     uint256 public constant gDenominator = 100;
     int128 public g1; // g to use when selling shares to pool
     int128 public g2; // g to use when selling fyTokens to pool
 
-    uint256 public constant cNumerator = 11;
-    uint256 public constant cDenominator = 10;
+    uint256 public constant cNumerator = 1015635;
+    uint256 public constant cDenominator = 1000000;
     int128 public c;
 
-    uint256 public constant muNumerator = 105;
-    uint256 public constant muDenominator = 100;
+    uint256 public constant muNumerator = 1015635;
+    uint256 public constant muDenominator = 1000000;
     int128 public mu;
 
     constructor() {
@@ -249,6 +249,34 @@ contract YieldMathTest is Test {
                 1e18;
 
             isClose(result, expectedResults[idx], 2);
+        }
+    }
+
+    function testUnit_fyTokenOutForSharesIn__marcopolo() public view {
+        // should match Desmos for selected inputs
+        uint128[1] memory sharesAmounts = [
+            uint128(984605690036 * 1e9)
+        ];
+        uint128[1] memory expectedResults = [
+            uint128(100335)
+        ];
+        uint128 result;
+        for (uint256 idx; idx < sharesAmounts.length; idx++) {
+            result =
+                YieldMath.fyTokenOutForSharesIn(
+                    3024854276750000000000000,
+                    3782691581060000000000000,
+                    sharesAmounts[idx], // x or ΔZ
+                    169270950,
+                    k,
+                    g1,
+                    c,
+                    mu
+                ) /
+                1e16;
+
+            console.log("result         : ", result);
+            console.log("expected result: ", expectedResults[idx]);
         }
     }
 

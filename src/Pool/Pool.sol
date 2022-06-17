@@ -924,8 +924,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 g1_,
                 _getC(),
                 mu
-            ) /
-            scaleFactor_;
+            ) / scaleFactor_;
 
         if (fyTokenBalance - fyTokenOut < sharesBalance + sharesIn) {
             revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, sharesBalance + sharesIn);
