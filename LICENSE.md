@@ -9,14 +9,14 @@ Parameters
 
 Licensor:             Yield Inc.
 
-Licensed Work:        Yield Protocol v2
+Licensed Work:        Yield Protocol YieldSpace TV
                       The Licensed Work is (c) 2021 Yield Inc.
 
 Additional Use Grant: Any uses listed and defined at
-                      v2-vault-license-grants.yieldprotocol.eth
+                      yieldspace-tv-license-grants.yieldprotocol.eth
 
-Change Date:          The earlier of 2023-06-01 or a date specified at
-                      v2-vault-license-date.yieldprotocol.eth
+Change Date:          The earlier of 2024-07-01 or a date specified at
+                      yieldspace-tv-license-date.yieldprotocol.eth
 
 Change License:       GNU General Public License v2.0 or later
 
