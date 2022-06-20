@@ -65,5 +65,3 @@ This project doesn't include any governance or upgradability features. If you ha
 ## Acknowledgements
 We would like to thank Dan Robinson (Paradigm), Georgios Konstantopoulos (Paradigm), SamCZSun (Paradigm), Mikhail Vladimirov (ABDK), Gustavo Grieco (Trail of Bits), Martin Lundfall (dAppHub), Noah Zinsmeister (Uniswap), and Transmissions11 (Paradigm) for their feedback and advice. We wouldn't be here without them.
 
-## License
-All files in this repository are released under the [GPLv3](https://github.com/yieldprotocol/fyDai/blob/master/LICENSE.md) license.
