@@ -162,7 +162,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            /  ` /  \ |\ | /__`  |  |__) |  | /  `  |  /  \ |__)
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
-
         // Set maturity and check to make sure its not 2107 yet.
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
@@ -397,9 +396,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 sharesIn;
         if (supply == 0) {
             // **First mint**
-            // Initialize at 1 pool token TODO: UPDATE ME minted per share
+            // Initialize at 1 pool token
             sharesIn = sharesBalance;
-            lpTokensMinted = sharesIn * (mu.mul(uint(1e18).fromUInt()).toUInt()) / 1e18;
+            lpTokensMinted = _mulMu(sharesIn);
         } else if (realFYTokenCached_ == 0) {
             // Edge case, no fyToken in the Pool after initialization
             sharesIn = sharesBalance - cache.sharesCached;
@@ -679,7 +678,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (fyTokenIn > max) revert SlippageDuringBuyBase(fyTokenIn, max);
 
         // Update TWAR
-        _update(cache.sharesCached - sharesOut, cache.fyTokenCached + fyTokenIn, cache.sharesCached, cache.fyTokenCached);
+        _update(
+            cache.sharesCached - sharesOut,
+            cache.fyTokenCached + fyTokenIn,
+            cache.sharesCached,
+            cache.fyTokenCached
+        );
 
         // Transfer
         _unwrap(to);
@@ -786,7 +790,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (baseIn > max) revert SlippageDuringBuyFYToken(baseIn, max);
 
         // Update TWAR
-        _update(cache.sharesCached + sharesIn, cache.fyTokenCached - fyTokenOut, cache.sharesCached, cache.fyTokenCached);
+        _update(
+            cache.sharesCached + sharesIn,
+            cache.fyTokenCached - fyTokenOut,
+            cache.sharesCached,
+            cache.fyTokenCached
+        );
 
         // Transfer
         fyToken.safeTransfer(to, fyTokenOut);
@@ -833,8 +842,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             ) /
             scaleFactor_;
 
-        if ((fyTokenBalance - fyTokenOut) < (sharesBalance + sharesIn)) {
-            revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, sharesBalance + sharesIn);
+        uint128 newSharesMulMu = _mulMu(sharesBalance + sharesIn).u128();
+        if ((fyTokenBalance - fyTokenOut) < newSharesMulMu) {
+            revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, newSharesMulMu);
         }
     }
 
@@ -902,7 +912,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return fyTokenOut Amount of fyToken hypothetically bought.
     function sellBasePreview(uint128 baseIn) external view virtual override returns (uint128 fyTokenOut) {
         Cache memory cache = _getCache();
-        fyTokenOut = _sellBasePreview(_wrapPreview(baseIn).u128(), cache.sharesCached, cache.fyTokenCached, _computeG1(cache.g1Fee));
+        fyTokenOut = _sellBasePreview(
+            _wrapPreview(baseIn).u128(),
+            cache.sharesCached,
+            cache.fyTokenCached,
+            _computeG1(cache.g1Fee)
+        );
     }
 
     /// Returns how much fyToken would be obtained by selling `sharesIn`.
@@ -927,8 +942,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             ) /
             scaleFactor_;
 
-        if (fyTokenBalance - fyTokenOut < sharesBalance + sharesIn) {
-            revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, sharesBalance + sharesIn);
+        uint128 newSharesMulMu = _mulMu(sharesBalance + sharesIn).u128();
+        if ((fyTokenBalance - fyTokenOut) < newSharesMulMu) {
+            revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, newSharesMulMu);
         }
     }
 
@@ -973,7 +989,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         Cache memory cache = _getCache();
         uint104 fyTokenBalance = _getFYTokenBalance();
         uint128 fyTokenIn = fyTokenBalance - cache.fyTokenCached;
-        uint128 sharesOut = _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        uint128 sharesOut = _sellFYTokenPreview(
+            fyTokenIn,
+            cache.sharesCached,
+            cache.fyTokenCached,
+            _computeG2(cache.g1Fee)
+        );
         baseOut = _unwrapPreview(sharesOut).u128();
 
         // Check slippage
@@ -1135,13 +1156,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
 
         // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(sharesCached);
+        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(_mulMu(sharesCached));
     }
 
     /// Update cached values and, on the first call per block, update cumulativeRatioLast.
     /// cumulativeRatioLast is a LAGGING, time weighted sum of the reserves ratio which is updated as follows:
     ///
     ///   cumulativeRatioLast += old fyTokenReserves / old baseReserves * seconds elapsed since blockTimestampLast
+    ///
+    /// NOTE: baseReserves is calculated as mu * sharesReserves
     ///
     /// Example:
     ///   First mint creates a ratio of 1:1.
@@ -1172,8 +1195,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 newCumulativeRatioLast = oldCumulativeRatioLast;
         if (timeElapsed > 0 && fyTokenCached_ > 0 && sharesCached_ > 0) {
             // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-            uint256 scaledFYTokenCached = uint256(fyTokenCached_) * 1e27;
-            newCumulativeRatioLast += (scaledFYTokenCached * timeElapsed) / sharesCached_;
+            newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
         }
 
         blockTimestampLast = blockTimestamp;
@@ -1240,7 +1262,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the base balance
     function _getBaseBalance() internal view virtual returns (uint256) {
-        return _getSharesBalance() * _getCurrentSharePrice() / 10**baseDecimals;
+        return (_getSharesBalance() * _getCurrentSharePrice()) / 10**baseDecimals;
     }
 
     /// Returns the base token current price.
@@ -1316,6 +1338,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return (fyToken.balanceOf(address(this)) + _totalSupply).u104();
     }
 
+    /// Returns mu multipled by given amount.
+    /// @param amount Amount as standard fp number.
+    /// @return product Return standard fp number retaining decimals of provided amount.
+    function _mulMu(uint256 amount) internal view returns (uint256 product) {
+        product = (amount * (mu.mul(uint256(1e18).fromUInt()).toUInt())) / 1e18;
+    }
+
     /// Retrieve any base tokens not accounted for in the cache
     /// @param to Address of the recipient of the base tokens.
     /// @return retrieved The amount of base tokens sent.
@@ -1326,7 +1355,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Now the current balances match the cache, so no need to update the TWAR
     }
 
-    /// Retrieve any fyTokens not accounted for in the cache
+    /// Retrieve any fyTokens not accounted for in the cache.
     /// @param to Address of the recipient of the fyTokens.
     /// @return retrieved The amount of fyTokens sent.
     function retrieveFYToken(address to) external virtual override returns (uint128 retrieved) {
@@ -1336,7 +1365,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Now the balances match the cache, so no need to update the TWAR
     }
 
-    /// Sets g1 numerator and denominator
+    /// Sets g1 numerator and denominator.
     /// @dev These numbers are converted to 64.64 and used to calculate g1 by dividing them, or g2 from 1/g1
     function setFees(uint16 g1Fee_) public auth {
         if (g1Fee_ > 10000) {

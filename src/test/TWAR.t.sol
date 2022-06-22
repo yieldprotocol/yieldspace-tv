@@ -104,7 +104,11 @@ contract TWAR__PoolInitialized is PoolInitialized {
         assertEq(pool.cumulativeRatioLast(), 0);
 
         // Send some shares to the pool.
-        shares.mint(address(pool), 10e18); // send an extra wad of shares
+        uint sharesToMint = (10e18 * 1e18) / pool.mu().mul(uint(1e18).fromUInt()).toUInt();
+        console.log("+ + file: TWAR.t.sol + line 108 + testUnit_twar2 + (10e18 * 1e18)", (10e18 * 1e18));
+        shares.mint(
+            address(pool), sharesToMint
+        );
 
 
         // Alice calls mint to Bob.
@@ -117,12 +121,13 @@ contract TWAR__PoolInitialized is PoolInitialized {
 
         // expect the total ratio seconds to be 60 (ray) based on the 1:1 ratio established
         // in setup and the 60 seconds that had elapsed after
-        assertEq(pool.cumulativeRatioLast(), 60 * 1e27);
-
+        console.log("+ + file: TWAR.t.sol + line 125 + testUnit_twar2 + 60 * sharesToMint", 60 * sharesToMint);
+        console.log("+ + file: TWAR.t.sol + line 125 + testUnit_twar2 + pool.cumulativeRatioLast()", pool.cumulativeRatioLast());
+        assertEq(pool.cumulativeRatioLast(), 60 * sharesToMint);
         // expect currCumRat to have increased
         (uint256 currCumRat1,) = pool.currentCumulativeRatio();
         (uint104 sharesReserves, uint104 fyTokenReserves,, ) = pool.getCache();
-        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, sharesReserves, timewarp);
+        uint256 expectedCurrCumRat = pool.cumulativeRatioLast() + calcRatioSeconds(fyTokenReserves, uint128(mulMu(sharesReserves, pool.mu())), timewarp);
         assertEq(currCumRat1, expectedCurrCumRat);
     }
 

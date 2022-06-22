@@ -20,7 +20,6 @@ pragma solidity >=0.8.13;
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
@@ -29,17 +28,16 @@ import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
-import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
-
+import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
 import {ETokenMock} from "./mocks/ETokenMock.sol";
 import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
 import {SyncablePoolEuler} from "./mocks/SyncablePoolEuler.sol";
-abstract contract ZeroStateEulerDai is ZeroState {
-        constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "EulerVault")) {}
 
+abstract contract ZeroStateEulerDai is ZeroState {
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "EulerVault")) {}
 }
 
 abstract contract WithLiquidityEuler is ZeroStateEulerDai {
@@ -68,22 +66,14 @@ contract Mint__ZeroStateEuler is ZeroStateEulerDai {
         asset.mint(address(pool), baseIn);
 
         vm.expectEmit(true, true, true, true);
-        emit Liquidity(
-            maturity,
-            alice,
-            bob,
-            address(0),
-            int256(-1 * int256(baseIn)),
-            int256(0),
-            int256(INITIAL_YVDAI)
-        );
+        emit Liquidity(maturity, alice, bob, address(0), int256(-1 * int256(baseIn)), int256(0), int256(INITIAL_YVDAI));
 
         vm.prank(alice);
         pool.init(bob, bob, 0, MAX);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -103,9 +93,8 @@ contract Mint__ZeroStateEuler is ZeroStateEulerDai {
         shares.mint(address(pool), INITIAL_YVDAI);
         pool.mint(bob, bob, 0, MAX);
 
-
         require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -122,7 +111,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerDai {
         vm.prank(alice);
         pool.sync();
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -150,12 +139,11 @@ contract Mint__WithLiquidityEuler is WithLiquidityEuler {
         require(shares.balanceOf(bob) == bobSharesInitialBalance);
         require(asset.balanceOf(bob) == bobAssetBefore + ETokenMock(address(shares)).convertBalanceToUnderlying(1e18)); // 1wad converted
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
 
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
-
 }
 
 contract Burn__WithLiquidityEuler is WithLiquidityEuler {
@@ -215,9 +203,7 @@ abstract contract WithExtraFYTokenEuler is WithLiquidityEuler {
         uint256 additionalFYToken = 30 * WAD;
         fyToken.mint(address(this), additionalFYToken);
         vm.prank(alice);
-        console.log('selling fytokenzzz...');
         pool.sellFYToken(address(alice), 0);
-        console.log('ok done selling fytokenzzz...');
     }
 }
 
@@ -245,7 +231,9 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(
+            uint256(1e18).fromUInt()
+        );
 
         fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
@@ -264,7 +252,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
         vm.prank(alice);
         pool.sellFYToken(bob, 0);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -274,7 +262,11 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
         uint256 fyTokenIn = 1e18;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999941268862289926, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(
+                SlippageDuringSellFYToken.selector,
+                999941268862289926,
+                340282366920938463463374607431768211455
+            )
         );
         pool.sellFYToken(bob, type(uint128).max);
     }
@@ -286,7 +278,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
 
     function testUnit_Euler_tradeDAI04() public {
         console.log("buys a certain amount base for fyToken");
-        (, uint104 fyTokenBalBefore,,) = pool.getCache();
+        (, uint104 fyTokenBalBefore, , ) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
         uint256 userAssetBefore = asset.balanceOf(bob);
@@ -295,7 +287,9 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(
+            uint256(1e18).fromUInt()
+        );
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -315,7 +309,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
         vm.prank(bob);
         pool.buyBase(bob, uint128(assetsOut), type(uint128).max);
 
-        (, uint104 fyTokenBal,,) = pool.getCache();
+        (, uint104 fyTokenBal, , ) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
@@ -324,7 +318,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
 
         almostEqual(fyTokenIn, expectedFYTokenIn, sharesOut / 1000000);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
@@ -335,9 +329,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
         uint128 sharesOut = 1e18;
         uint128 assetsOut = pool.unwrapPreview(1e18).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100063608132507117, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100063608132507117, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
@@ -356,7 +348,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEuler {
         require(shares.balanceOf(bob) == userSharesBefore);
         require(asset.balanceOf(bob) == userAssetBefore + assetsOut);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal != pool.getFYTokenBalance());
 
@@ -380,7 +372,9 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(
+            uint256(1e18).fromUInt()
+        );
 
         // Transfer base for sale to the pool
         asset.mint(address(pool), assetsIn);
@@ -405,7 +399,7 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
 
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
         require(fyTokenOut == expectedFYTokenOut);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -416,7 +410,11 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         uint128 baseIn = pool.unwrapPreview(sharesIn).u128();
         asset.mint(address(pool), baseIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100059306836277437, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(
+                SlippageDuringSellBase.selector,
+                1100059306836277437,
+                340282366920938463463374607431768211455
+            )
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));
@@ -434,7 +432,7 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         vm.prank(alice);
         pool.sellBase(bob, 0);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
@@ -442,13 +440,15 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
 
     function testUnit_Euler_tradeDAI10() public {
         console.log("buys a certain amount of fyTokens with base");
-        (uint104 sharesCachedBefore,,,) = pool.getCache();
+        (uint104 sharesCachedBefore, , , ) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(WAD);
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18).fromUInt()).div(
+            uint256(1e18).fromUInt()
+        );
 
         uint128 assetsIn = pool.unwrapPreview(initialShares).u128();
         // Transfer shares for sale to the pool
@@ -465,22 +465,19 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
             mu
         );
 
-        uint expectedBaseIn = pool.unwrapPreview(expectedSharesIn);
+        uint256 expectedBaseIn = pool.unwrapPreview(expectedSharesIn);
         vm.expectEmit(true, true, false, true);
         emit Trade(maturity, alice, bob, -int128(uint128(expectedBaseIn + 1)), int256(int128(fyTokenOut)));
 
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
 
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
         uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
 
-        require(
-            fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut,
-            "'User2' wallet should have 1 fyToken token"
-        );
+        require(fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut, "'User2' wallet should have 1 fyToken token");
 
         almostEqual(sharesIn, expectedSharesIn, sharesIn / 1000000);
         require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
@@ -492,24 +489,31 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         uint128 fyTokenOut = uint128(WAD);
 
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999946996518196437, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999946996518196437, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
-
 
     // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_Euler_tradeDAI12() public {
     //     console.log("donates base and buys fyToken");
+
+    function testUnit_Euler_tradeDAI13() public {
+        console.log("does not buy fyToken incurring negative interest rates");
+        uint128 x = 34_393_210044810302179841; // obtained through trial and error lol TODO
+        uint128 poolFYBal = pool.getFYTokenBalance();
+        x = uint128(bound(x, 1e18, poolFYBal));
+        vm.expectRevert(abi.encodeWithSelector(InsufficientFYTokenBalance.selector, 1187828012177411920042381, 1187829966713094473866228));
+        pool.buyFYTokenPreview(x);
+    }
+
 }
 
 contract TradeDAI__OnceMatureEuler is OnceMature {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
-    function testUnit_Euler_tradeDAI13() internal {
+    function testUnit_Euler_tradeDAI14() internal {
         console.log("doesn't allow sellBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellBasePreview(uint128(WAD));
@@ -517,7 +521,7 @@ contract TradeDAI__OnceMatureEuler is OnceMature {
         pool.sellBase(alice, 0);
     }
 
-    function testUnit_Euler_tradeDAI14() internal {
+    function testUnit_Euler_tradeDAI15() internal {
         console.log("doesn't allow buyBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyBasePreview(uint128(WAD));
@@ -525,7 +529,7 @@ contract TradeDAI__OnceMatureEuler is OnceMature {
         pool.buyBase(alice, uint128(WAD), uint128(MAX));
     }
 
-    function testUnit_Euler_tradeDAI15() internal {
+    function testUnit_Euler_tradeDAI16() internal {
         console.log("doesn't allow sellFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellFYTokenPreview(uint128(WAD));
@@ -533,7 +537,7 @@ contract TradeDAI__OnceMatureEuler is OnceMature {
         pool.sellFYToken(alice, 0);
     }
 
-    function testUnit_Euler_tradeDAI16() internal {
+    function testUnit_Euler_tradeDAI17() internal {
         console.log("doesn't allow buyFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyFYTokenPreview(uint128(WAD));

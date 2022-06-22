@@ -11,8 +11,8 @@ error AfterMaturity();
 /// @dev To save gas, total supply == 0 is checked instead of a state variable.
 error Initialized();
 
-/// Trade results in base balance > fyToken balance. We don't do that.
-error InsufficientFYTokenBalance(uint128 newFYTokenBalance, uint128 newBaseBalance);
+/// Trade results in negative interest rates because fyToken balance < (newSharesBalance * mu). Don't neg me.
+error InsufficientFYTokenBalance(uint128 newFYTokenBalance, uint128 newSharesBalanceTimesMu);
 
 /// Represents the fee in bps, and it cannot be larger than 10,000.
 /// @dev https://en.wikipedia.org/wiki/10,000 per wikipedia:
