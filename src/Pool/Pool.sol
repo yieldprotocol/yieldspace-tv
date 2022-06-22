@@ -179,8 +179,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         baseToken = baseToken_;
         fyToken = IFYToken(fyToken_);
         ts = ts_;
-        scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
-        mu = _getC();
+        scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow. TODO: Add test
+        mu = _getC(); // TODO: Revert on 0
 
         // Set g1Fee state variable.
         if (g1Fee_ > 10000) revert InvalidFee(g1Fee_);
@@ -398,7 +398,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             // **First mint**
             // Initialize at 1 pool token
             sharesIn = sharesBalance;
-            lpTokensMinted = _mulMu(sharesIn);
+            // lpTokensMinted = _mulMu(sharesIn);
+            lpTokensMinted = sharesIn;
         } else if (realFYTokenCached_ == 0) {
             // Edge case, no fyToken in the Pool after initialization
             sharesIn = sharesBalance - cache.sharesCached;
@@ -1156,7 +1157,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
 
         // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(_mulMu(sharesCached));
+        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv((sharesCached));
+        // currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(_mulMu(sharesCached));
     }
 
     /// Update cached values and, on the first call per block, update cumulativeRatioLast.
@@ -1195,7 +1197,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 newCumulativeRatioLast = oldCumulativeRatioLast;
         if (timeElapsed > 0 && fyTokenCached_ > 0 && sharesCached_ > 0) {
             // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-            newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
+            newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv((sharesCached_));
+            // newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
         }
 
         blockTimestampLast = blockTimestamp;

@@ -24,6 +24,9 @@ error InvalidFee(uint16 proposedFee);
 /// Maturity date must be less than type(uint32).max
 error MaturityOverflow();
 
+/// Mu cannot be zero. You're not a hero.
+error MuCannotBeZero();
+
 /// Not enough base was found in the pool contract to complete the requested action. You just wasted gas.
 /// @param baseAvailable The amount of unaccounted for base tokens.
 /// @param baseNeeded The amount of base tokens required for the mint.

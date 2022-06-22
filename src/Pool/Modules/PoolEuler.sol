@@ -34,7 +34,7 @@ contract PoolEuler is Pool {
     using MinimalTransferHelper for IERC20Like;
 
     constructor(
-        address euler_,   // The main Euler contract address
+        address euler_, // The main Euler contract address
         address eToken_,
         address fyToken_,
         int128 ts_,
@@ -57,13 +57,14 @@ contract PoolEuler is Pool {
 
     /// Returns the base token current price.
     /// This function should be overriden by modules.
-    /// @return The price of 1 share of a Euler token in terms of its underlying base asset.
+    /// @dev Euler convertBalanceToUnderlying() takes shares converted to 18 decimals ("accounting units")
+    /// @return The price of 1 share of a Euler token in terms of its underlying base asset with base asset decimals.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
         // The return is in the decimals of the underlying.
-        return IEToken(address(sharesToken)).convertBalanceToUnderlying(10**baseDecimals);
+        return IEToken(address(sharesToken)).convertBalanceToUnderlying(1e18);
     }
 
-    /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
+    /// Internal function for wrapping base asset tokens.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
@@ -85,7 +86,6 @@ contract PoolEuler is Pool {
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
-    /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return assets The amount of assets sent to the receiver.
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
@@ -102,10 +102,11 @@ contract PoolEuler is Pool {
     }
 
     /// Internal function to preview how many base tokens will be received when unwrapping a given amount of shares.
-    /// @dev This should be overridden by modules.
     /// @param shares The amount of shares to preview a redemption.
+    /// @dev Euler convertBalanceToUnderlying() takes shares converted to 18 decimals ("accounting units")
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
-        assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(shares);
+        // The return is in the decimals of the underlying but the amount provided must be in fp18 "accounting units".
+        assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(shares * scaleFactor);
     }
 }

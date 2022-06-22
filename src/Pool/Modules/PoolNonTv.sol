@@ -54,7 +54,7 @@ contract PoolNonTv is Pool {
         return uint256(10**baseDecimals);
     }
 
-    /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
+    /// Internal function for wrapping base asset tokens.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
@@ -82,7 +82,6 @@ contract PoolNonTv is Pool {
     }
 
     /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.
-    /// @dev This should be overridden by modules.
     /// @param shares The amount of shares to preview a redemption.
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
