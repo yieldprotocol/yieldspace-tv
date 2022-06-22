@@ -162,7 +162,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            /  ` /  \ |\ | /__`  |  |__) |  | /  `  |  /  \ |__)
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
-        // Set maturity and check to make sure its not 2107 yet.
+        // Set maturity with check to make sure its not 2107 yet.
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
         // Set sharesToken. NOTE: This contract assumes that baseToken, sharesToken and fyToken all use the same decimals.
@@ -174,22 +174,26 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Call approve hook for sharesToken.
         _approveSharesToken(baseToken_, sharesToken_);
 
-        // Set remaining immutables.
+        // Set other immutables.
         baseDecimals = baseToken_.decimals();
         baseToken = baseToken_;
         fyToken = IFYToken(fyToken_);
         ts = ts_;
         scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
-        mu = _getC();
 
-        // Set g1Fee state variable.
-        if (g1Fee_ > 10000) revert InvalidFee(g1Fee_);
-        g1Fee = g1Fee_;
+        // Set mu with check for 0.
+        if ((mu = _getC()) == 0) {
+            revert MuCannotBeZero();
+        }
+
+        // Set g1Fee state variable with out of bounds check.
+        if ((g1Fee = g1Fee_) > 10000) revert InvalidFee(g1Fee_);
         emit FeesSet(g1Fee_);
+
     }
 
-    /// This is used by the constructor give max approval to sharesToken.
-    /// @dev This should be overridden by modules if neeeded.
+    /// This is used by the constructor to give max approval to sharesToken.
+    /// @dev This should be overridden by modules if needed.
     function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
         baseToken_.approve(sharesToken_, type(uint256).max);
     }
@@ -398,7 +402,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             // **First mint**
             // Initialize at 1 pool token
             sharesIn = sharesBalance;
-            lpTokensMinted = _mulMu(sharesIn);
+            // lpTokensMinted = _mulMu(sharesIn);
+            lpTokensMinted = sharesIn;
         } else if (realFYTokenCached_ == 0) {
             // Edge case, no fyToken in the Pool after initialization
             sharesIn = sharesBalance - cache.sharesCached;
@@ -1156,7 +1161,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
 
         // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(_mulMu(sharesCached));
+        currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv((sharesCached));
+        // currentCumulativeRatio_ = cumulativeRatioLast + (fyTokenCached * timeElapsed).rdiv(_mulMu(sharesCached));
     }
 
     /// Update cached values and, on the first call per block, update cumulativeRatioLast.
@@ -1195,7 +1201,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 newCumulativeRatioLast = oldCumulativeRatioLast;
         if (timeElapsed > 0 && fyTokenCached_ > 0 && sharesCached_ > 0) {
             // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-            newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
+            newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv((sharesCached_));
+            // newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
         }
 
         blockTimestampLast = blockTimestamp;

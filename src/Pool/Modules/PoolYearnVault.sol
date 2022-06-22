@@ -53,7 +53,7 @@ contract PoolYearnVault is Pool {
         return IYVToken(address(sharesToken)).pricePerShare();
     }
 
-    /// Internal function for wrapping base tokens.  This should be overridden by modules.
+    /// Internal function for wrapping base tokens.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
@@ -71,7 +71,6 @@ contract PoolYearnVault is Pool {
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
-    /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return base_ The amount of base base sent to the receiver.
     function _unwrap(address receiver) internal virtual override returns (uint256 base_) {
@@ -81,7 +80,6 @@ contract PoolYearnVault is Pool {
     }
 
     /// Internal function to preview how many base tokens will be received when unwrapping a given amount of shares.
-    /// @dev This should be overridden by modules.
     /// @param shares The amount of shares to preview a redemption.
     /// @return base_ The amount of base tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 base_) {

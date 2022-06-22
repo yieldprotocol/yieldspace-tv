@@ -110,7 +110,7 @@ abstract contract ZeroState is TestCore {
         }
 
         // Create fyToken (e.g. "fyDAI").
-        fyToken = new FYTokenMock(fyName, fySymbol, address(shares), maturity);
+        fyToken = new FYTokenMock(fyName, fySymbol, address(asset), maturity);
 
         // Setup users, and give them some shares.
         alice = address(0xbabe);
