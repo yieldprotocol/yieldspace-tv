@@ -104,22 +104,10 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
-    function testUnit_NonTv_mint3() public {
-        console.log("syncs balances after donations");
+    // Test intentionally ommitted.
+    // function testUnit_NonTv_mint3() public {
+    //     console.log("syncs balances after donations");
 
-        shares.mint(address(pool), INITIAL_YVDAI);
-        fyToken.mint(address(pool), INITIAL_YVDAI / 9);
-
-        vm.expectEmit(false, false, false, true);
-        emit Sync(uint104(INITIAL_YVDAI), uint104(INITIAL_YVDAI / 9), 0);
-
-        vm.prank(alice);
-        pool.sync();
-
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
-        require(sharesBal == pool.getSharesBalance());
-        require(fyTokenBal == pool.getFYTokenBalance());
-    }
 }
 
 contract Mint__WithLiquidityNonTv is WithLiquidityNonTv {

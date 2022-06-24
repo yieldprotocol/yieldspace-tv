@@ -80,11 +80,16 @@ abstract contract ZeroState is TestCore {
         fySymbol = string.concat("fy", sharesSymbol);
         fyName = string.concat("fyToken ", sharesName, " maturity 1");
 
-        // Set some state variables based on decimals, to use as constants.
-        aliceSharesInitialBalance = 1000 * 10**(assetDecimals);
-        bobSharesInitialBalance = 2_000_000 * 10**(assetDecimals);
+        sharesDecimals = assetDecimals;
+        if (keccak256(abi.encodePacked(params.sharesType)) == TYPE_EULER) {
+            sharesDecimals = 18;
+        }
 
-        initialShares = 1_100_000 * 10**(assetDecimals);
+        // Set some state variables based on decimals, to use as constants.
+        aliceSharesInitialBalance = 1000 * 10**(sharesDecimals);
+        bobSharesInitialBalance = 2_000_000 * 10**(sharesDecimals);
+
+        initialShares = 1_100_000 * 10**(sharesDecimals);
         initialFYTokens = 1_500_000 * 10**(assetDecimals);
     }
 
@@ -103,9 +108,9 @@ abstract contract ZeroState is TestCore {
             }
             if (sharesType == TYPE_EULER) {
                 EulerMock euler = new EulerMock();
-                shares = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, assetDecimals, address(euler), address(asset))));
+                shares = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, address(euler), address(asset))));
             }
-            setPrice(address(shares), (muNumerator * (10**assetDecimals)) / muDenominator);
+            setPrice(address(shares), (muNumerator * (10**sharesDecimals)) / muDenominator);
             asset.mint(address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 

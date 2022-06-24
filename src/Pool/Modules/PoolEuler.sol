@@ -32,6 +32,7 @@ import "../../interfaces/IEToken.sol";
 /// @author @devtooligan
 contract PoolEuler is Pool {
     using MinimalTransferHelper for IERC20Like;
+    using CastU256U104 for uint256;
 
     constructor(
         address euler_, // The main Euler contract address
@@ -57,11 +58,17 @@ contract PoolEuler is Pool {
 
     /// Returns the base token current price.
     /// This function should be overriden by modules.
-    /// @dev Euler convertBalanceToUnderlying() takes shares converted to 18 decimals ("accounting units").
+    /// @dev Euler tokens are all 18 decimals.
     /// @return The price of 1 share of a Euler token in terms of its underlying base asset with base asset decimals.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
         // The return is in the decimals of the underlying.
         return IEToken(address(sharesToken)).convertBalanceToUnderlying(1e18);
+    }
+
+    /// Returns the shares balance TODO: lots of notes
+    /// The decimals of the shares amount returned is adjusted to match the decimals of the baseToken
+    function _getSharesBalance() internal view virtual override returns (uint104) {
+        return (sharesToken.balanceOf(address(this)) / scaleFactor).u104();
     }
 
     /// Internal function for wrapping base asset tokens.
@@ -72,16 +79,15 @@ contract PoolEuler is Pool {
         if (baseOut == 0) return 0;
 
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
-        uint256 sharesReceived = _getSharesBalance() - sharesCached;
+        uint256 sharesReceived = _getSharesBalance() - sharesCached;  // this includes any shares in pool previously
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, sharesReceived);
         }
     }
 
     /// Internal function to preview how many shares will be received when depositing a given amount of assets.
-    /// @dev Euler convertUnderlyingToBalance() returns shares converted to 18 decimals ("accounting units").
     /// @param assets The amount of base asset tokens to preview the deposit in native decimals.
-    /// @return shares The amount of shares that would be returned from depositing in native decimals.
+    /// @return shares The amount of shares that would be returned from depositing (converted to base decimals).
     function _wrapPreview(uint256 assets) internal view virtual override returns (uint256 shares) {
         shares = IEToken(address(sharesToken)).convertUnderlyingToBalance(assets) / scaleFactor;
     }
@@ -92,7 +98,6 @@ contract PoolEuler is Pool {
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
         if (surplus == 0) return 0;
-
         // convert to base
         assets = _unwrapPreview(surplus);
         IEToken(address(sharesToken)).withdraw(0, assets); // first param is subaccount, 0 for primary
@@ -103,11 +108,16 @@ contract PoolEuler is Pool {
     }
 
     /// Internal function to preview how many base tokens will be received when unwrapping a given amount of shares.
-    /// @param shares The amount of shares to preview a redemption in native decimals.
-    /// @dev Euler convertBalanceToUnderlying() takes shares converted to 18 decimals ("accounting units").
-    /// @return assets The amount of base asset tokens that would be returned from redeeming in native decimals.
-    function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
-        // The return is in the decimals of the underlying but the amount provided must be in fp18 "accounting units".
-        assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(shares * scaleFactor);
+    /// @dev NOTE: eToken contracts are all 18 decimals. Because Pool.sol expects share tokens to use the same decimals
+    /// as the base taken, when shares balance is needed, we convert the result of shares.balanceOf() to the base
+    /// decimals via the overridden _getSharesBalance(). Therefore, this _unwrapPreview() expects to receive share
+    /// amounts which have already been converted to base decimals. However, the eToken convertBalanceToUnderlying()
+    /// used in this fn requires share amounts in 18 decimals so we scale the shareAmount back up to fp18 and pass
+    /// as a parameter.  Fortunately, the return value from the convertBalanceToUnderlying() is in base decimals so
+    /// we don't have to do any further conversions, yay.
+    /// @param sharesInBaseDecimals The amount of shares to preview a redemption (converted to base decimals).
+    /// @return assets The amount of base asset tokens that would be returned from redeeming (in base decimals).
+    function _unwrapPreview(uint256 sharesInBaseDecimals) internal view virtual override returns (uint256 assets) {
+        assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(sharesInBaseDecimals * scaleFactor);
     }
 }

@@ -45,7 +45,9 @@ import "./PoolImports.sol"; /*
 //  Useful terminology:
 //    base - Example: DAI. The underlying token of the fyToken. Sometimes referred to as "asset" or "base".
 //    shares - Example: yvDAI. Upon receipt, base is deposited (wrapped) in a tokenized vault.
-//    Reserves are tracked in shares
+//    c - Current price of shares in terms of base (in 64.64 bit)
+//    mu - also called c0 is the initial c of shares at contract deployment
+//    Reserves are tracked in shares * mu for consistency.
 //
 /// @title  Pool.sol
 /// @dev    Uses ABDK 64.64 mathlib for precision and reduced gas.
@@ -88,11 +90,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// It is an ERC20 token.
     IERC20Like public immutable baseToken;
 
-    /// Decimals of base tokens (and shares token, and fyToken).
+    /// Decimals of base tokens (fyToken, lp token, and usually the sharesToken).
     uint256 public immutable baseDecimals;
 
-    /// When base comes into this contract it is deposited into a tokenized vault in return for shares.
-    /// @dev For most of this contract, only the ERC20 functionality of the shares tokens is required. As such, shares
+    /// When base comes into this contract it is deposited into a 3rd party tokenized vault in return for shares.
+    /// @dev For most of this contract, only the ERC20 functionality of the shares token is required. As such, shares
     /// are cast as "IERC20Like" and when that 4626 functionality is needed, they are recast as IERC4626.
     /// This wei, modules for non-4626 compliant base tokens can import this contract and override 4626 specific fn's.
     IERC20Like public immutable sharesToken;
@@ -165,7 +167,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Set maturity with check to make sure its not 2107 yet.
         if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
-        // Set sharesToken. NOTE: This contract assumes that baseToken, sharesToken and fyToken all use the same decimals.
+        // Set sharesToken.
         sharesToken = IERC20Like(sharesToken_);
 
         // Cache baseToken to save loads of SLOADs.
@@ -174,8 +176,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Call approve hook for sharesToken.
         _approveSharesToken(baseToken_, sharesToken_);
 
-        // Set other immutables.
+        // NOTE: LP tokens, baseToken and fyToken should have the same decimals.  Within this core contract, it is
+        // presumed that sharesToken also has the same decimals. If this is not the case, a separate module must be
+        // used to overwrite _getSharesBalance() and other affected functions (see PoolEuler.sol for example).
         baseDecimals = baseToken_.decimals();
+
+        // Set other immutables.
         baseToken = baseToken_;
         fyToken = IFYToken(fyToken_);
         ts = ts_;
@@ -189,7 +195,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Set g1Fee state variable with out of bounds check.
         if ((g1Fee = g1Fee_) > 10000) revert InvalidFee(g1Fee_);
         emit FeesSet(g1Fee_);
-
     }
 
     /// This is used by the constructor to give max approval to sharesToken.
@@ -241,8 +246,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev _totalSupply > 0 check important here to prevent unauthorized initialization.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return baseIn The amount of base found in the contract that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
@@ -274,8 +279,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This pool is considered initialized after the first LP token is minted.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
@@ -324,8 +329,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any leftover base at the end.
     /// @param fyTokenToBuy Amount of `fyToken` being bought in the Pool, from this we calculate how much base it will be taken in.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
@@ -359,8 +364,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
     /// @param fyTokenToBuy Amount of `fyToken` being bought in the Pool.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
@@ -380,13 +385,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     {
         // Wrap all base found in this contract.
         baseIn = baseToken.balanceOf(address(this));
+
         _wrap(address(this));
 
         // Gather data
         uint256 supply = _totalSupply;
         Cache memory cache = _getCache();
         uint256 realFYTokenCached_ = cache.fyTokenCached - supply; // The fyToken cache includes the virtual fyToken, equal to the supply
-        uint256 sharesBalance = sharesToken.balanceOf(address(this));
+        uint256 sharesBalance = _getSharesBalance();
 
         // Check the burn wasn't sandwiched
         if (realFYTokenCached_ != 0) {
@@ -422,7 +428,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             // We use all the available fyTokens, plus optional virtual trade. Surplus is in base tokens.
             fyTokenIn = fyToken.balanceOf(address(this)) - realFYTokenCached_;
             lpTokensMinted = (supply * (fyTokenToBuy + fyTokenIn)) / (realFYTokenCached_ - fyTokenToBuy);
+
             sharesIn = sharesToSell + ((cache.sharesCached + sharesToSell) * lpTokensMinted) / supply;
+
             if ((sharesBalance - cache.sharesCached) < sharesIn) {
                 revert NotEnoughBaseIn(_unwrapPreview(sharesBalance - cache.sharesCached), _unwrapPreview(sharesIn));
             }
@@ -473,8 +481,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// The liquidity tokens need to be previously tranfsferred to this contract.
     /// @param baseTo Wallet receiving the base tokens.
     /// @param fyTokenTo Wallet receiving the fyTokens.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return lpTokensBurned The amount of LP tokens burned.
     /// @return baseOut The amount of base tokens received.
     /// @return fyTokenOut The amount of fyTokens received.
@@ -516,8 +524,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Burn liquidity tokens in exchange for base.
     /// The liquidity provider needs to have called `pool.approve`.
     /// @param to Wallet receiving the base and fyToken.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return lpTokensBurned The amount of lp tokens burned.
     /// @return baseOut The amount of base tokens returned.
     function burnForBase(
@@ -534,8 +542,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param baseTo Wallet receiving the base.
     /// @param fyTokenTo Wallet receiving the fyToken.
     /// @param tradeToBase Whether the resulting fyToken should be traded for base tokens.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool.
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool.
+    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
+    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return lpTokensBurned The amount of pool tokens burned.
     /// @return baseOut The amount of base tokens returned.
     /// @return fyTokenOut The amount of fyTokens returned.
@@ -731,7 +739,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             ) /
             scaleFactor_;
     }
-
     /*buyFYToken
 
                          I want to buy `uint128 fyTokenOut` worth of fyTokens.
@@ -1245,20 +1252,23 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
     }
 
-    /// Returns the shares balance.
-    /// @dev Returns uint128 for consistency with getBaseBalance and getFYTokenBalance
-    /// @return The current balance of the pool's shares tokens.
+    /// Returns the shares balance with the same decimals as the underlying base asset.
+    /// @dev NOTE: If the decimals of the share token does not match the base token, then the amount of shares returned
+    /// will be adjusted to match the decimals of the base token.
+    /// @return The current balance of the pool's shares tokens as uint128 for consistency with other functions.
     function getSharesBalance() external view returns (uint128) {
         return _getSharesBalance();
     }
 
     /// Returns the shares balance
+    /// @dev NOTE: The decimals returned here must match the decimals of the base token.  If not, then this fn should
+    // be overriden by modules.
     function _getSharesBalance() internal view virtual returns (uint104) {
         return sharesToken.balanceOf(address(this)).u104();
     }
 
     /// Returns the base balance.
-    /// @dev Returs uint128 for backwards compatibility
+    /// @dev Returns uint128 for backwards compatibility
     /// @return The current balance of the pool's base tokens.
     function getBaseBalance() external view returns (uint128) {
         return _getBaseBalance().u128();

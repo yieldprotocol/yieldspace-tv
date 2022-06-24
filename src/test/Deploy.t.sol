@@ -50,7 +50,7 @@ contract Deploy is TestCore {
 
         // TODO: Add tests for Euler, Non-TV, maybe not Yearn if we're not using it
         // sharesYV = IERC20Like(address(new YVTokenMock(sharesName, sharesSymbol, assetDecimals, address(asset))));
-        // sharesEuler = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, assetDecimals, address(euler), address(asset))));
+        // sharesEuler = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, 18, address(euler), address(asset))));
 
         // Create fyTokens
         fyDAI = new FYTokenMock("fyDAI", "fyDAI", address(assetDAI), maturity);
