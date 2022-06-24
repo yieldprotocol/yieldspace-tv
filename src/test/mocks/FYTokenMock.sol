@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.13;
 
-import "./YVTokenMock.sol";
+import "./ERC20Mock.sol";
 import "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
 
 
 
 contract FYTokenMock is ERC20Permit, Mintable {
-    YVTokenMock public yearnVault;
+    ERC20Mock public underlying;
     uint32 public maturity;
 
     constructor (
         string memory name_,
         string memory symbol_,
-        address yearnVault_,
+        address underlying_,
         uint32 maturity_
     )
         ERC20Permit(
             name_,
             symbol_,
-            IERC20Metadata(yearnVault_).decimals()
+            IERC20Metadata(underlying_).decimals()
     ) {
-        yearnVault = YVTokenMock(yearnVault_);
+        underlying = ERC20Mock(underlying_);
         maturity = maturity_;
     }
 
@@ -31,6 +31,6 @@ contract FYTokenMock is ERC20Permit, Mintable {
 
     function redeem(address from, address to, uint256 amount) public {
         _burn(from, amount);
-        yearnVault.mint(to, amount);
+        underlying.mint(to, amount);
     }
 }

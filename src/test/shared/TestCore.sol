@@ -79,6 +79,7 @@ abstract contract TestCore is Test {
     string public sharesTypeString; // TYPE_4626 or TYPE_YV
     string public sharesName;
     string public sharesSymbol;
+    uint8 public sharesDecimals;
     IERC20Like public shares;
 
     uint256 public aliceSharesInitialBalance;

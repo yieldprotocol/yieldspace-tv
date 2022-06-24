@@ -3,6 +3,12 @@ pragma solidity >=0.8.13;
 
 import {console} from "forge-std/console.sol";
 import {IERC4626Mock} from "../mocks/ERC4626TokenMock.sol";
+import "../../Math64x64.sol";
+
+function mulMu(uint256 amount, int128 mu_) pure returns (uint256 product) {
+    product = (amount * Math64x64.toUInt(Math64x64.mul(mu_, Math64x64.fromUInt(uint256(1e18))))) / 1e18;
+}
+
 
 function almostEqual(
     uint256 x,
@@ -21,7 +27,7 @@ function almostEqual(
 }
 
 function setPrice(address token, uint256 price) {
-    // setPrice() appears on both ERC4626TokenMock and YVTokenMock
+    // setPrice() appears on ERC4626TokenMock and other mocks
     // so this fn can be used to set price on either
     IERC4626Mock(token).setPrice(price);
 

@@ -5,6 +5,9 @@ import "../Math64x64.sol";
 
 /// @dev Library wrapper contract to allow for try/catch logic within tests
 contract ForTesting {
+    using Math64x64 for int128;
+    using Math64x64 for uint256;
+
     function exp(int128 x) public pure returns (int128) {
         return Math64x64.exp(x);
     }
@@ -15,7 +18,6 @@ contract ForTesting {
 }
 
 /// @dev Testing utility functions
-
 function abs(int256 x) pure returns (int256) {
     return x >= 0 ? x : -x;
 }

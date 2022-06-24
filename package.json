@@ -1,6 +1,6 @@
 {
   "name": "@yield-protocol/yieldspace-tv",
-  "version": "0.1.1-rc10",
+  "version": "0.1.1-rc19",
   "description": "Yieldspace for tokenized vaults",
   "files": [
     "src/*.sol",
@@ -15,7 +15,7 @@
     "url": "git+https://github.com/yieldprotocol/yieldspace-tv.git"
   },
   "author": "Yield Inc.",
-  "license": "GPL-3.0-or-later",
+  "license": "Business Source License 1.1",
   "bugs": {
     "url": "https://github.com/yieldprotocol/yieldspace-tv/issues"
   },

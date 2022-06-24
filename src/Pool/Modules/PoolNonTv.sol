@@ -23,15 +23,13 @@ import "../../interfaces/IYVToken.sol";
 */
 
 /// Module for using non tokenized vault tokens as "shares" for the Yield Protocol Pool.sol AMM contract.
-/// For example ordinary DAI, as opposed to yvDAI or Compound DAI.
+/// For example ordinary DAI, as opposed to yvDAI or eDAI.
 /// @title  PoolNonTv.sol
 /// @dev Deploy pool with base token and associated fyToken.
 /// @author @devtooligan
 contract PoolNonTv is Pool {
     using MinimalTransferHelper for IERC20Like;
 
-    /* CONSTRUCTOR
-     *****************************************************************************************************************/
     constructor(
         address base_,
         address fyToken_,
@@ -39,14 +37,24 @@ contract PoolNonTv is Pool {
         uint16 g1Fee_
     ) Pool(base_, fyToken_, ts_, g1Fee_) {}
 
+    /// **This function is intentionally empty to overwrite the Pool._approveSharesToken fn.**
+    /// This is normally used by Pool.constructor give max approval to sharesToken, but not needed for Non-Tv pool.
+    function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual override {}
+
+    /// This is used by the constructor to set the base token as immutable.
+    /// For Non-tokenized vaults, the base is the same as the base asset.
+    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
+        return IERC20Like(sharesToken_);
+    }
+
     /// Returns the current price of one share.  For non-tokenized vaults this is always 1.
     /// This function should be overriden by modules.
     /// @return By always returning 1, we can use this module with any non-tokenized vault base such as WETH.
     function _getCurrentSharePrice() internal view virtual override returns (uint256) {
-        return uint256(10**IERC20Like(address(sharesToken)).decimals());
+        return uint256(10**baseDecimals);
     }
 
-    /// Internal function for wrapping base asset tokens.  This should be overridden by modules.
+    /// Internal function for wrapping base asset tokens.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
@@ -74,16 +82,9 @@ contract PoolNonTv is Pool {
     }
 
     /// Internal function to preview how many asset tokens will be received when unwrapping a given amount of shares.
-    /// @dev This should be overridden by modules.
     /// @param shares The amount of shares to preview a redemption.
     /// @return assets The amount of base asset tokens that would be returned from redeeming.
     function _unwrapPreview(uint256 shares) internal view virtual override returns (uint256 assets) {
         assets = shares;
-    }
-
-    /// This is used by the constructor to set the base token as immutable.
-    /// For Non-tokenized vaults, the base is the same as the base asset.
-    function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {
-        return IERC20Like(sharesToken_);
     }
 }

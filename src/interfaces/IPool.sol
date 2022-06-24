@@ -19,14 +19,16 @@ interface IPool is IERC20, IERC2612 {
     function fyToken() external view returns(IFYToken);
     function g1() external view returns(int128);
     function g2() external view returns(int128);
+    function getC() external view returns (int128);
     function getCurrentSharePrice() external view returns (uint256);
-    function getCache() external view returns (uint16 g1Fee_, uint104 baseCached, uint104 fyTokenCached, uint32 blockTimestampLast);
+    function getCache() external view returns (uint104 baseCached, uint104 fyTokenCached, uint32 blockTimestampLast, uint16 g1Fee_);
     function getBaseBalance() external view returns(uint128);
     function getFYTokenBalance() external view returns(uint128);
     function getSharesBalance() external view returns(uint128);
     function init(address to, address remainder, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
     function maturity() external view returns(uint32);
     function mint(address to, address remainder, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
+    function mu() external returns (int128);
     function mintWithBase(address to, address remainder, uint256 fyTokenToBuy, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
     function retrieveBase(address to) external returns(uint128 retrieved);
     function retrieveFYToken(address to) external returns(uint128 retrieved);
