@@ -1359,14 +1359,22 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         product = (amount * (mu.mul(uint256(1e18).fromUInt()).toUInt())) / 1e18;
     }
 
-    /// Retrieve any base tokens not accounted for in the cache
+    /// Retrieve any shares tokens not accounted for in the cache.
+    /// @param to Address of the recipient of the shares tokens.
+    /// @return retrieved The amount of shares tokens sent.
+    function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
+        // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
+        retrieved = _getSharesBalance() - sharesCached; // Cache can never be above balances
+        sharesToken.safeTransfer(to, retrieved);
+        // Now the current balances match the cache, so no need to update the TWAR
+    }
+
+    /// Retrieve all base tokens found in this contract.
     /// @param to Address of the recipient of the base tokens.
     /// @return retrieved The amount of base tokens sent.
     function retrieveBase(address to) external virtual override returns (uint128 retrieved) {
-        // related: https://twitter.com/transmissions11/status/1505994136389754880?s=20&t=1H6gvzl7DJLBxXqnhTuOVw
-        retrieved = _getSharesBalance() - sharesCached; // Cache can never be above balances
+        retrieved = baseToken.balanceOf(address(this)).u128();  // Pool does not keep any baseTokens so retrieve everything
         baseToken.safeTransfer(to, retrieved);
-        // Now the current balances match the cache, so no need to update the TWAR
     }
 
     /// Retrieve any fyTokens not accounted for in the cache.
