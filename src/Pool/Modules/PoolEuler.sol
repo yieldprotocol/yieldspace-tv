@@ -33,6 +33,7 @@ import "../../interfaces/IEToken.sol";
 contract PoolEuler is Pool {
     using MinimalTransferHelper for IERC20Like;
     using CastU256U104 for uint256;
+    using CastU256U128 for uint256;
 
     constructor(
         address euler_, // The main Euler contract address
@@ -119,5 +120,16 @@ contract PoolEuler is Pool {
     /// @return assets The amount of base asset tokens that would be returned from redeeming (in base decimals).
     function _unwrapPreview(uint256 sharesInBaseDecimals) internal view virtual override returns (uint256 assets) {
         assets = IEToken(address(sharesToken)).convertBalanceToUnderlying(sharesInBaseDecimals * scaleFactor);
+    }
+
+    /// Retrieve any shares tokens not accounted for in the cache.
+    /// @param to Address of the recipient of the shares tokens.
+    /// @return retrieved The amount of shares tokens sent (in eToken decimals -- 18).
+    function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
+        // sharesCached is stored by Yield with the same decimals as the underlying base, but actually the Euler
+        // eTokens are always fp18.  So we scale up the sharesCached and subtract from real eToken balance.
+        retrieved =(sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
+        sharesToken.safeTransfer(to, retrieved);
+        // Now the current balances match the cache, so no need to update the TWAR
     }
 }
