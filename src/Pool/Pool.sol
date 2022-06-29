@@ -588,7 +588,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (tradeToBase) {
             sharesOut +=
                 YieldMath.sharesOutForFYTokenIn( //                                This is a virtual sell
-                    (cache.sharesCached - baseOut.u128()) * scaleFactor_, //      Cache, minus virtual burn
+                    (cache.sharesCached - sharesOut.u128()) * scaleFactor_, //     Cache, minus virtual burn
                     (cache.fyTokenCached - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
                     fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
                     maturity - uint32(block.timestamp), //                         This can't be called after maturity
