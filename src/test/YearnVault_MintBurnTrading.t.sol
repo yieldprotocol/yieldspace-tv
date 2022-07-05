@@ -245,7 +245,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999941268862289926,
+                999999999129635703,
                 340282366920938463463374607431768211455
             )
         );
