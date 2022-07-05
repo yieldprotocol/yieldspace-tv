@@ -59,10 +59,8 @@ abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(asset.decimals())) / 9;
 
-        // Skew the balances without using trading functions
         fyToken.mint(address(pool), additionalFYToken);
-
-        pool.sync();
+        pool.sellFYToken(alice, 0);
     }
 }
 
@@ -75,6 +73,8 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
         asset.mint(address(pool), baseIn);
 
         vm.expectEmit(true, true, true, true);
+
+        uint expectedMint = 1154999999999; // mu1.05 * 1.1m rounded down
         emit Liquidity(
             maturity,
             alice,
@@ -82,17 +82,17 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
             address(0),
             int256(-1 * int256(baseIn)),
             int256(0),
-            int256(INITIAL_EUSDC / 1e12)
+            int256(expectedMint)
         );
 
         vm.prank(alice);
         pool.init(bob, bob, 0, MAX);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
-        // require(pool.balanceOf(bob) == INITIAL_EUSDC / 1e12);
-        // (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-        // require(sharesBal == pool.getSharesBalance());
-        // require(fyTokenBal == pool.getFYTokenBalance());
+        require(pool.balanceOf(bob) == expectedMint);
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
+        require(sharesBal == pool.getSharesBalance());
+        require(fyTokenBal == pool.getFYTokenBalance());
     }
 
     function testUnit_Euler_mint2() public {
@@ -110,7 +110,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
         shares.mint(address(pool), INITIAL_EUSDC);
         pool.mint(bob, bob, 0, MAX);
 
-        require(pool.balanceOf(bob) == INITIAL_EUSDC / 1e12 / 2);
+        almostEqual(pool.balanceOf(bob), INITIAL_EUSDC / 1e12 / 2 * muNumerator / muDenominator, 2);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
@@ -126,7 +126,7 @@ contract Mint__WithLiquidityEuler is WithLiquidityEuler {
         console.log("mints liquidity tokens, returning shares surplus converted to asset");
         uint256 bobAssetBefore = asset.balanceOf(bob);
         uint256 fyTokenIn = 1e6;
-        uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e6;
+        uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e6 * muNumerator / muDenominator;
         uint256 expectedSharesIn = (getSharesBalanceWithDecimalsAdjusted(address(pool)) * expectedMint) /
             pool.totalSupply();
 
@@ -266,7 +266,7 @@ contract TradeUSDC__WithLiquidityEuler is WithLiquidityEuler {
         uint256 fyTokenIn = 1e6;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999940, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999784, 340282366920938463463374607431768211455)
         );
         pool.sellFYToken(bob, type(uint128).max);
     }
@@ -329,7 +329,7 @@ contract TradeUSDC__WithLiquidityEuler is WithLiquidityEuler {
         uint128 sharesOut = 1e6;
         uint128 assetsOut = pool.unwrapPreview(1e6).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100063, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
@@ -412,7 +412,7 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100057376,
+                1100212468,
                 340282366920938463463374607431768211455
             )
         );
@@ -489,7 +489,7 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         uint128 fyTokenOut = uint128(1000e6);
 
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999947765, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999806804, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 

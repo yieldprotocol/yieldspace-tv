@@ -48,10 +48,7 @@ abstract contract WithLiquidityNonTv is ZeroStateNonTv {
         pool.init(alice, bob, 0, MAX);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
-        // Skew the balances without using trading functions
-        fyToken.mint(address(pool), additionalFYToken);
-
-        pool.sync();
+        pool.sellFYToken(alice, 0);
     }
 }
 

@@ -38,10 +38,7 @@ abstract contract WithLiquidity is ZeroState {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
-        // Skew the balances without using trading functions
-        fyToken.mint(address(pool), additionalFYToken);
-
-        pool.sync();
+        pool.sellFYToken(alice, 0);
     }
 }
 
@@ -54,10 +51,9 @@ contract Admin__WithLiquidity is WithLiquidity {
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
         (uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast, uint16 g1fee_) = pool.getCache();
         require(g1fee_ == g1Fee);
-        require(sharesCached == 1100000000000000000000000);
-        console.log(pool.totalSupply());
-        // require(fyTokenCached == 1277222222222222221122222);
-        require(blockTimeStampLast > 0);
+        almostEqual(sharesCached, 1100000000000000000000000, 100000000);
+        require(fyTokenCached == 1154999999999999998900000);
+        require(blockTimeStampLast == 1);
         uint256 expectedCurrentCumulativeRatio = pool.cumulativeRatioLast() +
             ((uint256(fyTokenCached) * 1e27) * (block.timestamp - blockTimeStampLast)) /
             sharesCached;
@@ -66,7 +62,7 @@ contract Admin__WithLiquidity is WithLiquidity {
         shares.mint(address(pool), 1e18);
         pool.sync();
         (uint104 sharesCachedNew, , ,) = pool.getCache();
-        require(sharesCachedNew == sharesCached + 1e18);
+        almostEqual(sharesCachedNew, sharesCached + 1e18, 100000000);
     }
 
     function testUnit_admin2() public {

@@ -52,10 +52,7 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
-        // Skew the balances without using trading functions
-        fyToken.mint(address(pool), additionalFYToken);
-
-        pool.sync();
+        pool.sellFYToken(alice, 0);
     }
 }
 
