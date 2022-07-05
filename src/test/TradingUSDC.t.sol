@@ -145,7 +145,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint128 sharesOut = 1e6;
         uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100926, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100949, 0));
         pool.buyBase(bob, baseOut, 0);
     }
 
