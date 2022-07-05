@@ -242,7 +242,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999890618546704867,
+                999999999074812345,
                 340282366920938463463374607431768211455
             )
         );
