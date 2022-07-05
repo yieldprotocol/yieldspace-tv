@@ -308,7 +308,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         uint128 sharesOut = 1e18;
         uint128 assetsOut = pool.unwrapPreview(1e18).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100063608132507117, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1099999001046422532, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
