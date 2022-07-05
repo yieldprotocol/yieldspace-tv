@@ -302,7 +302,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         console.log("does not buy shares beyond slippage");
         uint128 sharesOut = 1e18;
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000108393417685250, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 999999000927911419, 0));
         pool.buyBase(bob, sharesOut, 0);
     }
 
