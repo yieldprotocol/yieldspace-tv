@@ -340,7 +340,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
 
         // Send some shares to the pool.
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999946997338775724, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999905757770741064, 0));
 
         // Set max amount out to 0 and watch it revert.
         pool.buyFYToken(alice, fyTokenOut, 0);
