@@ -288,7 +288,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint128 fyTokenOut = uint128(1e6);
 
         asset.mint(address(pool), pool.wrapPreview(initialShares));
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999240, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999220, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 
