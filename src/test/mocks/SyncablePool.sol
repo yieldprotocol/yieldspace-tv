@@ -6,7 +6,6 @@ import {ISyncablePool} from "./ISyncablePool.sol";
 
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.
 contract SyncablePool is Pool, ISyncablePool {
-
     constructor(
         address shares_,
         address fyToken_,
@@ -19,5 +18,7 @@ contract SyncablePool is Pool, ISyncablePool {
         _update(_getSharesBalance(), _getFYTokenBalance(), sharesCached, fyTokenCached);
     }
 
-
+    function mulMu(uint256 amount) external view returns (uint256) {
+        return _mulMu(amount);
+    }
 }

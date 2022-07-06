@@ -6,9 +6,8 @@ import {ISyncablePool} from "./ISyncablePool.sol";
 
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.
 contract SyncablePoolEuler is PoolEuler, ISyncablePool {
-
     constructor(
-        address euler_,   // The main Euler contract address
+        address euler_, // The main Euler contract address
         address shares_,
         address fyToken_,
         int128 ts_,
@@ -22,5 +21,9 @@ contract SyncablePoolEuler is PoolEuler, ISyncablePool {
 
     function getSharesSurplus() public view returns (uint128) {
         return _getSharesBalance() - sharesCached;
+    }
+
+    function mulMu(uint256 amount) external view returns (uint256) {
+        return _mulMu(amount);
     }
 }

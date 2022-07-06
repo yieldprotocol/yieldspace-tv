@@ -6,5 +6,6 @@ import {IPool} from "../../interfaces/IPool.sol";
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.
 interface ISyncablePool is IPool {
     function sync() external;
-}
 
+    function mulMu(uint256 amount) external view returns (uint256);
+}
