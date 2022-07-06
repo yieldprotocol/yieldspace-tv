@@ -49,6 +49,7 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
+        fyToken.mint(address(pool), additionalFYToken);
         pool.sellFYToken(alice, 0);
     }
 }
@@ -184,7 +185,7 @@ abstract contract WithExtraFYTokenYearnVault is WithLiquidityYearnVault {
     function setUp() public virtual override {
         super.setUp();
         uint256 additionalFYToken = 30 * WAD;
-        fyToken.mint(address(this), additionalFYToken);
+        fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
         pool.sellFYToken(address(this), 0);
     }
@@ -245,7 +246,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999999999129635703,
+                999785051469477284,
                 340282366920938463463374607431768211455
             )
         );
@@ -308,7 +309,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         uint128 sharesOut = 1e18;
         uint128 assetsOut = pool.unwrapPreview(1e18).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1099999001046422532, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235494319975849, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
@@ -388,7 +389,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100059306836277437,
+                1100214484627287666,
                 340282366920938463463374607431768211455
             )
         );
@@ -463,7 +464,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         uint128 fyTokenOut = uint128(WAD);
 
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999946996518196437, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805960640945800, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 

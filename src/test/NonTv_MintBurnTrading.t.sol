@@ -46,6 +46,7 @@ abstract contract WithLiquidityNonTv is ZeroStateNonTv {
         pool.init(alice, bob, 0, MAX);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
+        fyToken.mint(address(pool), additionalFYToken);
         pool.sellFYToken(alice, 0);
     }
 }
@@ -134,7 +135,15 @@ contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
     function testUnit_NonTv_burn1() public {
         console.log("burns liquidity tokens");
         uint256 sharesBalance = shares.balanceOf(address(pool));
+        console.log(
+            " ~ file: NonTv_MintBurnTrading.t.sol ~ line 138 ~ testUnit_NonTv_burn1 ~ sharesBalance",
+            sharesBalance
+        );
         uint256 fyTokenBalance = fyToken.balanceOf(address(pool));
+        console.log(
+            " ~ file: NonTv_MintBurnTrading.t.sol ~ line 140 ~ testUnit_NonTv_burn1 ~ fyTokenBalance",
+            fyTokenBalance
+        );
         uint256 poolSup = pool.totalSupply();
         uint256 lpTokensIn = WAD;
 
@@ -162,6 +171,7 @@ contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
 
         uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
+        console.log(" ~ file: NonTv_MintBurnTrading.t.sol ~ line 167 ~ testUnit_NonTv_burn1 ~ fyTokenOut", fyTokenOut);
         almostEqual(sharesOut, expectedSharesOut, sharesOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
@@ -183,7 +193,7 @@ abstract contract WithExtraFYTokenNonTv is WithLiquidityNonTv {
     function setUp() public virtual override {
         super.setUp();
         uint256 additionalFYToken = 30 * WAD;
-        fyToken.mint(address(this), additionalFYToken);
+        fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
         pool.sellFYToken(address(this), 0);
     }
@@ -242,7 +252,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999999999074812345,
+                999768370574989354,
                 340282366920938463463374607431768211455
             )
         );
@@ -302,7 +312,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         console.log("does not buy shares beyond slippage");
         uint128 sharesOut = 1e18;
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 999999000927911419, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000230683079771239, 0));
         pool.buyBase(bob, sharesOut, 0);
     }
 
@@ -337,7 +347,6 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         uint256 aliceBeginningSharesBal = shares.balanceOf(alice);
         uint128 sharesIn = uint128(WAD);
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
-
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
         int128 c_ = ONE;
@@ -380,7 +389,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1000099725437752658,
+                1000210141672476586,
                 340282366920938463463374607431768211455
             )
         );
@@ -452,7 +461,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         uint128 fyTokenOut = uint128(WAD);
 
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999901284309497760, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999790902063159378, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 

@@ -41,7 +41,7 @@ abstract contract WithExtraFYToken is WithLiquidity {
 
         // Donate an additional 30 WAD fyToken to pool.
         uint256 additionalFYToken = 30 * WAD;
-        fyToken.mint(address(this), additionalFYToken);
+        fyToken.mint(address(pool), additionalFYToken);
 
         // Alice calls sellFYToken
         vm.prank(alice);
@@ -260,7 +260,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100104676131877480,
+                1100104725904570645,
                 340282366920938463463374607431768211455
             )
         );
@@ -340,7 +340,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
 
         // Send some shares to the pool.
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999905757770741064, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999905712529973337, 0));
 
         // Set max amount out to 0 and watch it revert.
         pool.buyFYToken(alice, fyTokenOut, 0);
