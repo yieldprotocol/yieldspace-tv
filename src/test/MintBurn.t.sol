@@ -81,12 +81,19 @@ contract Mint__ZeroState is ZeroStateDai {
         vm.prank(bob);
         console.log(2);
         uint256 baseIn = pool.unwrapPreview(INITIAL_YVDAI);
-        console.log(" ~ file: MintBurn.t.sol ~ line 85 ~ testUnit_mint1 ~ baseIn", baseIn);
         asset.mint(address(pool), baseIn);
         console.log(3);
 
         vm.expectEmit(true, true, true, true);
-        emit Liquidity(maturity, alice, bob, address(0), int256(-1 * int256(baseIn)), int256(0), int256(INITIAL_YVDAI));
+        emit Liquidity(
+            maturity,
+            alice,
+            bob,
+            address(0),
+            int256(-1 * int256(baseIn)),
+            int256(0),
+            int256(pool.mulMu(INITIAL_YVDAI))
+        );
 
         // Alice calls init.
         vm.prank(alice);
@@ -98,9 +105,8 @@ contract Mint__ZeroState is ZeroStateDai {
         console.log(5);
 
         // Confirm balance of pool as expected, as well as cached balances.
-        console.log(" ~ file: MintBurn.t.sol ~ line 102 ~ testUnit_mint1 ~ pool.balanceOf(bob)", pool.balanceOf(bob));
-        console.log(" ~ file: MintBurn.t.sol ~ line 103 ~ testUnit_mint1 ~ INITIAL_YVDAI", INITIAL_YVDAI);
-        require(pool.balanceOf(bob) == INITIAL_YVDAI);
+        // First mint should equal shares in times mu
+        require(pool.balanceOf(bob) == pool.mulMu(INITIAL_YVDAI));
         console.log(5);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         console.log(6);

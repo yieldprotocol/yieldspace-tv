@@ -63,13 +63,21 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
         asset.mint(address(pool), baseIn);
 
         vm.expectEmit(true, true, true, true);
-        emit Liquidity(maturity, alice, bob, address(0), int256(-1 * int256(baseIn)), int256(0), int256(INITIAL_YVDAI));
+        emit Liquidity(
+            maturity,
+            alice,
+            bob,
+            address(0),
+            int256(-1 * int256(baseIn)),
+            int256(0),
+            int256(pool.mulMu(INITIAL_YVDAI))
+        );
 
         vm.prank(alice);
         pool.init(bob, bob, 0, MAX);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
-        require(pool.balanceOf(bob) == INITIAL_YVDAI);
+        require(pool.balanceOf(bob) == pool.mulMu(INITIAL_YVDAI));
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
