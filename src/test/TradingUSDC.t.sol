@@ -20,7 +20,7 @@ import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
-import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
 import {almostEqual, setPrice} from "./shared/Utils.sol";
 import {IERC4626Mock} from "./mocks/ERC4626TokenMock.sol";
@@ -28,10 +28,8 @@ import "./shared/Constants.sol";
 // import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
 import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
 
-
 abstract contract ZeroStateUSDC is ZeroState {
     constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "4626")) {}
-
 }
 
 abstract contract WithLiquidity is ZeroStateUSDC {
@@ -43,7 +41,6 @@ abstract contract WithLiquidity is ZeroStateUSDC {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         fyToken.mint(address(pool), initialFYTokens);
         pool.sync();
-
     }
 }
 
@@ -57,7 +54,7 @@ abstract contract WithExtraFYTokenUSDC is WithLiquidity {
     function setUp() public virtual override {
         super.setUp();
         uint256 additionalFYToken = 30 * WAD;
-        fyToken.mint(address(this), additionalFYToken);
+        fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
         pool.sellFYToken(address(this), 0);
     }
@@ -68,7 +65,6 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
     using Math64x64 for int128;
     using CastU256U128 for uint256;
 
-
     function testUnit_tradeUSDC01() public {
         console.log("sells a certain amount of fyToken for base");
         uint256 fyTokenIn = 25_000 * 1e6;
@@ -78,7 +74,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         vm.prank(alice);
         pool.sellFYToken(bob, 0);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -88,7 +84,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint256 fyTokenIn = 1e6;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999157, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999135, 340282366920938463463374607431768211455)
         );
         pool.sellFYToken(bob, type(uint128).max);
     }
@@ -100,7 +96,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
     function testUnit_tradeUSDC04() public {
         console.log("buys a certain amount base for fyToken");
-        (,uint104 fyTokenBalBefore,,) = pool.getCache();
+        (, uint104 fyTokenBalBefore, , ) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
         uint256 userAssetBefore = asset.balanceOf(bob);
@@ -109,7 +105,9 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10 ** shares.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
+        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+            uint256(1e6).fromUInt()
+        );
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -127,7 +125,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         vm.prank(bob);
         pool.buyBase(bob, assetsOut, type(uint128).max);
 
-        (,uint104 fyTokenBal,,) = pool.getCache();
+        (, uint104 fyTokenBal, , ) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
@@ -136,7 +134,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
         almostEqual(fyTokenIn, expectedFYTokenIn, 1);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
@@ -147,9 +145,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint128 sharesOut = 1e6;
         uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100926, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100949, 0));
         pool.buyBase(bob, baseOut, 0);
     }
 
@@ -168,7 +164,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         require(shares.balanceOf(bob) == bobSharesBefore);
         require(asset.balanceOf(bob) == bobAssetBefore + IERC4626Mock(address(shares)).convertToAssets(sharesOut));
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal != pool.getFYTokenBalance());
 
@@ -177,7 +173,6 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
         require(fyToken.balanceOf(alice) > aliceFYTokenBefore);
     }
-
 }
 
 contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
@@ -190,7 +185,9 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint256 userSharesBalanceBefore = shares.balanceOf(alice);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10 ** shares.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
+        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+            uint256(1e6).fromUInt()
+        );
 
         // Transfer shares for sale to the pool
         shares.mint(address(pool), sharesIn);
@@ -211,7 +208,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
         require(shares.balanceOf(alice) == userSharesBalanceBefore, "'From' wallet should have no shares tokens");
         require(fyTokenOut == expectedFYTokenOut);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -222,7 +219,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint128 assetsIn = uint128(pool.unwrapPreview(sharesIn));
         asset.mint(address(pool), assetsIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100837, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100859, 340282366920938463463374607431768211455)
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));
@@ -239,7 +236,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         vm.prank(alice);
         pool.sellBase(bob, 0);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
@@ -247,13 +244,15 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
     function testUnit_tradeUSDC10() public {
         console.log("buys a certain amount of fyTokens with base");
-        (uint104 sharesCachedBefore,,,) = pool.getCache();
+        (uint104 sharesCachedBefore, , , ) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(1e6);
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10 ** shares.decimals()).fromUInt()).div(uint256(1e6).fromUInt());
+        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+            uint256(1e6).fromUInt()
+        );
 
         // Transfer shares for sale to the pool
         asset.mint(address(pool), pool.unwrapPreview(initialShares));
@@ -272,15 +271,12 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
 
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
         uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
 
-        require(
-            fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut,
-            "'User2' wallet should have 1 fyToken token"
-        );
+        require(fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut, "'User2' wallet should have 1 fyToken token");
 
         almostEqual(sharesIn, expectedSharesIn, sharesIn / 100000);
         require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
@@ -292,9 +288,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint128 fyTokenOut = uint128(1e6);
 
         asset.mint(address(pool), pool.wrapPreview(initialShares));
-        vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999240, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999220, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 
@@ -302,7 +296,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         console.log("donates shares and buys fyToken");
         uint256 sharesBalances = pool.getSharesBalance();
         uint256 fyTokenBalances = pool.getFYTokenBalance();
-        (uint104 sharesCachedBefore,,,) = pool.getCache();
+        (uint104 sharesCachedBefore, , , ) = pool.getCache();
 
         uint128 fyTokenOut = uint128(1e6);
         uint128 sharesDonation = uint128(1e6);
@@ -311,7 +305,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
 
         require(sharesCachedCurrent == sharesBalances + sharesIn);
