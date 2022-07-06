@@ -47,9 +47,8 @@ abstract contract WithLiquidity is ZeroStateDai {
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
-        // Skew the balances by donating fyToken, without using trading functions.
         fyToken.mint(address(pool), additionalFYToken);
-        pool.sync();
+        pool.sellFYToken(alice, 0);
 
         // elapse some time after initialization
         vm.warp(block.timestamp + 60);
@@ -82,6 +81,7 @@ contract Mint__ZeroState is ZeroStateDai {
         vm.prank(bob);
         console.log(2);
         uint256 baseIn = pool.unwrapPreview(INITIAL_YVDAI);
+        console.log(" ~ file: MintBurn.t.sol ~ line 85 ~ testUnit_mint1 ~ baseIn", baseIn);
         asset.mint(address(pool), baseIn);
         console.log(3);
 
@@ -98,10 +98,12 @@ contract Mint__ZeroState is ZeroStateDai {
         console.log(5);
 
         // Confirm balance of pool as expected, as well as cached balances.
+        console.log(" ~ file: MintBurn.t.sol ~ line 102 ~ testUnit_mint1 ~ pool.balanceOf(bob)", pool.balanceOf(bob));
+        console.log(" ~ file: MintBurn.t.sol ~ line 103 ~ testUnit_mint1 ~ INITIAL_YVDAI", INITIAL_YVDAI);
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
         console.log(5);
-        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
-        console.log(5);
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
+        console.log(6);
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -128,7 +130,7 @@ contract Mint__ZeroState is ZeroStateDai {
 
         // Confirm balance of pool as expected, as well as cached balances.
         require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
-        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -146,7 +148,7 @@ contract Mint__WithLiquidity is WithLiquidity {
         uint256 fyTokenIn = WAD;
         uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e18;
         uint256 expectedSharesIn = ((shares.balanceOf(address(pool)) * expectedMint) / pool.totalSupply());
-         // send base for an extra wad of shares
+        // send base for an extra wad of shares
         uint256 extraSharesIn = 1e18;
         uint256 expectedBaseIn = pool.unwrapPreview(expectedSharesIn + extraSharesIn);
         uint256 poolTokensBefore = pool.balanceOf(bob);
@@ -167,7 +169,7 @@ contract Mint__WithLiquidity is WithLiquidity {
         almostEqual(shares.balanceOf(bob), bobSharesInitialBalance, fyTokenIn / 10000);
         almostEqual(asset.balanceOf(bob), pool.getCurrentSharePrice(), fyTokenIn / 10000);
 
-        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -226,7 +228,7 @@ contract Burn__WithLiquidity is WithLiquidity {
         almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
-        (uint104 sharesBal, uint104 fyTokenBal, ,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
         require(fyToken.balanceOf(address(charlie)) == fyTokenOut);
