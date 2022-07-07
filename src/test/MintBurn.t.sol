@@ -124,9 +124,9 @@ contract Mint__ZeroState is ZeroStateDai {
         vm.startPrank(alice);
         pool.init(address(0), address(0), 0, MAX);
 
-        // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
+        // After initializing, donate shares and sellFyToken to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
-        pool.sync();
+        pool.sellFYToken(alice, 0);
 
         // Send more shares to the pool.
         shares.mint(address(pool), INITIAL_YVDAI);
@@ -135,8 +135,9 @@ contract Mint__ZeroState is ZeroStateDai {
         pool.mint(bob, bob, 0, MAX);
 
         // Confirm balance of pool as expected, as well as cached balances.
-        require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
+        uint256 expectedLpTokens = (pool.totalSupply() * INITIAL_YVDAI) / sharesBal;
+        require(pool.balanceOf(bob) == expectedLpTokens);
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -159,7 +160,7 @@ contract Mint__WithLiquidity is WithLiquidity {
         uint256 expectedBaseIn = pool.unwrapPreview(expectedSharesIn + extraSharesIn);
         uint256 poolTokensBefore = pool.balanceOf(bob);
 
-        // Send some shares to the pool.
+        // Send some base to the pool.
         asset.mint(address(pool), expectedBaseIn);
         // Send some fyToken to the pool.
         fyToken.mint(address(pool), fyTokenIn);
