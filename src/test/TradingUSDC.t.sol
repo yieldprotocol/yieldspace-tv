@@ -35,12 +35,20 @@ abstract contract ZeroStateUSDC is ZeroState {
 abstract contract WithLiquidity is ZeroStateUSDC {
     function setUp() public virtual override {
         super.setUp();
-        shares.mint(address(pool), initialShares);
+
+        // Send some shares to the pool.
+        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
+
+        // Alice calls init.
         vm.prank(alice);
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(alice, bob, 0, MAX);
+
+        // Update the price of shares to value of state variables: cNumerator/cDenominator
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        fyToken.mint(address(pool), initialFYTokens);
-        pool.sync();
+        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
+
+        fyToken.mint(address(pool), additionalFYToken);
+        pool.sellFYToken(alice, 0);
     }
 }
 
@@ -53,10 +61,10 @@ abstract contract WithExtraFYTokenUSDC is WithLiquidity {
 
     function setUp() public virtual override {
         super.setUp();
-        uint256 additionalFYToken = 30 * WAD;
+        uint256 additionalFYToken = 30 * 1e6;
         fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
-        pool.sellFYToken(address(this), 0);
+        pool.sellFYToken(alice, 0);
     }
 }
 
