@@ -116,7 +116,7 @@ contract Mint__WithLiquidityYearnVault is WithLiquidityYearnVault {
         console.log("mints liquidity tokens, returning shares surplus converted to asset");
         uint256 bobAssetBefore = asset.balanceOf(bob);
         uint256 fyTokenIn = WAD;
-        uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e18;
+        uint256 expectedMint = ((pool.totalSupply() * fyTokenIn) / (fyToken.balanceOf(address(pool))));
         uint256 expectedSharesIn = (shares.balanceOf(address(pool)) * expectedMint) / pool.totalSupply();
 
         uint256 poolTokensBefore = pool.balanceOf(bob);

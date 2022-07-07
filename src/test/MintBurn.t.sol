@@ -153,8 +153,9 @@ contract Mint__WithLiquidity is WithLiquidity {
 
         // Calculate expected Mint and SharesIn for 1 WAD fyToken in.
         uint256 fyTokenIn = WAD;
-        uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e18;
+        uint256 expectedMint = (pool.totalSupply() * fyTokenIn) / fyToken.balanceOf(address(pool));
         uint256 expectedSharesIn = ((shares.balanceOf(address(pool)) * expectedMint) / pool.totalSupply());
+
         // send base for an extra wad of shares
         uint256 extraSharesIn = 1e18;
         uint256 expectedBaseIn = pool.unwrapPreview(expectedSharesIn + extraSharesIn);
