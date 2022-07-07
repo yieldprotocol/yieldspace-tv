@@ -21,4 +21,12 @@ contract SyncablePoolNonTv is PoolNonTv, ISyncablePool {
     function mulMu(uint256 amount) external view returns (uint256) {
         return _mulMu(amount);
     }
+
+    function calcRatioSeconds(
+        uint128 fyTokenReserves,
+        uint128 sharesReserves,
+        uint256 secondsElapsed
+    ) public view returns (uint256) {
+        return (uint256(fyTokenReserves) * 1e27 * secondsElapsed) / _mulMu(sharesReserves);
+    }
 }

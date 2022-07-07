@@ -8,4 +8,10 @@ interface ISyncablePool is IPool {
     function sync() external;
 
     function mulMu(uint256 amount) external view returns (uint256);
+
+    function calcRatioSeconds(
+        uint128 fyTokenReserves,
+        uint128 sharesReserves,
+        uint256 secondsElapsed
+    ) external view returns (uint256);
 }
