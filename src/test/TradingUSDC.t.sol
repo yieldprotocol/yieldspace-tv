@@ -92,7 +92,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint256 fyTokenIn = 1e6;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999135, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999784, 340282366920938463463374607431768211455)
         );
         pool.sellFYToken(bob, type(uint128).max);
     }
@@ -153,7 +153,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint128 sharesOut = 1e6;
         uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100949, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235, 0));
         pool.buyBase(bob, baseOut, 0);
     }
 
@@ -227,7 +227,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint128 assetsIn = uint128(pool.unwrapPreview(sharesIn));
         asset.mint(address(pool), assetsIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100859, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100214, 340282366920938463463374607431768211455)
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));
@@ -296,7 +296,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint128 fyTokenOut = uint128(1e6);
 
         asset.mint(address(pool), pool.wrapPreview(initialShares));
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999220, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 
