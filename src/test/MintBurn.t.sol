@@ -76,13 +76,10 @@ contract Mint__ZeroState is ZeroStateDai {
 
     function testUnit_mint1() public {
         console.log("adds initial liquidity");
-        console.log(1);
         // Bob transfers some shares to the pool.
         vm.prank(bob);
-        console.log(2);
         uint256 baseIn = pool.unwrapPreview(INITIAL_YVDAI);
         asset.mint(address(pool), baseIn);
-        console.log(3);
 
         vm.expectEmit(true, true, true, true);
         emit Liquidity(
@@ -99,17 +96,13 @@ contract Mint__ZeroState is ZeroStateDai {
         vm.prank(alice);
         pool.init(bob, bob, 0, MAX);
 
-        console.log(4);
         // Shares price is set to value of state variable cNumerator/cDenominator.
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        console.log(5);
 
         // Confirm balance of pool as expected, as well as cached balances.
         // First mint should equal shares in times mu
         require(pool.balanceOf(bob) == pool.mulMu(INITIAL_YVDAI));
-        console.log(5);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-        console.log(6);
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
