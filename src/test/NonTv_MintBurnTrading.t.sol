@@ -135,15 +135,7 @@ contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
     function testUnit_NonTv_burn1() public {
         console.log("burns liquidity tokens");
         uint256 sharesBalance = shares.balanceOf(address(pool));
-        console.log(
-            " ~ file: NonTv_MintBurnTrading.t.sol ~ line 138 ~ testUnit_NonTv_burn1 ~ sharesBalance",
-            sharesBalance
-        );
         uint256 fyTokenBalance = fyToken.balanceOf(address(pool));
-        console.log(
-            " ~ file: NonTv_MintBurnTrading.t.sol ~ line 140 ~ testUnit_NonTv_burn1 ~ fyTokenBalance",
-            fyTokenBalance
-        );
         uint256 poolSup = pool.totalSupply();
         uint256 lpTokensIn = WAD;
 
@@ -171,7 +163,6 @@ contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
 
         uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
-        console.log(" ~ file: NonTv_MintBurnTrading.t.sol ~ line 167 ~ testUnit_NonTv_burn1 ~ fyTokenOut", fyTokenOut);
         almostEqual(sharesOut, expectedSharesOut, sharesOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 

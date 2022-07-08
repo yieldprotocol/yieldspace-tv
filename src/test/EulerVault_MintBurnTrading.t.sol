@@ -382,10 +382,6 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
             c_,
             mu
         ) / pool.scaleFactor();
-        console.log(
-            "+ + file: EulerVault_MintBurnTrading.t.sol + line 392 + testUnit_Euler_tradeUSDC07 + expectedFYTokenOut",
-            expectedFYTokenOut
-        );
 
         vm.expectEmit(true, true, false, true);
         emit Trade(maturity, alice, bob, -int128(assetsIn), int256(expectedFYTokenOut));
@@ -393,10 +389,6 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         pool.sellBase(bob, 0);
 
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
-        console.log(
-            "+ + file: EulerVault_MintBurnTrading.t.sol + line 401 + testUnit_Euler_tradeUSDC07 + fyTokenOut",
-            fyTokenOut
-        );
         require(fyTokenOut == expectedFYTokenOut);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
