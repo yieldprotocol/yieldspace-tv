@@ -20,7 +20,6 @@ pragma solidity >=0.8.13;
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
@@ -36,8 +35,7 @@ import {YVTokenMock} from "./mocks/YVTokenMock.sol";
 import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
 
 abstract contract ZeroStateNonTv is ZeroState {
-        constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "NonTv")) {}
-
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "NonTv")) {}
 }
 
 abstract contract WithLiquidityNonTv is ZeroStateNonTv {
@@ -48,10 +46,8 @@ abstract contract WithLiquidityNonTv is ZeroStateNonTv {
         pool.init(alice, bob, 0, MAX);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
-        // Skew the balances without using trading functions
         fyToken.mint(address(pool), additionalFYToken);
-
-        pool.sync();
+        pool.sellFYToken(alice, 0);
     }
 }
 
@@ -77,7 +73,7 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
         pool.init(bob, bob, 0, MAX);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -97,9 +93,8 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
         shares.mint(address(pool), INITIAL_YVDAI);
         pool.mint(bob, bob, 0, MAX);
 
-
         require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -107,7 +102,6 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
     // Test intentionally ommitted.
     // function testUnit_NonTv_mint3() public {
     //     console.log("syncs balances after donations");
-
 }
 
 contract Mint__WithLiquidityNonTv is WithLiquidityNonTv {
@@ -130,12 +124,11 @@ contract Mint__WithLiquidityNonTv is WithLiquidityNonTv {
         almostEqual(minted, expectedMint, fyTokenIn / 10000);
         almostEqual(shares.balanceOf(bob), WAD + bobSharesInitialBalance, fyTokenIn / 10000);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
 
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
-
 }
 
 contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
@@ -168,13 +161,12 @@ contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
         vm.prank(alice);
         pool.burn(bob, address(charlie), 0, MAX);
 
-
         uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
         almostEqual(sharesOut, expectedSharesOut, sharesOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
         require(shares.balanceOf(bob) - bobSharesInitialBalance == sharesOut);
@@ -192,7 +184,7 @@ abstract contract WithExtraFYTokenNonTv is WithLiquidityNonTv {
     function setUp() public virtual override {
         super.setUp();
         uint256 additionalFYToken = 30 * WAD;
-        fyToken.mint(address(this), additionalFYToken);
+        fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
         pool.sellFYToken(address(this), 0);
     }
@@ -239,7 +231,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         vm.prank(alice);
         pool.sellFYToken(bob, 0);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -249,11 +241,14 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         uint256 fyTokenIn = 1e18;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellFYToken.selector, 999890618546704867, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(
+                SlippageDuringSellFYToken.selector,
+                999768370574989354,
+                340282366920938463463374607431768211455
+            )
         );
         pool.sellFYToken(bob, type(uint128).max);
     }
-
 
     // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
@@ -262,7 +257,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
 
     function testUnit_NonTv_tradeDAI04() public {
         console.log("buys a certain amount shares for fyToken");
-        (,uint104 fyTokenBalBefore,,) = pool.getCache();
+        (, uint104 fyTokenBalBefore, , ) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
 
@@ -290,7 +285,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         vm.prank(bob);
         pool.buyBase(bob, uint128(sharesOut), type(uint128).max);
 
-        (, uint104 fyTokenBal,,) = pool.getCache();
+        (, uint104 fyTokenBal, , ) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
@@ -298,7 +293,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
 
         almostEqual(fyTokenIn, expectedFYTokenIn, sharesOut / 1000000);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
@@ -308,9 +303,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         console.log("does not buy shares beyond slippage");
         uint128 sharesOut = 1e18;
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000108393417685250, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000230683079771239, 0));
         pool.buyBase(bob, sharesOut, 0);
     }
 
@@ -326,7 +319,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         pool.buyBase(bob, sharesOut, uint128(MAX));
         require(shares.balanceOf(bob) == userSharesBefore + sharesOut);
 
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal != pool.getFYTokenBalance());
 
@@ -345,7 +338,6 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         uint256 aliceBeginningSharesBal = shares.balanceOf(alice);
         uint128 sharesIn = uint128(WAD);
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
-
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
         int128 c_ = ONE;
@@ -371,9 +363,12 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         pool.sellBase(bob, 0);
 
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
-        require(aliceBeginningSharesBal == shares.balanceOf(alice), "'From' wallet should have not increase shares tokens");
+        require(
+            aliceBeginningSharesBal == shares.balanceOf(alice),
+            "'From' wallet should have not increase shares tokens"
+        );
         require(fyTokenOut == expectedFYTokenOut);
-        (uint104 sharesBal, uint104 fyTokenBal,,) = pool.getCache();
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
@@ -383,7 +378,11 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         uint128 sharesIn = uint128(WAD);
         shares.mint(address(pool), sharesIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1000099725437752658, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(
+                SlippageDuringSellBase.selector,
+                1000210141672476586,
+                340282366920938463463374607431768211455
+            )
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));
@@ -400,7 +399,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         vm.prank(alice);
         pool.sellBase(bob, 0);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter,,) = pool.getCache();
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
 
         require(sharesBalAfter == pool.getSharesBalance());
         require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
@@ -408,7 +407,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
 
     function testUnit_NonTv_tradeDAI10() public {
         console.log("buys a certain amount of fyTokens with shares");
-        (uint104 sharesCachedBefore,,,) = pool.getCache();
+        (uint104 sharesCachedBefore, , , ) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(WAD);
 
@@ -436,15 +435,12 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
 
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
         uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
 
-        require(
-            fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut,
-            "'User2' wallet should have 1 fyToken token"
-        );
+        require(fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut, "'User2' wallet should have 1 fyToken token");
 
         almostEqual(sharesIn, expectedSharesIn, sharesIn / 1000000);
         require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
@@ -456,9 +452,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         uint128 fyTokenOut = uint128(WAD);
 
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999901284309497760, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999790902063159378, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 
@@ -466,7 +460,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         console.log("donates shares and buys fyToken");
         uint256 sharesBalances = pool.getSharesBalance();
         uint256 fyTokenBalances = pool.getFYTokenBalance();
-        (uint104 sharesCachedBefore,,,) = pool.getCache();
+        (uint104 sharesCachedBefore, , , ) = pool.getCache();
 
         uint128 fyTokenOut = uint128(WAD);
         uint128 sharesDonation = uint128(WAD);
@@ -475,7 +469,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
 
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent,,) = pool.getCache();
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
         uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
 
         require(sharesCachedCurrent == sharesBalances + sharesIn);
