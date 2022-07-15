@@ -78,7 +78,7 @@ library YieldMath {
 
                      y - (                         sum                           )^(   invA   )
                      y - ((    Za         ) + (  Ya  ) - (       Zxa           ) )^(   invA   )
-                Δy = y - ( c/μ * (μz)^(1-t) +  y^(1-t) -  c/μ * (μz + μdx)^(1-t) )^(1 / (1 - t))
+                Δy = y - ( c/μ * (μz)^(1-t) +  y^(1-t) -  c/μ * (μz + μx)^(1-t)  )^(1 / (1 - t))
 
                 */
                 uint256 normalizedSharesReserves;
