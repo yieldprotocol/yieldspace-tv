@@ -14,6 +14,7 @@ import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
+/// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
 library YieldMath {
     using Math64x64 for int128;
     using Math64x64 for uint128;
@@ -77,7 +78,7 @@ library YieldMath {
 
                      y - (                         sum                           )^(   invA   )
                      y - ((    Za         ) + (  Ya  ) - (       Zxa           ) )^(   invA   )
-                Δy = y - ( c/μ * (μz)^(1-t) +  y^(1-t) -  c/μ * (μz + μdx)^(1-t) )^(1 / (1 - t))
+                Δy = y - ( c/μ * (μz)^(1-t) +  y^(1-t) -  c/μ * (μz + μx)^(1-t)  )^(1 / (1 - t))
 
                 */
                 uint256 normalizedSharesReserves;

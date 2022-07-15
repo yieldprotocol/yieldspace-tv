@@ -6,7 +6,6 @@ import {ISyncablePool} from "./ISyncablePool.sol";
 
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.
 contract SyncablePoolYearnVault is PoolYearnVault, ISyncablePool {
-
     constructor(
         address shares_,
         address fyToken_,
@@ -19,5 +18,15 @@ contract SyncablePoolYearnVault is PoolYearnVault, ISyncablePool {
         _update(_getSharesBalance(), _getFYTokenBalance(), sharesCached, fyTokenCached);
     }
 
+    function mulMu(uint256 amount) external view returns (uint256) {
+        return _mulMu(amount);
+    }
 
+    function calcRatioSeconds(
+        uint128 fyTokenReserves,
+        uint128 sharesReserves,
+        uint256 secondsElapsed
+    ) public view returns (uint256) {
+        return (uint256(fyTokenReserves) * 1e27 * secondsElapsed) / _mulMu(sharesReserves);
+    }
 }
