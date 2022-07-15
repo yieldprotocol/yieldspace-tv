@@ -18,7 +18,7 @@ import {RDiv} from "@yield-protocol/utils-v2/contracts/math/RDiv.sol";
 
 import {IPool} from "../interfaces/IPool.sol";
 import {IERC4626} from  "../interfaces/IERC4626.sol";
-import {IFYToken} from  "@yield-protocol/vault-interfaces/src/IFYToken.sol";
+import {IFYToken} from "@yield-protocol/vault-v2/contracts/interfaces/IFYToken.sol";
 import {ERC20Permit} from  "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
 import {AccessControl} from  "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
 import {ERC20, IERC20Metadata as IERC20Like, IERC20} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
