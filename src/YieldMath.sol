@@ -125,8 +125,6 @@ library YieldMath {
                 "YieldMath: Rounding error"
             );
 
-            fyTokenOut = fyTokenOut < MAX - 1e12 ? fyTokenOut + 1e12 : MAX; // Add error guard, ceiling the result at max
-
             require(
                 fyTokenOut <= fyTokenReserves,
                 "YieldMath: > fyToken reserves"
@@ -337,8 +335,6 @@ library YieldMath {
                 (result = uint256(uint128(sum).pow(ONE, a)) - uint256(fyTokenReserves)) <= MAX,
                 "YieldMath: Rounding error"
             );
-
-            result = result > 1e12 ? result - 1e12 : 0; // Subtract error guard, flooring the result at zero
 
             return uint128(result);
         }
