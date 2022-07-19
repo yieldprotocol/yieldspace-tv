@@ -187,7 +187,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
 
         // Send 1 WAD fyToken to pool.
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235490671016766, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236490671016766, 0));
 
         // Set maxRatio to 0 and see it revert.
         pool.buyBase(bob, baseOut, 0);
@@ -260,7 +260,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100214481334552585,
+                1100213481334552585,
                 340282366920938463463374607431768211455
             )
         );

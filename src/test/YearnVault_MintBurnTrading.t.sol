@@ -45,7 +45,7 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
 
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice, bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
@@ -74,7 +74,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
         );
 
         vm.prank(alice);
-        pool.init(bob, bob, 0, MAX);
+        pool.init(bob, bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == pool.mulMu(INITIAL_YVDAI));
@@ -89,7 +89,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
 
         vm.startPrank(alice);
 
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(address(0), address(0));
 
         // After initializing, donate shares and sellFyToken to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
@@ -319,7 +319,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         uint128 sharesOut = 1e18;
         uint128 assetsOut = pool.unwrapPreview(1e18).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235494319975849, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236494319975849, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
@@ -399,7 +399,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100214484627287666,
+                1100213484627287666,
                 340282366920938463463374607431768211455
             )
         );

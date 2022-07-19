@@ -43,7 +43,7 @@ abstract contract WithLiquidityNonTv is ZeroStateNonTv {
         super.setUp();
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice, bob);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
         fyToken.mint(address(pool), additionalFYToken);
@@ -70,7 +70,7 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
         );
 
         vm.prank(alice);
-        pool.init(bob, bob, 0, MAX);
+        pool.init(bob, bob);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
@@ -84,7 +84,7 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
 
         vm.startPrank(alice);
 
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(address(0), address(0));
 
         // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
@@ -303,7 +303,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         console.log("does not buy shares beyond slippage");
         uint128 sharesOut = 1e18;
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000230683079771239, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000231683079771239, 0));
         pool.buyBase(bob, sharesOut, 0);
     }
 
@@ -380,7 +380,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1000210141672476586,
+                1000209141672476586,
                 340282366920938463463374607431768211455
             )
         );
