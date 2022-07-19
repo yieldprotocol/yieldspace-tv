@@ -1002,16 +1002,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached,
             _computeG2(cache.g1Fee)
         );
-        baseOut = _unwrapPreview(sharesOut).u128();
-
-        // Check slippage
-        if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         // Update TWAR
         _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
 
         // Transfer
-        _unwrap(to);
+        baseOut = _unwrap(to).u128();
+
+        // Check slippage
+        if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
