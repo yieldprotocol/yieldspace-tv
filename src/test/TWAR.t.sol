@@ -205,7 +205,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         vm.warp(block.timestamp + 1000);
         expectedCurrCumRat += pool.calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2, ) = pool.currentCumulativeRatio();
-        assertEq(currCumRat2, expectedCurrCumRat);
+        assertApproxEqAbs(currCumRat2, expectedCurrCumRat, 1);
     }
 
     function testUnit_twar5() public {
@@ -331,6 +331,6 @@ contract TWAR__PoolInitialized is PoolInitialized {
         vm.warp(block.timestamp + 1000);
         expectedCurrCumRat += pool.calcRatioSeconds(fyTokenReserves, sharesReserves, 1000);
         (uint256 currCumRat2, ) = pool.currentCumulativeRatio();
-        assertEq(currCumRat2, expectedCurrCumRat);
+        assertApproxEqAbs(currCumRat2, expectedCurrCumRat, 1);
     }
 }
