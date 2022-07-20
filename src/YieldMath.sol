@@ -232,7 +232,7 @@ library YieldMath {
                 }
 
                 rightTerm = int128(ONE).div(mu).mul(
-                    int128(uint128((zaYaYxa).divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)))
+                    int128(uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)))
                 );
             }
             require(rightTerm <= int128(sharesReserves), "YieldMath: Rate underflow");
