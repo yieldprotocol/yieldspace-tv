@@ -125,8 +125,6 @@ library YieldMath {
                 "YieldMath: Rounding error"
             );
 
-            fyTokenOut = fyTokenOut < MAX - 1e12 ? fyTokenOut + 1e12 : MAX; // Add error guard, ceiling the result at max
-
             require(
                 fyTokenOut <= fyTokenReserves,
                 "YieldMath: > fyToken reserves"
@@ -234,7 +232,7 @@ library YieldMath {
                 }
 
                 rightTerm = int128(ONE).div(mu).mul(
-                    int128(uint128((zaYaYxa).divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)))
+                    int128(uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)))
                 );
             }
             require(rightTerm <= int128(sharesReserves), "YieldMath: Rate underflow");
@@ -337,8 +335,6 @@ library YieldMath {
                 (result = uint256(uint128(sum).pow(ONE, a)) - uint256(fyTokenReserves)) <= MAX,
                 "YieldMath: Rounding error"
             );
-
-            result = result > 1e12 ? result - 1e12 : 0; // Subtract error guard, flooring the result at zero
 
             return uint128(result);
         }
@@ -472,20 +468,20 @@ library YieldMath {
         if (totalSupply == 0) return 0;
 
         unchecked {
-        // a = (1 - k * timeTillMaturity)
-        int128 a = int128(ONE).sub(k.mul(timeTillMaturity.fromUInt()));
-        require (a > 0, "YieldMath: Too far from maturity");
+            // a = (1 - k * timeTillMaturity)
+            int128 a = int128(ONE).sub(k.mul(timeTillMaturity.fromUInt()));
+            require (a > 0, "YieldMath: Too far from maturity");
 
-        uint256 sum =
-        uint256(baseReserves.pow(uint128 (a), ONE)) +
-        uint256(fyTokenReserves.pow(uint128 (a), ONE)) >> 1;
-        require(sum < MAX, "YieldMath: Sum overflow");
+            uint256 sum =
+            uint256(baseReserves.pow(uint128 (a), ONE)) +
+            uint256(fyTokenReserves.pow(uint128 (a), ONE)) >> 1;
+            require(sum < MAX, "YieldMath: Sum overflow");
 
-        // We multiply the dividend by 1e18 to get a fixed point number with 18 decimals
-        uint256 result_ = uint256(uint128(sum).pow(ONE, uint128(a))) * 1e18 / totalSupply;
-        require (result_ < MAX, "YieldMath: Result overflow");
+            // We multiply the dividend by 1e18 to get a fixed point number with 18 decimals
+            uint256 result_ = uint256(uint128(sum).pow(ONE, uint128(a))) * 1e18 / totalSupply;
+            require (result_ < MAX, "YieldMath: Result overflow");
 
-        result = uint128(result_);
+            result = uint128(result_);
         }
     }
 }
