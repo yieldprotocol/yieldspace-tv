@@ -396,7 +396,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             if (
                 uint256(cache.sharesCached).wdiv(realFYTokenCached_) < minRatio ||
                 uint256(cache.sharesCached).wdiv(realFYTokenCached_) > maxRatio
-            ) revert SlippageDuringMint((uint256(cache.sharesCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
+            ) revert SlippageDuringMint(uint256(cache.sharesCached).wdiv(realFYTokenCached_), minRatio, maxRatio);
         }
 
         // Calculate token amounts
