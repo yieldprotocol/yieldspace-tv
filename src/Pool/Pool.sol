@@ -1299,7 +1299,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the c based on the current price
     function _getC() internal view returns (int128) {
-        return ((_getCurrentSharePrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
+        return (_getCurrentSharePrice() * scaleFactor).divu(1e18);
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
