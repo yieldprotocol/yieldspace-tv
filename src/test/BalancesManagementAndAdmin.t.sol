@@ -52,7 +52,7 @@ contract Admin__WithLiquidity is WithLiquidity {
         (uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast, uint16 g1fee_) = pool.getCache();
         require(g1fee_ == g1Fee);
         almostEqual(sharesCached, 1100000000000000000000000, 100000000);
-        require(fyTokenCached == 1154999999999999998900000);
+        require(fyTokenCached == 1154999999999999999952295);
         require(blockTimeStampLast == 1);
         uint256 expectedCurrentCumulativeRatio = pool.cumulativeRatioLast() +
             ((uint256(fyTokenCached) * 1e27) * (block.timestamp - blockTimeStampLast)) /

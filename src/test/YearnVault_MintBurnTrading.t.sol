@@ -319,7 +319,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         uint128 sharesOut = 1e18;
         uint128 assetsOut = pool.unwrapPreview(1e18).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236494319975849, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236494318923554, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
@@ -399,7 +399,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100213484627287666,
+                1100213484622196799,
                 340282366920938463463374607431768211455
             )
         );
@@ -474,7 +474,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         uint128 fyTokenOut = uint128(WAD);
 
         shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805960640945800, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805960651409356, 0));
         pool.buyFYToken(alice, fyTokenOut, 0);
     }
 
