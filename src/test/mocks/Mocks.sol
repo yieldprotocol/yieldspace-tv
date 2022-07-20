@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import "forge-std/Test.sol";
-import "@yield-protocol/vault-interfaces/src/DataTypes.sol";
+import "@yield-protocol/vault-v2/contracts/interfaces/DataTypes.sol";
 
 //common utilities for forge tests
 library Mocks  {
