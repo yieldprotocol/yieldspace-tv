@@ -280,16 +280,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This pool is considered initialized after the first LP token is minted.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
     function init(
         address to,
-        address remainder,
-        uint256 minRatio,
-        uint256 maxRatio
+        address remainder
     )
         external
         virtual
@@ -302,7 +298,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     {
         if (_totalSupply != 0) revert Initialized();
 
-        (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, remainder, 0, minRatio, maxRatio);
+        (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, remainder, 0, 0, type(uint256).max);
 
         emit gm();
     }
@@ -1007,16 +1003,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached,
             _computeG2(cache.g1Fee)
         );
-        baseOut = _unwrapPreview(sharesOut).u128();
-
-        // Check slippage
-        if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         // Update TWAR
         _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
 
         // Transfer
-        _unwrap(to);
+        baseOut = _unwrap(to).u128();
+
+        // Check slippage
+        if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }

@@ -33,7 +33,7 @@ abstract contract WithLiquidity is ZeroState {
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
 
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice, bob);
 
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
