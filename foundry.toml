@@ -1,4 +1,4 @@
-[default]
+[profile.default]
 contracts = 'src/contracts'
 gas_reports = ["*"]
 libs = ['lib']
@@ -12,13 +12,13 @@ verbosity = 3                 # The verbosity of tests
 
 fuzz_runs = 1000
 
-[local]
+[profile.local]
 fuzz_runs = 1000
 
-[deep]
+[profile.deep]
 fuzz_runs = 20000
 
-[super_deep]
+[profile.super_deep]
 fuzz_runs = 100000
 
 
