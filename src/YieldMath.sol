@@ -118,6 +118,8 @@ library YieldMath {
                 );
 
                 sum = (za + ya - zxa).u128();
+
+                require(sum <= (za + ya), "YieldMath: Sum underflow");
             }
 
             // result = fyTokenReserves - (sum ** (1/a))
