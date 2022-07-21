@@ -452,6 +452,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Return any unused base tokens
         if (sharesBalance > cache.sharesCached + sharesIn) _unwrap(remainder);
 
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached + fyTokenIn + lpTokensMinted) < supply + lpTokensMinted) {
+            revert FYTokenCachedBadState();
+        }
+
         emit Liquidity(
             maturity,
             msg.sender,
@@ -616,6 +621,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         baseOut = _unwrap(baseTo);
 
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
+
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached - fyTokenOut - lpTokensBurned) < supply - lpTokensBurned) {
+            revert FYTokenCachedBadState();
+        }
+
 
         emit Liquidity(
             maturity,
@@ -813,6 +824,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Transfer
         fyToken.safeTransfer(to, fyTokenOut);
 
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached - fyTokenOut) < _totalSupply) {
+            revert FYTokenCachedBadState();
+        }
+
         emit Trade(maturity, msg.sender, to, -(baseIn.i128()), fyTokenOut.i128());
     }
 
@@ -915,6 +931,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Transfer
         fyToken.safeTransfer(to, fyTokenOut);
+
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached - fyTokenOut) < _totalSupply) {
+            revert FYTokenCachedBadState();
+        }
 
         emit Trade(maturity, msg.sender, to, -(_unwrapPreview(sharesIn).u128().i128()), fyTokenOut.i128());
     }
@@ -1216,6 +1237,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Update the reserves caches
         uint104 newSharesCached = sharesBalance.u104();
         uint104 newFYTokenCached = fyBalance.u104();
+
         sharesCached = newSharesCached;
         fyTokenCached = newFYTokenCached;
 
