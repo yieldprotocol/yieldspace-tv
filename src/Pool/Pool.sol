@@ -202,7 +202,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This is used by the constructor to give max approval to sharesToken.
     /// @dev This should be overridden by modules if needed.
     function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
-        baseToken_.approve(sharesToken_, type(uint256).max);
+        bool success = baseToken_.approve(sharesToken_, type(uint256).max);
+        if (!success) {
+            revert ApproveFailed();
+        }
     }
 
     /// This is used by the constructor to set the base token as immutable.
