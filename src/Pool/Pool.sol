@@ -165,7 +165,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
         // Set maturity with check to make sure its not 2107 yet.
-        if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
+        uint256 maturity_ = IFYToken(fyToken_).maturity();
+        if (maturity_ > uint256(type(uint32).max)) revert MaturityOverflow();
+        maturity = uint32(maturity_);
 
         // Set sharesToken.
         sharesToken = IERC20Like(sharesToken_);
