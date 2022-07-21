@@ -99,7 +99,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This wei, modules for non-4626 compliant base tokens can import this contract and override 4626 specific fn's.
     IERC20Like public immutable sharesToken;
 
-    /// Time stretch == 1 / seconds in 10 years (64.64)
+    /// Time stretch == 1 / seconds in x years where x varies per contract (64.64)
     int128 public immutable ts;
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)
@@ -611,7 +611,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Update TWAR
         _update(
             (cache.sharesCached - sharesOut).u128(),
-            (cache.fyTokenCached - fyTokenOut - lpTokensBurned).u128(),
+            (cache.fyTokenCached - fyTokenOut - lpTokensBurned).u128(), // Exclude "virtual" fyToken from new minted LP tokens
             cache.sharesCached,
             cache.fyTokenCached
         );
@@ -679,7 +679,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                                                            '-..___|_..=:` `-:=.._|___..-'
     */
     /// Buy base with fyToken.
-    /// The trader needs to have transferred in the correct amount of fyTokens in advance.
+    /// The trader needs to have transferred in the necessary amount of fyTokens in advance.
     /// @param to Wallet receiving the base being bought.
     /// @param baseOut Amount of base being bought that will be deposited in `to` wallet.
     /// @param max Maximum amount of fyToken that will be paid for the trade.
