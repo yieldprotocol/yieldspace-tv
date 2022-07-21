@@ -201,17 +201,7 @@ contract YieldMathTest is Test {
             mu
         ) / 1e18;
 
-        vm.expectRevert(bytes("YieldMath: Rounding error"));
-        YieldMath.fyTokenOutForSharesIn(
-            sharesReserves,
-            100000,
-            1_500_000 * 1e18, // x or ΔZ
-            timeTillMaturity,
-            k,
-            g1,
-            c,
-            mu
-        ) / 1e18;
+        // NOTE: could not hit "YieldMath: Rounding error" <- possibly redundant
         // NOTE: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
     }
 

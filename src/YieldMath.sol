@@ -12,6 +12,7 @@ pragma solidity >=0.8.13;
 
 import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
+import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
@@ -21,6 +22,7 @@ library YieldMath {
     using Math64x64 for int256;
     using Math64x64 for uint256;
     using Exp64x64 for uint128;
+    using CastU256U128 for uint256;
 
     uint128 public constant ONE = 0x10000000000000000; //   In 64.64
     uint256 public constant MAX = type(uint128).max; //     Used for overflow checks
@@ -68,7 +70,7 @@ library YieldMath {
 
             uint128 a = _computeA(timeTillMaturity, k, g);
 
-            uint256 sum;
+            uint128 sum;
             {
                 /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -115,13 +117,13 @@ library YieldMath {
                     "YieldMath: Rate overflow (zxa)"
                 );
 
-                sum = za + ya - zxa;
+                sum = (za + ya - zxa).u128();
             }
 
             // result = fyTokenReserves - (sum ** (1/a))
             uint256 fyTokenOut;
             require(
-                (fyTokenOut = uint256(fyTokenReserves) - uint256(uint128(sum).pow(ONE, a))) <= MAX,
+                (fyTokenOut = uint256(fyTokenReserves) - uint256(sum.pow(ONE, a))) <= MAX,
                 "YieldMath: Rounding error"
             );
 
