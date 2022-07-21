@@ -426,15 +426,14 @@ library YieldMath {
 
             // yxa = (fyTokenReserves - x) ** aß
             uint256 yxa = (fyTokenReserves - fyTokenOut).pow(a, ONE);
+            require(fyTokenOut <= fyTokenReserves, "YieldMath: Underflow (yxa)");
 
             uint256 zaYaYxa;
             require((zaYaYxa = (za + ya - yxa)) <= MAX, "YieldMath: Rate overflow (zyy)");
 
             int128 subtotal = int128(ONE).div(mu).mul(
-                uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)).i128();
+                (uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a))).i128()
             );
-
-            require(subtotal >= sharesReserves.i128(), "YieldMath: Rate underflow");
 
             return uint128(subtotal) - sharesReserves;
         }
