@@ -13,6 +13,7 @@ pragma solidity >=0.8.13;
 import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
 import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {CastU128I128} from  "@yield-protocol/utils-v2/contracts/cast/CastU128I128.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
@@ -23,6 +24,7 @@ library YieldMath {
     using Math64x64 for uint256;
     using Exp64x64 for uint128;
     using CastU256U128 for uint256;
+    using CastU128I128 for uint128;
 
     uint128 public constant ONE = 0x10000000000000000; //   In 64.64
     uint256 public constant MAX = type(uint128).max; //     Used for overflow checks
@@ -236,10 +238,10 @@ library YieldMath {
                 }
 
                 rightTerm = int128(ONE).div(mu).mul(
-                    int128(uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)))
+                    uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)).i128()
                 );
             }
-            require(rightTerm <= int128(sharesReserves), "YieldMath: Rate underflow");
+            require(rightTerm <= sharesReserves.i128(), "YieldMath: Rate underflow");
 
             return sharesReserves - uint128(rightTerm);
         }
@@ -429,10 +431,10 @@ library YieldMath {
             require((zaYaYxa = (za + ya - yxa)) <= MAX, "YieldMath: Rate overflow (zyy)");
 
             int128 subtotal = int128(ONE).div(mu).mul(
-                int128(uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)))
+                uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a)).i128();
             );
 
-            require(subtotal >= int128(sharesReserves), "YieldMath: Rate underflow");
+            require(subtotal >= sharesReserves.i128(), "YieldMath: Rate underflow");
 
             return uint128(subtotal) - sharesReserves;
         }
