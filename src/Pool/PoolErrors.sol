@@ -7,6 +7,14 @@ pragma solidity >=0.8.13;
 /// The pool has matured and maybe you should too.
 error AfterMaturity();
 
+/// The approval of the sharesToken failed miserably.
+error ApproveFailed();
+
+/// The update would cause the FYToken cached to be less than the total supply. This should never happen but may
+/// occur due to unexpected rounding errors.  We cannot allow this to happen as it could have many unexpected and
+/// side effects which may pierce the fabric of the space-time continuum.
+error FYTokenCachedBadState();
+
 /// The pool has already been initialized. What are you thinking?
 /// @dev To save gas, total supply == 0 is checked instead of a state variable.
 error Initialized();

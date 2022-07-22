@@ -41,7 +41,7 @@ abstract contract WithLiquidity is ZeroStateUSDC {
 
         // Alice calls init.
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice, bob);
 
         // Update the price of shares to value of state variables: cNumerator/cDenominator
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
@@ -153,7 +153,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         uint128 sharesOut = 1e6;
         uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236, 0));
         pool.buyBase(bob, baseOut, 0);
     }
 
@@ -227,7 +227,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint128 assetsIn = uint128(pool.unwrapPreview(sharesIn));
         asset.mint(address(pool), assetsIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100214, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100213, 340282366920938463463374607431768211455)
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));

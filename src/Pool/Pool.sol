@@ -80,13 +80,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* IMMUTABLES
      *****************************************************************************************************************/
 
-    /// The fyToken for the corresponding base token.  It's not fyYVDAI, it's still fyDAI.  Even though we convert base
+    /// The fyToken for the corresponding base token. Ex. yvDAI's fyToken will be fyDAI. Even though we convert base
     /// in this contract to a wrapped tokenized vault (e.g. Yearn Vault Dai), the fyToken is still payable in
-    /// the base token upon maturity.
+    /// the base token, DAI, upon maturity.
     IFYToken public immutable fyToken;
 
     /// This pool accepts a pair of base and fyToken tokens.
-    /// Whent these are deposited into a tokenized vault they become shares.
+    /// When these are deposited into a tokenized vault they become shares.
     /// It is an ERC20 token.
     IERC20Like public immutable baseToken;
 
@@ -99,7 +99,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This wei, modules for non-4626 compliant base tokens can import this contract and override 4626 specific fn's.
     IERC20Like public immutable sharesToken;
 
-    /// Time stretch == 1 / seconds in 10 years (64.64)
+    /// Time stretch == 1 / seconds in x years where x varies per contract (64.64)
     int128 public immutable ts;
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)
@@ -165,7 +165,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
         // Set maturity with check to make sure its not 2107 yet.
-        if ((maturity = uint32(IFYToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
+        uint256 maturity_ = IFYToken(fyToken_).maturity();
+        if (maturity_ > uint256(type(uint32).max)) revert MaturityOverflow();
+        maturity = uint32(maturity_);
 
         // Set sharesToken.
         sharesToken = IERC20Like(sharesToken_);
@@ -200,7 +202,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This is used by the constructor to give max approval to sharesToken.
     /// @dev This should be overridden by modules if needed.
     function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
-        baseToken_.approve(sharesToken_, type(uint256).max);
+        bool success = baseToken_.approve(sharesToken_, type(uint256).max);
+        if (!success) {
+            revert ApproveFailed();
+        }
     }
 
     /// This is used by the constructor to set the base token as immutable.
@@ -274,21 +279,18 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     //  ╦┌┐┌┬┌┬┐┬┌─┐┬  ┬┌─┐┌─┐  ╔═╗┌─┐┌─┐┬
     //  ║││││ │ │├─┤│  │┌─┘├┤   ╠═╝│ ││ ││
     //  ╩┘└┘┴ ┴ ┴┴ ┴┴─┘┴└─┘└─┘  ╩  └─┘└─┘┴─┘
-    /// @dev This is the exact same as mint() but with auth added and skip the supply > 0 check.
+    /// @dev This is the exact same as mint() but with auth added and skip the supply > 0 check
+    /// and checks instead that supply == 0.
     /// This intialize mechanism is different than UniV2.  Tokens addresses are added at contract creation.
     /// This pool is considered initialized after the first LP token is minted.
     /// @param to Wallet receiving the minted liquidity tokens.
     /// @param remainder Wallet receiving any surplus base.
-    /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
-    /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
     function init(
         address to,
-        address remainder,
-        uint256 minRatio,
-        uint256 maxRatio
+        address remainder
     )
         external
         virtual
@@ -301,7 +303,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     {
         if (_totalSupply != 0) revert Initialized();
 
-        (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, remainder, 0, minRatio, maxRatio);
+        (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, remainder, 0, 0, type(uint256).max);
 
         emit gm();
     }
@@ -399,7 +401,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             if (
                 uint256(cache.sharesCached).wdiv(realFYTokenCached_) < minRatio ||
                 uint256(cache.sharesCached).wdiv(realFYTokenCached_) > maxRatio
-            ) revert SlippageDuringMint((uint256(cache.sharesCached) * 1e18) / realFYTokenCached_, minRatio, maxRatio);
+            ) revert SlippageDuringMint(uint256(cache.sharesCached).wdiv(realFYTokenCached_), minRatio, maxRatio);
         }
 
         // Calculate token amounts
@@ -449,6 +451,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Return any unused base tokens
         if (sharesBalance > cache.sharesCached + sharesIn) _unwrap(remainder);
+
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached + fyTokenIn + lpTokensMinted) < supply + lpTokensMinted) {
+            revert FYTokenCachedBadState();
+        }
 
         emit Liquidity(
             maturity,
@@ -588,7 +595,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (tradeToBase) {
             sharesOut +=
                 YieldMath.sharesOutForFYTokenIn( //                                This is a virtual sell
-                    (cache.sharesCached - baseOut.u128()) * scaleFactor_, //      Cache, minus virtual burn
+                    (cache.sharesCached - sharesOut.u128()) * scaleFactor_, //     Cache, minus virtual burn
                     (cache.fyTokenCached - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
                     fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
                     maturity - uint32(block.timestamp), //                         This can't be called after maturity
@@ -604,7 +611,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Update TWAR
         _update(
             (cache.sharesCached - sharesOut).u128(),
-            (cache.fyTokenCached - fyTokenOut - lpTokensBurned).u128(),
+            (cache.fyTokenCached - fyTokenOut - lpTokensBurned).u128(), // Exclude "virtual" fyToken from new minted LP tokens
             cache.sharesCached,
             cache.fyTokenCached
         );
@@ -614,6 +621,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         baseOut = _unwrap(baseTo);
 
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
+
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached - fyTokenOut - lpTokensBurned) < supply - lpTokensBurned) {
+            revert FYTokenCachedBadState();
+        }
+
 
         emit Liquidity(
             maturity,
@@ -666,7 +679,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                                                            '-..___|_..=:` `-:=.._|___..-'
     */
     /// Buy base with fyToken.
-    /// The trader needs to have transferred in the correct amount of fyTokens in advance.
+    /// The trader needs to have transferred in the necessary amount of fyTokens in advance.
     /// @param to Wallet receiving the base being bought.
     /// @param baseOut Amount of base being bought that will be deposited in `to` wallet.
     /// @param max Maximum amount of fyToken that will be paid for the trade.
@@ -811,6 +824,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Transfer
         fyToken.safeTransfer(to, fyTokenOut);
 
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached - fyTokenOut) < _totalSupply) {
+            revert FYTokenCachedBadState();
+        }
+
         emit Trade(maturity, msg.sender, to, -(baseIn.i128()), fyTokenOut.i128());
     }
 
@@ -914,6 +932,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Transfer
         fyToken.safeTransfer(to, fyTokenOut);
 
+        // confirm new virtual fyToken balance is not less than new supply
+        if ((cache.fyTokenCached - fyTokenOut) < _totalSupply) {
+            revert FYTokenCachedBadState();
+        }
+
         emit Trade(maturity, msg.sender, to, -(_unwrapPreview(sharesIn).u128().i128()), fyTokenOut.i128());
     }
 
@@ -1006,16 +1029,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached,
             _computeG2(cache.g1Fee)
         );
-        baseOut = _unwrapPreview(sharesOut).u128();
-
-        // Check slippage
-        if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         // Update TWAR
         _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
 
         // Transfer
-        _unwrap(to);
+        baseOut = _unwrap(to).u128();
+
+        // Check slippage
+        if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
@@ -1215,6 +1237,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Update the reserves caches
         uint104 newSharesCached = sharesBalance.u104();
         uint104 newFYTokenCached = fyBalance.u104();
+
         sharesCached = newSharesCached;
         fyTokenCached = newFYTokenCached;
 
@@ -1233,7 +1256,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the ratio of net proceeds after fees, for buying fyToken
     function _computeG1(uint16 g1Fee_) internal pure returns (int128) {
-        return uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt());
+        return uint256(g1Fee_).divu(10000);
     }
 
     /// Exposes the 64.64 factor used for determining fees.
@@ -1249,7 +1272,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Returns the ratio of net proceeds after fees, for selling fyToken
     function _computeG2(uint16 g1Fee_) internal pure returns (int128) {
         // Divide 1 (64.64) by g1
-        return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
+        return uint256(10000).divu(g1Fee_);
     }
 
     /// Returns the shares balance with the same decimals as the underlying base asset.
@@ -1303,7 +1326,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the c based on the current price
     function _getC() internal view returns (int128) {
-        return ((_getCurrentSharePrice() * scaleFactor)).fromUInt().div(uint256(1e18).fromUInt());
+        return (_getCurrentSharePrice() * scaleFactor).divu(1e18);
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
@@ -1356,7 +1379,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param amount Amount as standard fp number.
     /// @return product Return standard fp number retaining decimals of provided amount.
     function _mulMu(uint256 amount) internal view returns (uint256 product) {
-        product = (amount * (mu.mul(uint256(1e18).fromUInt()).toUInt())) / 1e18;
+        product = mu.mulu(amount);
     }
 
     /// Retrieve any shares tokens not accounted for in the cache.

@@ -55,7 +55,7 @@ abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
 
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice, bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(asset.decimals())) / 9;
 
@@ -78,7 +78,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
         emit Liquidity(maturity, alice, bob, address(0), int256(-1 * int256(baseIn)), int256(0), int256(expectedMint));
 
         vm.prank(alice);
-        pool.init(bob, bob, 0, MAX);
+        pool.init(bob, bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == expectedMint);
@@ -93,7 +93,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
 
         vm.startPrank(alice);
 
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(address(0), address(0));
 
         // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_EUSDC);
@@ -322,7 +322,7 @@ contract TradeUSDC__WithLiquidityEuler is WithLiquidityEuler {
         uint128 sharesOut = 1e6;
         uint128 assetsOut = pool.unwrapPreview(1e6).u128();
         fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235, 0));
+        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236, 0));
         pool.buyBase(bob, assetsOut, 0);
     }
 
@@ -401,7 +401,7 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         uint128 baseIn = pool.unwrapPreview(sharesIn).u128();
         asset.mint(address(pool), baseIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100212521, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100212520, 340282366920938463463374607431768211455)
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));
