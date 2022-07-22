@@ -1272,7 +1272,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Returns the ratio of net proceeds after fees, for selling fyToken
     function _computeG2(uint16 g1Fee_) internal pure returns (int128) {
         // Divide 1 (64.64) by g1
-        return int128(YieldMath.ONE).div(uint256(g1Fee_).fromUInt().div(uint256(10000).fromUInt()));
+        return uint256(10000).divu(g1Fee_);
     }
 
     /// Returns the shares balance with the same decimals as the underlying base asset.
