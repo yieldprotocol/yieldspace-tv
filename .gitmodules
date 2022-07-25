@@ -7,3 +7,6 @@
 [submodule "lib/vault-v2"]
 	path = lib/vault-v2
 	url = https://github.com/yieldprotocol/vault-v2
+[submodule "lib/vault-interfaces"]
+	path = lib/vault-interfaces
+	url = https://github.com/yieldprotocol/vault-interfaces-DEPRECATED
