@@ -1221,14 +1221,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (sharesBalance == sharesCached_ && fyBalance == fyTokenCached_) return;
 
         uint32 blockTimestamp = uint32(block.timestamp);
-        uint32 timeElapsed;
-        timeElapsed = blockTimestamp - blockTimestampLast; // reverts on underflow
+        uint256 timeElapsed = blockTimestamp - blockTimestampLast; // reverts on underflow
 
         uint256 oldCumulativeRatioLast = cumulativeRatioLast;
         uint256 newCumulativeRatioLast = oldCumulativeRatioLast;
         if (timeElapsed > 0 && fyTokenCached_ > 0 && sharesCached_ > 0) {
             // Multiply by 1e27 here so that r = t * y/x is a fixed point factor with 27 decimals
-            newCumulativeRatioLast += uint256(fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
+            newCumulativeRatioLast += (fyTokenCached_ * timeElapsed).rdiv(_mulMu(sharesCached_));
         }
 
         blockTimestampLast = blockTimestamp;
