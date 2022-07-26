@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.15;
+pragma solidity >=0.8.13;
 interface IPoolOracle {
 
     /// @notice returns the TWAR for a given `pool` using the moving average over the max available time range within the window
