@@ -80,13 +80,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* IMMUTABLES
      *****************************************************************************************************************/
 
-    /// The fyToken for the corresponding base token.  It's not fyYVDAI, it's still fyDAI.  Even though we convert base
+    /// The fyToken for the corresponding base token. Ex. yvDAI's fyToken will be fyDAI. Even though we convert base
     /// in this contract to a wrapped tokenized vault (e.g. Yearn Vault Dai), the fyToken is still payable in
     /// the base token upon maturity.
     IMaturingToken public immutable fyToken;
 
     /// This pool accepts a pair of base and fyToken tokens.
-    /// Whent these are deposited into a tokenized vault they become shares.
+    /// When these are deposited into a tokenized vault they become shares.
     /// It is an ERC20 token.
     IERC20Like public immutable baseToken;
 
@@ -274,7 +274,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     //  ╦┌┐┌┬┌┬┐┬┌─┐┬  ┬┌─┐┌─┐  ╔═╗┌─┐┌─┐┬
     //  ║││││ │ │├─┤│  │┌─┘├┤   ╠═╝│ ││ ││
     //  ╩┘└┘┴ ┴ ┴┴ ┴┴─┘┴└─┘└─┘  ╩  └─┘└─┘┴─┘
-    /// @dev This is the exact same as mint() but with auth added and skip the supply > 0 check.
+    /// @dev This is the exact same as mint() but with auth added and skip the supply > 0 check
+    /// and checks instead that supply == 0.
     /// This intialize mechanism is different than UniV2.  Tokens addresses are added at contract creation.
     /// This pool is considered initialized after the first LP token is minted.
     /// @param to Wallet receiving the minted liquidity tokens.
