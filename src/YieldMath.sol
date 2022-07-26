@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 /*
    __     ___      _     _
    \ \   / (_)    | |   | | ██╗   ██╗██╗███████╗██╗     ██████╗ ███╗   ███╗ █████╗ ████████╗██╗  ██╗
@@ -92,8 +92,8 @@ library YieldMath {
                 );
 
                 // za = c/μ * (normalizedSharesReserves ** a)
-                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to 
-                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z) 
+                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                 uint256 za;
                 require(
                     (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
@@ -101,8 +101,8 @@ library YieldMath {
                 );
 
                 // ya = fyTokenReserves ** a
-                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to 
-                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z) 
+                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                 uint256 ya = fyTokenReserves.pow(a, ONE);
 
                 // normalizedSharesIn = μ * sharesIn
