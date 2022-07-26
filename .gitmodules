@@ -6,4 +6,4 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/vault-v2"]
 	path = lib/vault-v2
-	url = https://github.com/yieldprotocol/vault-v2
+	url = https://github.com/yieldprotocol/vault-v2@feat/deprecate-vault-interfaces
