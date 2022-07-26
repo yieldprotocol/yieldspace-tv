@@ -2,7 +2,7 @@
 pragma solidity >= 0.8.0;
 import "@yield-protocol/utils-v2/contracts/token/IERC20.sol";
 import "@yield-protocol/utils-v2/contracts/token/IERC2612.sol";
-import "@yield-protocol/vault-interfaces/src/IFYToken.sol";
+import {IFYToken} from "@yield-protocol/vault-v2/contracts/interfaces/IFYToken.sol";
 import {IERC20Metadata} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 
 interface IPool is IERC20, IERC2612 {
