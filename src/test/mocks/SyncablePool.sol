@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 
 import {Pool} from "../../Pool/Pool.sol";
 import {ISyncablePool} from "./ISyncablePool.sol";
