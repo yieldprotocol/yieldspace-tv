@@ -2,7 +2,7 @@
 pragma solidity >= 0.8.0;
 import "@yield-protocol/utils-v2/contracts/token/IERC20.sol";
 import "@yield-protocol/utils-v2/contracts/token/IERC2612.sol";
-import {IFYToken} from "@yield-protocol/vault-v2/contracts/interfaces/IFYToken.sol";
+import {IMaturingToken} from "./IMaturingToken.sol";
 import {IERC20Metadata} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 
 interface IPool is IERC20, IERC2612 {
@@ -16,7 +16,7 @@ interface IPool is IERC20, IERC2612 {
     function buyFYTokenPreview(uint128 fyTokenOut) external view returns(uint128);
     function currentCumulativeRatio() external view returns (uint256 currentCumulativeRatio_, uint256 blockTimestampCurrent);
     function cumulativeRatioLast() external view returns (uint256);
-    function fyToken() external view returns(IFYToken);
+    function fyToken() external view returns(IMaturingToken);
     function g1() external view returns(int128);
     function g2() external view returns(int128);
     function getC() external view returns (int128);

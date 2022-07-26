@@ -2,10 +2,11 @@
 contracts = 'src/contracts'
 gas_reports = ["*"]
 libs = ['lib']
+offline = false               # Disable downloading of missing solc version(s)
 optimizer = true              # Enable or disable the solc optimizer
 optimizer_runs = 200          # The number of optimizer runs
 out = 'out'
-solc_version = '0.8.14'        # Override for the solc version (setting this ignores `auto_detect_solc`)
+solc_version = '0.8.15'       # Override for the solc version (setting this ignores `auto_detect_solc`)
 src = 'src'
 verbosity = 3                 # The verbosity of tests
 

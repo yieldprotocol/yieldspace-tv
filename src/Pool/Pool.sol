@@ -65,7 +65,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     using CastU256U104 for uint256;
     using CastU256U128 for uint256;
     using CastU256I256 for uint256;
-    using MinimalTransferHelper for IFYToken;
+    using MinimalTransferHelper for IMaturingToken;
     using MinimalTransferHelper for IERC20Like;
 
     /* MODIFIERS
@@ -82,8 +82,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// The fyToken for the corresponding base token. Ex. yvDAI's fyToken will be fyDAI. Even though we convert base
     /// in this contract to a wrapped tokenized vault (e.g. Yearn Vault Dai), the fyToken is still payable in
-    /// the base token, DAI, upon maturity.
-    IFYToken public immutable fyToken;
+    /// the base token upon maturity.
+    IMaturingToken public immutable fyToken;
 
     /// This pool accepts a pair of base and fyToken tokens.
     /// When these are deposited into a tokenized vault they become shares.
@@ -165,9 +165,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
            \__, \__/ | \| .__/  |  |  \ \__/ \__,  |  \__/ |  \ */
 
         // Set maturity with check to make sure its not 2107 yet.
-        uint256 maturity_ = IFYToken(fyToken_).maturity();
-        if (maturity_ > uint256(type(uint32).max)) revert MaturityOverflow();
-        maturity = uint32(maturity_);
+        if ((maturity = uint32(IMaturingToken(fyToken_).maturity())) > type(uint32).max) revert MaturityOverflow();
 
         // Set sharesToken.
         sharesToken = IERC20Like(sharesToken_);
@@ -185,7 +183,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Set other immutables.
         baseToken = baseToken_;
-        fyToken = IFYToken(fyToken_);
+        fyToken = IMaturingToken(fyToken_);
         ts = ts_;
         scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
 
