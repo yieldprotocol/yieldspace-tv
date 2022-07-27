@@ -72,7 +72,7 @@ library YieldMath {
 
             uint128 a = _computeA(timeTillMaturity, k, g);
 
-            uint128 sum;
+            uint256 sum;
             {
                 /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -125,7 +125,7 @@ library YieldMath {
                     "YieldMath: Rate overflow (zxa)"
                 );
 
-                sum = (za + ya - zxa).u128();
+                sum = za + ya - zxa;
 
                 require(sum <= (za + ya), "YieldMath: Sum underflow");
             }
@@ -135,7 +135,7 @@ library YieldMath {
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z) 
             uint256 fyTokenOut;
             require(
-                (fyTokenOut = uint256(fyTokenReserves) - uint256(sum.pow(ONE, a))) <= MAX,
+                (fyTokenOut = uint256(fyTokenReserves) - sum.u128().pow(ONE, a)) <= MAX,
                 "YieldMath: Rounding error"
             );
 
