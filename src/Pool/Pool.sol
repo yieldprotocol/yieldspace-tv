@@ -361,6 +361,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// The amount of liquidity tokens is calculated from the amount of fyTokenToBuy from the pool,
     /// plus the amount of extra, unaccounted for fyToken in this contract.
     /// The base tokens also need to be previously transferred and present in this contract.
+    /// Only usable before maturity.
     /// @dev Warning: This fn does not check if supply > 0 like the external functions do.
     /// This function overloads the ERC20._mint(address, uint) function.
     /// @param to Wallet receiving the minted liquidity tokens.
@@ -379,6 +380,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint256 maxRatio
     )
         internal
+        beforeMaturity
         returns (
             uint256 baseIn,
             uint256 fyTokenIn,
@@ -532,6 +534,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     */
     /// Burn liquidity tokens in exchange for base.
     /// The liquidity provider needs to have called `pool.approve`.
+    /// Only usable before maturity.
     /// @param to Wallet receiving the base and fyToken.
     /// @param minRatio Minimum ratio of shares to fyToken in the pool (fp18).
     /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
@@ -541,7 +544,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         address to,
         uint256 minRatio,
         uint256 maxRatio
-    ) external virtual override returns (uint256 lpTokensBurned, uint256 baseOut) {
+    )
+        external virtual override
+        beforeMaturity
+        returns (uint256 lpTokensBurned, uint256 baseOut)
+    {
         (lpTokensBurned, baseOut, ) = _burn(to, address(0), true, minRatio, maxRatio);
     }
 
