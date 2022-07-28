@@ -20,7 +20,7 @@ error FYTokenCachedBadState();
 error Initialized();
 
 /// Trade results in negative interest rates because fyToken balance < (newSharesBalance * mu). Don't neg me.
-error InsufficientFYTokenBalance(uint128 newFYTokenBalance, uint128 newSharesBalanceTimesMu);
+error NegativeInterestRatesNotAllowed(uint128 newFYTokenBalance, uint128 newSharesBalanceTimesMu);
 
 /// Represents the fee in bps, and it cannot be larger than 10,000.
 /// @dev https://en.wikipedia.org/wiki/10,000 per wikipedia:

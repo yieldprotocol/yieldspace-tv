@@ -880,7 +880,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         uint128 newSharesMulMu = _mulMu(sharesBalance + sharesIn).u128();
         if ((fyTokenBalance - fyTokenOut) < newSharesMulMu) {
-            revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, newSharesMulMu);
+            revert NegativeInterestRatesNotAllowed(fyTokenBalance - fyTokenOut, newSharesMulMu);
         }
     }
 
@@ -985,7 +985,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         uint128 newSharesMulMu = _mulMu(sharesBalance + sharesIn).u128();
         if ((fyTokenBalance - fyTokenOut) < newSharesMulMu) {
-            revert InsufficientFYTokenBalance(fyTokenBalance - fyTokenOut, newSharesMulMu);
+            revert NegativeInterestRatesNotAllowed(fyTokenBalance - fyTokenOut, newSharesMulMu);
         }
     }
 
