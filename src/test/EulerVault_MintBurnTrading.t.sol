@@ -55,7 +55,7 @@ abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
 
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
-        pool.init(alice, bob);
+        pool.init(alice);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(asset.decimals())) / 9;
 
@@ -78,7 +78,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
         emit Liquidity(maturity, alice, bob, address(0), int256(-1 * int256(baseIn)), int256(0), int256(expectedMint));
 
         vm.prank(alice);
-        pool.init(bob, bob);
+        pool.init(bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == expectedMint);
@@ -93,7 +93,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
 
         vm.startPrank(alice);
 
-        pool.init(address(0), address(0));
+        pool.init(address(0));
 
         // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_EUSDC);
@@ -317,14 +317,8 @@ contract TradeUSDC__WithLiquidityEuler is WithLiquidityEuler {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-    function testUnit_Euler_tradeUSDC05() public {
-        console.log("does not buy base beyond slippage");
-        uint128 sharesOut = 1e6;
-        uint128 assetsOut = pool.unwrapPreview(1e6).u128();
-        fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236, 0));
-        pool.buyBase(bob, assetsOut, 0);
-    }
+    // Removed
+    // function testUnit_Euler_tradeUSDC05() public {
 
     function testUnit_Euler_tradeUSDC06() public {
         console.log("buys base and retrieves change");
@@ -471,14 +465,8 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-    function testUnit_Euler_tradeUSDC11() public {
-        console.log("does not buy fyToken beyond slippage");
-        uint128 fyTokenOut = uint128(1000e6);
-
-        shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999806756, 0));
-        pool.buyFYToken(alice, fyTokenOut, 0);
-    }
+    // Removed
+    // function testUnit_Euler_tradeUSDC11() public {
 
     // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.

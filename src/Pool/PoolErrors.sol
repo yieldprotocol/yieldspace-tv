@@ -49,23 +49,12 @@ error NotEnoughFYTokenIn(uint256 fYTokensAvailable, uint256 fYTokensNeeded);
 /// @dev To save gas, total supply == 0 is checked instead of a state variable
 error NotInitialized();
 
-/// Maximum amount of fyToken (per the max arg) would be exceeded for the trade. gg
-/// @param fyTokenIn fyTokens that would be required for the trade.
-/// @param max The maximum amount of fyTokens to be paid as specified by the caller.
-error SlippageDuringBuyBase(uint128 fyTokenIn, uint128 max);
-
 /// The reserves have changed compared with the last cache which causes the burn to fall outside the bounds of min/max
 /// slippage ratios selected. This is likely the result of a peanut butter sandwich attack.
 /// @param newRatio The ratio that would have resulted from the mint.
 /// @param minRatio The minimum ratio allowed as specified by the caller.
 /// @param maxRatio The maximum ratio allowed as specified by the caller
 error SlippageDuringBurn(uint256 newRatio, uint256 minRatio, uint256 maxRatio);
-
-
-/// Maximium amount of base (per the max arg) was exceeded for the trade. L and ratio.
-/// @param baseIn The base that would be required for the trade.
-/// @param max The maximum amount of base to be paid as specified by the caller.
-error SlippageDuringBuyFYToken(uint128 baseIn, uint128 max);
 
 /// The reserves have changed compared with the last cache which causes the mint to fall outside the bounds of min/max
 /// slippage ratios selected. This is likely the result of a bologna sandwich attack.

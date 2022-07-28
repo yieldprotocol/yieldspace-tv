@@ -180,18 +180,9 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-    function testUnit_tradeDAI05() public {
-        console.log("does not buy base beyond slippage");
-        uint128 sharesOut = 1e18;
-        uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
 
-        // Send 1 WAD fyToken to pool.
-        fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236490669964471, 0));
-
-        // Set maxRatio to 0 and see it revert.
-        pool.buyBase(bob, baseOut, 0);
-    }
+    // Removed
+    // function testUnit_tradeDAI05() public {
 
     // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
@@ -334,17 +325,9 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-    function testUnit_tradeDAI11() public {
-        console.log("does not buy fyToken beyond slippage");
-        uint128 fyTokenOut = uint128(WAD);
 
-        // Send some shares to the pool.
-        shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805963634541415, 0));
-
-        // Set max amount out to 0 and watch it revert.
-        pool.buyFYToken(alice, fyTokenOut, 0);
-    }
+    // Removed
+    // function testUnit_tradeDAI11() public {
 
     // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.

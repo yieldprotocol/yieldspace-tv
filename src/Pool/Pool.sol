@@ -284,13 +284,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This intialize mechanism is different than UniV2.  Tokens addresses are added at contract creation.
     /// This pool is considered initialized after the first LP token is minted.
     /// @param to Wallet receiving the minted liquidity tokens.
-    /// @param remainder Wallet receiving any surplus base.
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
     function init(
-        address to,
-        address remainder
+        address to
     )
         external
         virtual
@@ -303,7 +301,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     {
         if (_totalSupply != 0) revert Initialized();
 
-        (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, remainder, 0, 0, type(uint256).max);
+        // address(this) used for the remainder, but actually this parameter is not used at all in this case because
+        // there will never be any left over base in this case
+        (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, address(this), 0, 0, type(uint256).max);
 
         emit gm();
     }
@@ -691,7 +691,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// The trader needs to have transferred in the necessary amount of fyTokens in advance.
     /// @param to Wallet receiving the base being bought.
     /// @param baseOut Amount of base being bought that will be deposited in `to` wallet.
-    /// @param max Maximum amount of fyToken that will be paid for the trade.
+    /// @param max This has been deprecated and was left in for backwards compatibility.
     /// @return fyTokenIn Amount of fyToken that will be taken from caller.
     function buyBase(
         address to,
@@ -709,7 +709,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (fyTokenBalance - cache.fyTokenCached < fyTokenIn) {
             revert NotEnoughFYTokenIn(fyTokenBalance - cache.fyTokenCached, fyTokenIn);
         }
-        if (fyTokenIn > max) revert SlippageDuringBuyBase(fyTokenIn, max);
 
         // Update TWAR
         _update(
@@ -796,7 +795,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// The trader needs to have transferred in the correct amount of base tokens in advance.
     /// @param to Wallet receiving the fyToken being bought.
     /// @param fyTokenOut Amount of fyToken being bought that will be deposited in `to` wallet.
-    /// @param max Maximum amount of base token that will be paid for the trade.
+    /// @param max  This has been deprecated and was left in for backwards compatibility.
     /// @return baseIn Amount of base that will be used.
     function buyFYToken(
         address to,
@@ -820,7 +819,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Checks
         if (sharesBalance - cache.sharesCached < sharesIn)
             revert NotEnoughBaseIn(_wrapPreview(sharesBalance - cache.sharesCached), baseIn);
-        if (baseIn > max) revert SlippageDuringBuyFYToken(baseIn, max);
 
         // Update TWAR
         _update(

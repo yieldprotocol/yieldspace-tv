@@ -38,7 +38,7 @@ contract TWAR__ZeroState is ZeroStateDai {
         // initialize pool, add initial liquidity and set new price on shares
         shares.mint(address(pool), INITIAL_YVDAI);
         vm.prank(alice);
-        pool.init(bob, bob);
+        pool.init(bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         // since cumRatLast is on a lag, it should still be zero.
@@ -74,7 +74,7 @@ abstract contract PoolInitialized is ZeroStateDai {
 
         // Alice calls init.
         vm.prank(alice);
-        pool.init(alice, bob);
+        pool.init(alice);
 
         // elapse some time after initialization
         vm.warp(block.timestamp + 60);

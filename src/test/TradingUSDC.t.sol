@@ -41,7 +41,7 @@ abstract contract WithLiquidity is ZeroStateUSDC {
 
         // Alice calls init.
         vm.prank(alice);
-        pool.init(alice, bob);
+        pool.init(alice);
 
         // Update the price of shares to value of state variables: cNumerator/cDenominator
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
@@ -148,14 +148,8 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-    function testUnit_tradeUSDC05() public {
-        console.log("does not buy base beyond slippage");
-        uint128 sharesOut = 1e6;
-        uint128 baseOut = pool.unwrapPreview(sharesOut).u128();
-        fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100236, 0));
-        pool.buyBase(bob, baseOut, 0);
-    }
+    // Removed
+    // function testUnit_tradeUSDC05() public {
 
     function testUnit_tradeUSDC06() public {
         console.log("buys base and retrieves change");
@@ -291,14 +285,9 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-    function testUnit_tradeUSDC11() public {
-        console.log("does not buy fyToken beyond slippage");
-        uint128 fyTokenOut = uint128(1e6);
 
-        asset.mint(address(pool), pool.wrapPreview(initialShares));
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805, 0));
-        pool.buyFYToken(alice, fyTokenOut, 0);
-    }
+    // Removed
+    // function testUnit_tradeUSDC11() public {
 
     function testUnit_tradeUSDC12() public {
         console.log("donates shares and buys fyToken");

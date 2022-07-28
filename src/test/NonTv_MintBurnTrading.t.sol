@@ -43,7 +43,7 @@ abstract contract WithLiquidityNonTv is ZeroStateNonTv {
         super.setUp();
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
-        pool.init(alice, bob);
+        pool.init(alice);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
         fyToken.mint(address(pool), additionalFYToken);
@@ -70,7 +70,7 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
         );
 
         vm.prank(alice);
-        pool.init(bob, bob);
+        pool.init(bob);
 
         require(pool.balanceOf(bob) == INITIAL_YVDAI);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
@@ -84,7 +84,7 @@ contract Mint__ZeroStateNonTv is ZeroStateNonTv {
 
         vm.startPrank(alice);
 
-        pool.init(address(0), address(0));
+        pool.init(address(0));
 
         // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
@@ -299,13 +299,9 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-    function testUnit_NonTv_tradeDAI05() public {
-        console.log("does not buy shares beyond slippage");
-        uint128 sharesOut = 1e18;
-        fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1000231683079771239, 0));
-        pool.buyBase(bob, sharesOut, 0);
-    }
+
+    // Removed
+    // function testUnit_NonTv_tradeDAI05() public {
 
     function testUnit_NonTv_tradeDAI06() public {
         console.log("buys shares and retrieves change");
@@ -447,14 +443,9 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-    function testUnit_NonTv_tradeDAI11() public {
-        console.log("does not buy fyToken beyond slippage");
-        uint128 fyTokenOut = uint128(WAD);
 
-        shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999790902063159378, 0));
-        pool.buyFYToken(alice, fyTokenOut, 0);
-    }
+    // Removed
+    // function testUnit_NonTv_tradeDAI11() public {
 
     function testUnit_NonTv_tradeDAI12() public {
         console.log("donates shares and buys fyToken");
