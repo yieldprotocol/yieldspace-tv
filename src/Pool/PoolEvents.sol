@@ -4,7 +4,7 @@ pragma solidity >=0.8.15;
 /* POOL EVENTS
  ******************************************************************************************************************/
 
-interface PoolEvents {
+abstract contract PoolEvents {
     /// Fees have been updated.
     event FeesSet(uint16 g1Fee);
 
