@@ -39,6 +39,7 @@ interface IPool is IERC20, IERC2612 {
     function sellFYToken(address to, uint128 min) external returns(uint128);
     function sellFYTokenPreview(uint128 fyTokenIn) external view returns(uint128);
     function setFees(uint16 g1Fee_) external;
+    function sharesToken() external view returns(IERC20Metadata);
     function ts() external view returns(int128);
     function wrap(address receiver) external returns (uint256 shares);
     function wrapPreview(uint256 assets) external view returns (uint256 shares);
