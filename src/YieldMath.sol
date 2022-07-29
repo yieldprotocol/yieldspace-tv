@@ -251,9 +251,13 @@ library YieldMath {
                     require((zaYaYxa = (za + ya - yxa)) <= MAX, "YieldMath: Rate overflow (yxa)");
                 }
 
-                rightTerm = uint128(int128(ONE).div(mu).mul(
-                    uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), a).i128()
-                ));
+                rightTerm = uint128(                         // Cast zaYaYxa/(c/μ).pow(1/a).div(μ) from int128 to uint128 - always positive
+                    int128(                                  // Cast zaYaYxa/(c/μ).pow(1/a) from uint128 to int128 - always < zaYaYxa/(c/μ)
+                        uint128(                             // Cast zaYaYxa/(c/μ) from int128 to uint128 - always positive
+                            zaYaYxa.divu(uint128(c.div(mu))) // Cast c/μ from int128 to uint128 - always positive
+                        ).pow(uint128(ONE), a)               // Cast 2^64 from int128 to uint128 - always positive
+                    ).div(mu)
+                );
             }
             require(rightTerm <= sharesReserves, "YieldMath: Rate underflow");
 
