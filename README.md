@@ -1,6 +1,6 @@
 # YieldSpace for Tokenized Vaults
 
-#### DISCLAIMER: This code has NOT been externally audited and is actively being developed. Please do not use in production without taking the appropriate steps to ensure maximum security. This code is provided as-is, with no guarantees of any kind.
+#### DISCLAIMER: Please do not use in production without taking the appropriate steps to ensure maximum security. This code is provided as-is, with no guarantees of any kind.
 
 ---
 
