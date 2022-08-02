@@ -61,7 +61,8 @@ In developing this YieldSpace we have used two different libraries for fixed poi
 
 ## Security
 
-In developing the code in this repository we have set the highest bar possible for security. `yieldspace-tv` has been audited by [ABDK Consulting](https://www.abdk.consulting/) and the report can be found [here](https://github.com/yieldprotocol/yieldspace-tv/blob/main/audit/ABDK_Yield_yieldspace_tv_v_1_0.pdf).  
+In developing the code in this repository we have set the highest bar possible for security. `yieldspace-tv` has been audited by [ABDK Consulting](https://www.abdk.consulting/) and the report can be found [here](https://github.com/yieldprotocol/yieldspace-tv/blob/main/audit/ABDK_Yield_yieldspace_tv_v_1_0.pdf).
+
 We have also used fuzzing tests for the Pool and YieldMath contracts, allowing us to find edge cases and vulnerabilities that we would have missed otherwise.
 
 ## Bug Bounty
