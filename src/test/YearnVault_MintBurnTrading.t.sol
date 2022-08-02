@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 
 /*
   __     ___      _     _
@@ -45,7 +45,7 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
 
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
@@ -74,7 +74,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
         );
 
         vm.prank(alice);
-        pool.init(bob, bob, 0, MAX);
+        pool.init(bob);
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
         require(pool.balanceOf(bob) == pool.mulMu(INITIAL_YVDAI));
@@ -89,7 +89,7 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
 
         vm.startPrank(alice);
 
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(address(0));
 
         // After initializing, donate shares and sellFyToken to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
@@ -314,14 +314,9 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-    function testUnit_YearnVault_tradeDAI05() public {
-        console.log("does not buy base beyond slippage");
-        uint128 sharesOut = 1e18;
-        uint128 assetsOut = pool.unwrapPreview(1e18).u128();
-        fyToken.mint(address(pool), initialFYTokens);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyBase.selector, 1100235494319975849, 0));
-        pool.buyBase(bob, assetsOut, 0);
-    }
+
+    // Removed
+    // function testUnit_YearnVault_tradeDAI05() public {
 
     function testUnit_YearnVault_tradeDAI06() public {
         console.log("buys base and retrieves change");
@@ -399,7 +394,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100214484627287666,
+                1100213484622196799,
                 340282366920938463463374607431768211455
             )
         );
@@ -469,14 +464,9 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-    function testUnit_YearnVault_tradeDAI11() public {
-        console.log("does not buy fyToken beyond slippage");
-        uint128 fyTokenOut = uint128(WAD);
 
-        shares.mint(address(pool), initialShares);
-        vm.expectRevert(abi.encodeWithSelector(SlippageDuringBuyFYToken.selector, 999805960640945800, 0));
-        pool.buyFYToken(alice, fyTokenOut, 0);
-    }
+    // Removed
+    // function testUnit_YearnVault_tradeDAI11() public {
 
     function testUnit_YearnVault_tradeDAI12() public {
         console.log("donates base and buys fyToken");

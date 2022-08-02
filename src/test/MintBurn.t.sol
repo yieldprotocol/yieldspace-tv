@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 
 /*
   __     ___      _     _
@@ -38,7 +38,7 @@ abstract contract WithLiquidity is ZeroStateDai {
 
         // Alice calls init.
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice);
 
         // elapse some time after initialization
         vm.warp(block.timestamp + 60);
@@ -71,7 +71,7 @@ contract Mint__ZeroState is ZeroStateDai {
         address noAuth = payable(address(0xB0FFED));
         vm.expectRevert(bytes("Access denied"));
         vm.prank(noAuth);
-        pool.init(bob, bob, 0, MAX);
+        pool.init(bob);
     }
 
     function testUnit_mint1() public {
@@ -94,7 +94,7 @@ contract Mint__ZeroState is ZeroStateDai {
 
         // Alice calls init.
         vm.prank(alice);
-        pool.init(bob, bob, 0, MAX);
+        pool.init(bob);
 
         // Shares price is set to value of state variable cNumerator/cDenominator.
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
@@ -115,7 +115,7 @@ contract Mint__ZeroState is ZeroStateDai {
 
         // Alice calls init.
         vm.startPrank(alice);
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(address(0));
 
         // After initializing, donate shares and sellFyToken to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
@@ -181,7 +181,7 @@ contract Mint__WithLiquidity is WithLiquidity {
 
         // Alice calls init.
         vm.startPrank(alice);
-        pool.init(address(0), address(0), 0, MAX);
+        pool.init(address(0));
     }
 }
 

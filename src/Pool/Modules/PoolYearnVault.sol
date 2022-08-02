@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 
 import "../Pool.sol";
 import "../../interfaces/IYVToken.sol";
@@ -35,11 +35,11 @@ contract PoolYearnVault is Pool {
     using MinimalTransferHelper for IERC20Like;
 
     constructor(
-        address base_,
+        address sharesToken_,
         address fyToken_,
         int128 ts_,
         uint16 g1Fee_
-    ) Pool(base_, fyToken_, ts_, g1Fee_) {}
+    ) Pool(sharesToken_, fyToken_, ts_, g1Fee_) {}
 
     /// This is used by the constructor to set the base token as immutable.
     function _getBaseAsset(address sharesToken_) internal virtual override returns (IERC20Like) {

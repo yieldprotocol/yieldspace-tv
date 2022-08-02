@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 
 /*
   __     ___      _     _
@@ -33,7 +33,7 @@ abstract contract WithLiquidity is ZeroState {
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
 
         vm.prank(alice);
-        pool.init(alice, bob, 0, MAX);
+        pool.init(alice);
 
         setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
@@ -52,7 +52,7 @@ contract Admin__WithLiquidity is WithLiquidity {
         (uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast, uint16 g1fee_) = pool.getCache();
         require(g1fee_ == g1Fee);
         almostEqual(sharesCached, 1100000000000000000000000, 100000000);
-        require(fyTokenCached == 1154999999999999998900000);
+        require(fyTokenCached == 1154999999999999999952295);
         require(blockTimeStampLast == 1);
         uint256 expectedCurrentCumulativeRatio = pool.cumulativeRatioLast() +
             ((uint256(fyTokenCached) * 1e27) * (block.timestamp - blockTimeStampLast)) /

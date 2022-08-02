@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.13;
+pragma solidity >=0.8.15;
 
 /* POOL ERRORS
 ******************************************************************************************************************/
@@ -7,12 +7,20 @@ pragma solidity >=0.8.13;
 /// The pool has matured and maybe you should too.
 error AfterMaturity();
 
+/// The approval of the sharesToken failed miserably.
+error ApproveFailed();
+
+/// The update would cause the FYToken cached to be less than the total supply. This should never happen but may
+/// occur due to unexpected rounding errors.  We cannot allow this to happen as it could have many unexpected and
+/// side effects which may pierce the fabric of the space-time continuum.
+error FYTokenCachedBadState();
+
 /// The pool has already been initialized. What are you thinking?
 /// @dev To save gas, total supply == 0 is checked instead of a state variable.
 error Initialized();
 
 /// Trade results in negative interest rates because fyToken balance < (newSharesBalance * mu). Don't neg me.
-error InsufficientFYTokenBalance(uint128 newFYTokenBalance, uint128 newSharesBalanceTimesMu);
+error NegativeInterestRatesNotAllowed(uint128 newFYTokenBalance, uint128 newSharesBalanceTimesMu);
 
 /// Represents the fee in bps, and it cannot be larger than 10,000.
 /// @dev https://en.wikipedia.org/wiki/10,000 per wikipedia:
@@ -41,23 +49,12 @@ error NotEnoughFYTokenIn(uint256 fYTokensAvailable, uint256 fYTokensNeeded);
 /// @dev To save gas, total supply == 0 is checked instead of a state variable
 error NotInitialized();
 
-/// Maximum amount of fyToken (per the max arg) would be exceeded for the trade. gg
-/// @param fyTokenIn fyTokens that would be required for the trade.
-/// @param max The maximum amount of fyTokens to be paid as specified by the caller.
-error SlippageDuringBuyBase(uint128 fyTokenIn, uint128 max);
-
 /// The reserves have changed compared with the last cache which causes the burn to fall outside the bounds of min/max
 /// slippage ratios selected. This is likely the result of a peanut butter sandwich attack.
 /// @param newRatio The ratio that would have resulted from the mint.
 /// @param minRatio The minimum ratio allowed as specified by the caller.
 /// @param maxRatio The maximum ratio allowed as specified by the caller
 error SlippageDuringBurn(uint256 newRatio, uint256 minRatio, uint256 maxRatio);
-
-
-/// Maximium amount of base (per the max arg) was exceeded for the trade. L and ratio.
-/// @param baseIn The base that would be required for the trade.
-/// @param max The maximum amount of base to be paid as specified by the caller.
-error SlippageDuringBuyFYToken(uint128 baseIn, uint128 max);
 
 /// The reserves have changed compared with the last cache which causes the mint to fall outside the bounds of min/max
 /// slippage ratios selected. This is likely the result of a bologna sandwich attack.
