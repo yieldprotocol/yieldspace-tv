@@ -105,20 +105,12 @@ contract YieldMathTest is Test {
         mu = muNumerator.fromUInt().div(muDenominator.fromUInt());
     }
 
-    function isClose(
+    function percentOrMinimum(
         uint256 result,
-        uint256 expectedResult,
-        uint256 maxDiff
-    ) public pure {
-        if (expectedResult > result) {
-            require((expectedResult - result) <= maxDiff);
-        } else {
-            require((result - expectedResult) <= maxDiff);
-        }
-    }
-
-    function percentOrMinumum(uint256 result, uint256 divisor, uint256 nominalDiff) public pure returns(uint256) {
-        uint256 fraction = result/divisor;
+        uint256 divisor,
+        uint256 nominalDiff
+    ) public pure returns (uint256) {
+        uint256 fraction = result / divisor;
         return fraction > nominalDiff ? fraction : nominalDiff;
     }
 
@@ -205,7 +197,7 @@ contract YieldMathTest is Test {
         // NOTE: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
     }
 
-    function testUnit_fyTokenOutForSharesIn__baseCases() public view {
+    function testUnit_fyTokenOutForSharesIn__baseCases() public {
         // should match Desmos for selected inputs
         uint128[6] memory sharesAmounts = [
             uint128(50_000 * 1e18),
@@ -238,7 +230,7 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            isClose(result, expectedResults[idx], 2);
+            assertApproxEqAbs(result, expectedResults[idx], 2);
         }
     }
 
@@ -340,7 +332,7 @@ contract YieldMathTest is Test {
 
         uint256 cPrice = ((cNumerator * sharesAmount) / cDenominator) / 1e18;
 
-        isClose(result, cPrice, 2);
+        assertApproxEqAbs(result, cPrice, 2);
     }
 
     function testFuzz_fyTokenOutForSharesIn_farFromMaturity(uint128 sharesAmount) public {
@@ -364,7 +356,7 @@ contract YieldMathTest is Test {
 
         console.log("ammFyOut", ammFyOut);
         console.log("result", result);
-        isClose(ammFyOut / 1e18, result / 1e18, percentOrMinumum(result, 1e20, 2));
+        assertApproxEqAbs(ammFyOut / 1e18, result / 1e18, percentOrMinimum(result, 1e20, 2));
     }
 
     // // function testUnit_fyTokenOutForSharesIn__increaseG(uint128 amount) public {
@@ -489,10 +481,9 @@ contract YieldMathTest is Test {
         ) / 1e18;
 
         // NOTE: could not hit "YieldMath: Rate overflow (zyy)" <- possibly redundant
-
     }
 
-    function testUnit_sharesInForFYTokenOut__baseCases() public view {
+    function testUnit_sharesInForFYTokenOut__baseCases() public {
         // should match Desmos for selected inputs
         uint128[5] memory fyTokenAmounts = [
             uint128(50000 * 1e18),
@@ -523,7 +514,7 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            isClose(result, expectedResults[idx], 2);
+            assertApproxEqAbs(result, expectedResults[idx], 2);
         }
     }
 
@@ -549,7 +540,7 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        isClose(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
+        assertApproxEqAbs(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
     }
 
     function testFuzz_sharesInForFYTokenOut__noFees1(uint128 fyTokenAmount) public {
@@ -576,7 +567,7 @@ contract YieldMathTest is Test {
             mu
         );
 
-        isClose(result2 / 1e18, fyTokenAmount / 1e18, 2);
+        assertApproxEqAbs(result2 / 1e18, fyTokenAmount / 1e18, 2);
     }
 
     function testFuzz_sharesInForFYTokenOut__noFees2(uint128 fyTokenAmount) public {
@@ -622,7 +613,7 @@ contract YieldMathTest is Test {
 
         uint256 cPrice = (cNumerator * result) / cDenominator;
 
-        isClose(fyTokenAmount / 1e18, cPrice / 1e18, 2);
+        assertApproxEqAbs(fyTokenAmount / 1e18, cPrice / 1e18, 2);
     }
 
     // NOTE: testFuzz_sharesInForFYTokenOut_farFromMaturity cannot be implemented because the size of
@@ -703,7 +694,7 @@ contract YieldMathTest is Test {
         // NOTE: could not hit "YieldMath: Rate underflow" <- possibly redundant
     }
 
-    function testUnit_sharesOutForFYTokenIn__baseCases() public view {
+    function testUnit_sharesOutForFYTokenIn__baseCases() public {
         // should match Desmos for selected inputs
         uint128[5] memory fyTokenAmounts = [
             uint128(25000 * 1e18),
@@ -734,7 +725,7 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            isClose(result, expectedResults[idx], 2);
+            assertApproxEqAbs(result, expectedResults[idx], 2);
         }
     }
 
@@ -761,7 +752,7 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        isClose(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
+        assertApproxEqAbs(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
     }
 
     function testFuzz_sharesOutForFYTokenIn__noFees1(uint128 fyTokenAmount) public {
@@ -938,7 +929,7 @@ contract YieldMathTest is Test {
         // NOTE: could not hit "YieldMath: > fyToken reserves" <- possibly redundant
     }
 
-    function testUnit_fyTokenInForSharesOut__baseCases() public view {
+    function testUnit_fyTokenInForSharesOut__baseCases() public {
         // should match Desmos for selected inputs
         uint128[6] memory sharesAmounts = [
             uint128(50000 * 1e18),
@@ -971,7 +962,7 @@ contract YieldMathTest is Test {
                 ) /
                 1e18;
 
-            isClose(result, expectedResults[idx], 2);
+            assertApproxEqAbs(result, expectedResults[idx], 2);
         }
     }
 
@@ -997,7 +988,7 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        isClose(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
+        assertApproxEqAbs(resultFYTokens / 1e18, fyTokenAmount / 1e18, 2);
     }
 
     function testFuzz_fyTokenInForSharesOut__noFees1(uint128 sharesAmount) public {
@@ -1022,7 +1013,7 @@ contract YieldMathTest is Test {
             c,
             mu
         );
-        isClose(result2 / 1e18, sharesAmount / 1e18, 2);
+        assertApproxEqAbs(result2 / 1e18, sharesAmount / 1e18, 2);
     }
 
     function testFuzz_fyTokenInForSharesOut__noFees2(uint128 sharesAmount) public {
@@ -1091,8 +1082,6 @@ contract YieldMathTest is Test {
         uint256 newFyTokenReserves = oldK / newSharesReserves;
         uint256 ammFyIn = newFyTokenReserves - fyTokenReserves;
 
-        isClose(ammFyIn / 1e18, result / 1e18, percentOrMinumum(result, 1e20, 2));
+        assertApproxEqAbs(ammFyIn / 1e18, result / 1e18, percentOrMinimum(result, 1e20, 2));
     }
-
-
 }
