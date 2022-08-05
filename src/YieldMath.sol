@@ -471,6 +471,80 @@ library YieldMath {
         }
     }
 
+    /// Calculates the max amount of fyToken a user could sell.
+    /// @param sharesReserves shares reserves amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param timeTillMaturity time till maturity in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64
+    /// @param g fee coefficient, multiplied by 2^64
+    /// @param c price of shares in terms of Dai, multiplied by 2^64
+    /// @param mu (μ) Normalization factor -- starts as c at initialization
+    /// @return fyTokenIn the max amount of fyToken a user could sell
+    function maxFYTokenIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128) {
+        /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+
+                y = fyToken reserves
+                z = shares reserves
+
+                     (                  sum        )^(   invA    ) - y
+                     (    Za          ) + (  Ya  ) )^(   invA    ) - y
+                Δy = ( c/μ * (μz)^(1-t) +  y^(1-t) )^(1 / (1 - t)) - y
+
+            */
+
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+
+            uint128 a = _computeA(timeTillMaturity, k, g);
+            uint256 sum;
+            {
+                // normalizedSharesReserves = μ * sharesReserves
+                uint256 normalizedSharesReserves;
+                require(
+                    (normalizedSharesReserves = mu.mulu(sharesReserves)) <= MAX,
+                    "YieldMath: Rate overflow (nsr)"
+                );
+
+                // za = c/μ * (normalizedSharesReserves ** a)
+                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+                uint256 za;
+                require(
+                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
+                    "YieldMath: Rate overflow (za)"
+                );
+
+                // ya = fyTokenReserves ** a
+                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+                uint256 ya = fyTokenReserves.pow(a, ONE);
+
+                // sum = za + ya
+                // z < MAX, y < MAX, a < 1. It can only underflow, not overflow.
+                require((sum = za + ya) <= MAX, "YieldMath: > fyToken reserves");
+            }
+
+            // result = fyTokenReserves - (sum ** (1/a))
+            // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+            // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+            uint256 result;
+            require(
+                (result = uint256(uint128(sum).pow(ONE, a)) - uint256(fyTokenReserves)) <= MAX,
+                "YieldMath: Rounding error"
+            );
+
+            return uint128(result);
+        }
+    }
+
     /* UTILITY FUNCTIONS
      ******************************************************************************************************************/
 

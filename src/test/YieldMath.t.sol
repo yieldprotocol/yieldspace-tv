@@ -1084,4 +1084,36 @@ contract YieldMathTest is Test {
 
         assertApproxEqAbs(ammFyIn / 1e18, result / 1e18, percentOrMinimum(result, 1e20, 2));
     }
+
+    /* 5. function maxFYTokenIn
+     ***************************************************************/
+
+    function test_maxFYTokenIn() public {
+        uint128 _maxFYTokenIn = YieldMath.maxFYTokenIn(sharesReserves, fyTokenReserves, timeTillMaturity, k, g2, c, mu);
+
+        uint256 sharesOut = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            _maxFYTokenIn,
+            timeTillMaturity,
+            k,
+            g2,
+            c,
+            mu
+        );
+
+        assertApproxEqAbs(sharesOut, sharesReserves, 1e12);
+
+        vm.expectRevert("YieldMath: Rate overflow (yxa)");
+        YieldMath.sharesOutForFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            _maxFYTokenIn + 1e12,
+            timeTillMaturity,
+            k,
+            g2,
+            c,
+            mu
+        );
+    }
 }
