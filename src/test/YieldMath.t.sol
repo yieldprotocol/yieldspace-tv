@@ -1091,6 +1091,9 @@ contract YieldMathTest is Test {
     function test_maxFYTokenIn() public {
         uint128 _maxFYTokenIn = YieldMath.maxFYTokenIn(sharesReserves, fyTokenReserves, timeTillMaturity, k, g2, c, mu);
 
+        // https://www.desmos.com/calculator/jcdfr1qv3z
+        assertApproxEqAbs(_maxFYTokenIn, 1230211.59495e18, 1e13);
+
         uint256 sharesOut = YieldMath.sharesOutForFYTokenIn(
             sharesReserves,
             fyTokenReserves,
@@ -1115,5 +1118,57 @@ contract YieldMathTest is Test {
             c,
             mu
         );
+    }
+
+    /* 5. function maxFYTokenOut
+     ***************************************************************/
+
+    function test_maxFYTokenOut() public {
+        // uint128 _maxFYTokenOut = 1676866556835377479719384 - 1500000000000000000000000;
+        // uint128 _maxFYTokenOut = 176631.361972e18;
+        // uint128 _maxFYTokenOut = 146749.822871e18;
+        // uint128 _maxFYTokenOut = 209668.563e18;
+        uint128 _maxFYTokenOut = YieldMath.maxFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+
+        assertApproxEqAbs(_maxFYTokenOut, 176631.361972e18, 1e12);
+
+        uint256 sharesIn = YieldMath.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            _maxFYTokenOut,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+
+        uint newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
+        require((fyTokenReserves - _maxFYTokenOut) < newSharesMulMu, "??");
+
+        console.log(newSharesMulMu);
+        console.log(fyTokenReserves - _maxFYTokenOut);
+
+        assertApproxEqAbs(newSharesMulMu, fyTokenReserves - _maxFYTokenOut, 0);
+
+        // vm.expectRevert("YieldMath: Rate overflow (yxa)");
+        // YieldMath.sharesInForFYTokenOut(
+        //     sharesReserves,
+        //     fyTokenReserves,
+        //     _maxFYTokenOut + 1e12,
+        //     timeTillMaturity,
+        //     k,
+        //     g1,
+        //     c,
+        //     mu
+        // );
     }
 }

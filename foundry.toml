@@ -19,5 +19,8 @@ fuzz_runs = 20000
 [profile.super_deep]
 fuzz_runs = 100000
 
+[profile.dev]
+ignored_error_codes = [5574] # code size warning
+optimizer = false
 
 # See more config options https://github.com/gakonst/foundry/tree/master/config

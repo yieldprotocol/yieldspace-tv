@@ -130,7 +130,7 @@ contract PoolOracle is IPoolOracle {
         // This check is to safeguard the edge case where the pool was initialised just now (or very, very recently)
         // and hence the TWAR can't be trusted as it would be easy to manipulate it.
         // This can happen cause even if we always try to use a value that's `windowSize` old, if said value is stale or invalid
-        // we'll loop and try newere ones until we find a valid one (or we blow).
+        // we'll loop and try newer ones until we find a valid one (or we blow).
         if (timeElapsed < minTimeElapsed) {
             revert InsufficientElapsedTime(pool, timeElapsed);
         }
