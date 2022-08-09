@@ -29,6 +29,7 @@ import "../../interfaces/IYVToken.sol";
 /// @author @devtooligan
 contract PoolNonTv is Pool {
     using MinimalTransferHelper for IERC20Like;
+    using CastU256U128 for uint256;
 
     constructor(
         address base_,
@@ -36,6 +37,43 @@ contract PoolNonTv is Pool {
         int128 ts_,
         uint16 g1Fee_
     ) Pool(base_, fyToken_, ts_, g1Fee_) {}
+
+    /* EXTERNAL FUNCTIONS
+     *****************************************************************************************************************/
+
+    /// Retrieve any shares/base tokens not accounted for in the cache.
+    /// Note: For PoolNonTv, sharesToken == baseToken.
+    /// This fn is the same as retrieveBase().
+    /// @param to Address of the recipient of the shares/base tokens.
+    /// @return retrieved The amount of shares/base tokens sent.
+    function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
+        retrieved = _retrieveBase(to);
+    }
+
+    /// Retrieve any shares/base tokens not accounted for in the cache.
+    /// Note: For PoolNonTv, sharesToken == baseToken.
+    /// This fn is the same as retrieveShares().
+    /// @param to Address of the recipient of the shares/base tokens.
+    /// @return retrieved The amount of shares/base tokens sent.
+    function retrieveBase(address to) external virtual override returns (uint128 retrieved) {
+        retrieved = _retrieveBase(to);
+    }
+
+    /* INTERNAL FUNCTIONS
+     *****************************************************************************************************************/
+
+    /// Retrieve any shares/base tokens not accounted for in the cache.
+    /// Note: For PoolNonTv, sharesToken == baseToken.
+    /// This fn is used by both retrieveBase() and retrieveShares().
+    /// @param to Address of the recipient of the shares/base tokens.
+    /// @return retrieved The amount of shares/base tokens sent.
+    function _retrieveBase(address to) internal virtual returns (uint128 retrieved) {
+        // For PoolNonTv, sharesToken == baseToken. This allows for the use of the core Pool.sol contract logic with
+        // non-yield-bearing tokens. As such the sharesCached state var actually represents baseTokens, since they
+        // are the same.
+        retrieved = (baseToken.balanceOf(address(this)) - sharesCached).u128();
+        baseToken.safeTransfer(to, retrieved);
+    }
 
     /// **This function is intentionally empty to overwrite the Pool._approveSharesToken fn.**
     /// This is normally used by Pool.constructor give max approval to sharesToken, but not needed for Non-Tv pool.
