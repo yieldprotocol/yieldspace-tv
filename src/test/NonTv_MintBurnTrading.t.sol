@@ -33,6 +33,8 @@ import "./shared/Utils.sol";
 import "./shared/Constants.sol";
 import {YVTokenMock} from "./mocks/YVTokenMock.sol";
 import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
+import {IERC20Like} from  "../interfaces/IERC20Like.sol";
+
 
 abstract contract ZeroStateNonTv is ZeroState {
     constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "NonTv")) {}
@@ -504,3 +506,116 @@ contract TradeDAI__OnceMatureNonTv is OnceMature {
         pool.buyFYToken(alice, uint128(WAD), uint128(MAX));
     }
 }
+
+contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
+
+    function testUnit_admin1_NonTv() public {
+        console.log("retrieveBase returns nothing if there is no excess");
+        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
+        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+
+        pool.retrieveBase(alice);
+
+        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        assertEq(currentSharesCached, startingSharesCached);
+        assertEq(currentFyTokenCached, startingFyTokenCached);
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
+    }
+
+    function testUnit_admin2_NonTv() public {
+        console.log("retrieveBase returns exceess");
+        uint256 additionalAmount = 69;
+        IERC20Like base = IERC20Like(address(pool.baseToken()));
+        vm.prank(alice);
+        base.transfer(address(pool), additionalAmount);
+
+        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
+        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+
+        pool.retrieveBase(alice);
+
+        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        assertEq(currentSharesCached, startingSharesCached);
+        assertEq(currentFyTokenCached, startingFyTokenCached);
+
+        // "sharesToken" and "baseToken" both point to the same token
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
+    }
+
+    function testUnit_admin3_NonTv() public {
+        console.log("retrieveShares returns nothing if there is no excess");
+        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
+        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+
+        pool.retrieveShares(alice);
+
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
+        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        assertEq(currentFyTokenCached, startingFyTokenCached);
+    }
+
+    function testUnit_admin4_NonTv() public {
+        console.log("retrieveShares returns exceess");
+
+        uint256 additionalAmount = 69e18;
+        shares.mint(address(pool), additionalAmount);
+
+        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
+        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+
+        pool.retrieveShares(alice);
+
+        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        assertEq(currentFyTokenCached, startingFyTokenCached);
+        assertEq(currentSharesCached, startingSharesCached);
+
+        // "sharesToken" and "baseToken" both point to the same token
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
+    }
+
+    function testUnit_admin5_NonTv() public {
+        console.log("retrieveFYToken returns nothing if there is no excess");
+        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
+        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
+        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+
+        pool.retrieveFYToken(alice);
+
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
+        assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
+        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        assertEq(currentFyTokenCached, startingFyTokenCached);
+
+    }
+
+    function testUnit_admin6_NonTv() public {
+        console.log("retrieveFYToken returns exceess");
+        uint256 additionalAmount = 69e18;
+        fyToken.mint(address(pool), additionalAmount);
+
+        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
+        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
+        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+
+        pool.retrieveFYToken(alice);
+
+        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        assertEq(currentFyTokenCached, startingFyTokenCached);
+        assertEq(currentSharesCached, startingSharesCached);
+        assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+    }
+}
+
