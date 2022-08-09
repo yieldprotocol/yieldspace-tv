@@ -14,7 +14,8 @@ import "forge-std/Test.sol";
 import "./helpers.sol";
 import "./../Math64x64.sol";
 
-contract Math64x64Test is DSTest {
+contract Math64x64Test is Test {
+    using Math64x64 for uint256;
     /**TESTS*********************************************************
 
         Tests grouped by function:
@@ -151,25 +152,28 @@ contract Math64x64Test is DSTest {
         }
     }
 
-    function testFuzz_toInt_Math64x64(int128 to) public {
-        int64 result = Math64x64.toInt(to);
+    function testFuzz_toInt_Math64x64(uint256 x) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
 
-        // Re-implement logic from lib to derive expected result
-        int64 expectedResult = int64(to >> 64);
+        int64 result = Math64x64.toInt(x64);
+
+        // Re-implement logic from lib x64 derive expected result
+        int64 expectedResult = int64(x64 >> 64);
         assertEq(expectedResult, result);
 
         // Property Testing
         // fn(x) < fn(x + 1)
         bool overflows;
         unchecked {
-            overflows = to > to + 1;
+            overflows = x64 > x64 + 1;
         }
         if (!overflows) {
-            require(Math64x64.toInt(to + 1) >= result);
+            require(Math64x64.toInt(x64 + 1) >= result);
         }
 
         // abs(fn(x)) < abs(x)
-        require(abs(result) <= abs(to));
+        require(abs(result) <= abs(x64));
     }
 
     /* 3.  function fromUInt(uint256 x) internal pure returns (int128)
@@ -254,27 +258,6 @@ contract Math64x64Test is DSTest {
         Math64x64.toUInt(-1);
     }
 
-    function testFuzz_toUInt_Math64x64(int128 to) public {
-        int64 result = Math64x64.toInt(to);
-
-        // Re-implement logic from lib to derive expected result
-        int128 expectedResult = int64(to >> 64);
-        assertEq(expectedResult, result);
-
-        // Property Testing
-        // fn(x) < fn(x + 1)
-        bool overflows;
-        unchecked {
-            overflows = to > to + 1;
-        }
-        if (!overflows) {
-            require(Math64x64.toInt(to + 1) >= result);
-        }
-
-        // abs(fn(x)) < abs(x)
-        require(abs(result) <= abs(to));
-    }
-
     /* 5.  function from128x128 (int256 x) internal pure returns (int128)
      ***************************************************************/
     function testUnit_from128x128_Math64x64() public {
@@ -333,11 +316,14 @@ contract Math64x64Test is DSTest {
         }
     }
 
-    function testFuzz_to128x128_Math64x64(int128 to) public {
-        int256 result = Math64x64.to128x128(to);
+    function testFuzz_to128x128_Math64x64(uint256 x) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+
+        int256 result = Math64x64.to128x128(x64);
 
         // Re-implement logic from lib to derive expected result
-        int256 expectedResult = int256(to) << 64;
+        int256 expectedResult = int256(x64) << 64;
 
         assertEq(expectedResult, result);
 
@@ -345,10 +331,10 @@ contract Math64x64Test is DSTest {
         // fn(x) < fn(x + 1)
         bool overflows;
         unchecked {
-            overflows = to > to + 1;
+            overflows = x64 > x64 + 1;
         }
         if (!overflows) {
-            require(Math64x64.to128x128(to + 1) >= result);
+            require(Math64x64.to128x128(x64 + 1) >= result);
         }
     }
 
@@ -619,16 +605,20 @@ contract Math64x64Test is DSTest {
         Math64x64.div(type(int128).max, 0x0);
     }
 
-    function testFuzz_div_Math64x64(int128 x, int128 y) public {
-        if (y == 0) return;
+    function testFuzz_div_Math64x64(uint256 x, uint256 y) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        y = bound(y, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 y64 = y.fromUInt();
+
+        vm.assume(y != 0);
 
         // Re-implement logic from lib to derive expected result
-        int256 expectedResult256 = (int256(x) << 64) / y;
-        if (expectedResult256 > type(int128).max || expectedResult256 < type(int128).min) return;
+        int256 expectedResult256 = (int256(x64) << 64) / y64;
 
         int128 expectedResult = int128(expectedResult256);
 
-        int128 result = Math64x64.div(x, y);
+        int128 result = Math64x64.div(x64, y64);
 
         assertEq(expectedResult, result);
     }
@@ -687,37 +677,6 @@ contract Math64x64Test is DSTest {
         Math64x64.divi(type(int128).max, 0x0);
     }
 
-    function testFuzz_divi_Math64x64(int256 x, int256 y) public {
-        if (y == 0) return;
-        if (x < type(int128).min) return;
-        if (x > type(int128).max) return;
-
-        int128 expectedResult;
-        int128 result;
-
-        bool negativeResult = false;
-        if (x < 0) {
-            x = -x; // We rely on overflow behavior here
-            negativeResult = true;
-        }
-        if (y < 0) {
-            y = -y; // We rely on overflow behavior here
-            negativeResult = !negativeResult;
-        }
-        uint128 absoluteResult = Math64x64.divuu(uint256(x), uint256(y));
-        if (negativeResult) {
-            if (absoluteResult > 0x80000000000000000000000000000000) return;
-            expectedResult = -int128(absoluteResult); // We rely on overflow behavior here
-        } else {
-            if (absoluteResult > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) return;
-            expectedResult = int128(absoluteResult); // We rely on overflow behavior here
-        }
-
-        result = Math64x64.divi(x, y);
-
-        assertEq(expectedResult, result);
-    }
-
     /* 14. function divu (uint256 x, uint256 y) internal pure returns (int128)
      ***************************************************************/
     // NOTE: Math64x64.divu's core internal function, Math64x64.divuu, is tested indirectly
@@ -748,9 +707,10 @@ contract Math64x64Test is DSTest {
         Math64x64.neg(type(int128).min);
     }
 
-    function testFuzz_neg_Math64x64(int128 x) public {
-        if (x == type(int128).min) return;
-        assertEq(Math64x64.neg(x), -x);
+    function testFuzz_neg_Math64x64(uint256 x) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        vm.assume(x64 > type(int128).min);
     }
 
     /* 16. function abs (int128 x) internal pure returns (int128)
@@ -778,9 +738,11 @@ contract Math64x64Test is DSTest {
         Math64x64.abs(type(int128).min);
     }
 
-    function testFuzz_abs_Math64x64(int128 x) public {
-        if (x == type(int128).min) x += 1;
-        assertEq(Math64x64.abs(int128(x)), abs(x));
+    function testFuzz_abs_Math64x64(uint256 x) public {
+        x = bound(x, 1, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        vm.assume(x64 != type(int128).min);
+        assertEq(Math64x64.abs(x64), abs(x64));
     }
 
     /* 17. function inv (int128 x) internal pure returns (int128)
@@ -808,13 +770,14 @@ contract Math64x64Test is DSTest {
         Math64x64.inv(0);
     }
 
-    function testFuzz_inv_Math64x64(int128 x) public {
-        if (x == 0) return;
+    function testFuzz_inv_Math64x64(uint256 x) public {
+        x = bound(x, 1, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
 
-        int256 expectedResult = int256(0x100000000000000000000000000000000) / x;
+        int256 expectedResult = int256(0x100000000000000000000000000000000) / x64;
         if (expectedResult > type(int128).max || expectedResult < type(int128).min) return;
 
-        assertEq(Math64x64.inv(int128(x)), int128(expectedResult));
+        assertEq(Math64x64.inv(int128(x64)), int128(expectedResult));
     }
 
     /* 18. function avg (int128 x, int128 y) internal pure returns (int128)
@@ -841,10 +804,15 @@ contract Math64x64Test is DSTest {
         }
     }
 
-    function testFuzz_avg_Math64x64(int128 x, int128 y) public {
-        int128 result = Math64x64.avg(x, y);
+    function testFuzz_avg_Math64x64(uint256 x, uint256 y) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        y = bound(y, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 y64 = y.fromUInt();
 
-        int128 expectedResult = int128((int256(x) + int256(y)) >> 1);
+        int128 result = Math64x64.avg(x64, y64);
+
+        int128 expectedResult = int128((int256(x64) + int256(y64)) >> 1);
 
         assertEq(expectedResult, result);
     }
@@ -878,12 +846,17 @@ contract Math64x64Test is DSTest {
      * for a large percentage of test cases being skipped when the product of the passed in
      * parameters is negative.  Recommend deep fuzzing w 10,000 runs or more
      */
-    function testFuzz_gavg_Math64x64(int128 x, int128 y) public {
-        int256 m = int256(x) * int256(y);
+    function testFuzz_gavg_Math64x64(uint256 x, uint256 y) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        y = bound(y, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 y64 = y.fromUInt();
+
+        int256 m = int256(x64) * int256(y64);
         if (m < 0) return;
         if (m >= 0x4000000000000000000000000000000000000000000000000000000000000000) return;
 
-        int128 result = Math64x64.gavg(x, y);
+        int128 result = Math64x64.gavg(x64, y64);
 
         int128 expectedResult = int128(Math64x64.sqrtu(uint256(m)));
 
@@ -944,43 +917,6 @@ contract Math64x64Test is DSTest {
         Math64x64.pow(type(int128).max, type(uint256).max);
     }
 
-    /**
-     * NOTE: This Math64x64.pow logic is too complex to test w symbolic execution
-     * but also is subject to false positive results when fuzzing due to the potential
-     * for a large percentage of test cases being skipped when reverted during the
-     * powu fn call. Recommend deep fuzzing w 10,000 runs or more
-     */
-    function testFuzz_pow_Math64x64(int128 x, uint256 y) public {
-        int128 result;
-        try forTesting.pow(x, y) returns (int128 result_) {
-            result = result_;
-        } catch {
-            return;
-        }
-
-        uint256 absoluteResult;
-        bool negativeResult = false;
-        int128 expectedResult;
-        unchecked {
-            if (x >= 0) {
-                absoluteResult = powu(uint256(uint128(x)) << 63, y);
-            } else {
-                // We rely on overflow behavior here
-                absoluteResult = powu(uint256(uint128(-x)) << 63, y);
-                negativeResult = y & 1 > 0;
-            }
-
-            absoluteResult >>= 63;
-
-            if (negativeResult) {
-                expectedResult = -int128(int256(absoluteResult)); // We rely on overflow behavior here
-            } else {
-                expectedResult = int128(int256(absoluteResult)); // We rely on overflow behavior here
-            }
-        }
-
-        assertEq(result, expectedResult);
-    }
 
     /* 21. function sqrt (int128 x) internal pure returns (int128)
      ***************************************************************/
@@ -1000,11 +936,13 @@ contract Math64x64Test is DSTest {
         Math64x64.sqrt(-0x1);
     }
 
-    function testFuzz_sqrt_Math64x64(int128 x) public {
-        if (x == type(int128).min) x = type(int128).max;
-        if (x < 0) x = -x;
-        int128 result = Math64x64.sqrt(x);
-        int128 expectedResult = int128(Math64x64.sqrtu(uint256(uint128(x)) << 64));
+    function testFuzz_sqrt_Math64x64(uint256 x) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        vm.assume(x64 > 0);
+
+        int128 result = Math64x64.sqrt(x64);
+        int128 expectedResult = int128(Math64x64.sqrtu(uint256(uint128(x64)) << 64));
 
         assertEq(result, expectedResult);
     }
@@ -1105,13 +1043,15 @@ contract Math64x64Test is DSTest {
         Math64x64.ln(0x0);
     }
 
-    function testFuzz_ln_Math64x64(int128 x) public {
-        if (x == type(int128).min) x = type(int128).max;
-        if (x != abs(x)) x = -x;
-        if (x == 0) x = 0x1;
+    function testFuzz_ln_Math64x64(uint256 x) public {
+        x = bound(x, 0, 0x7FFFFFFFFFFFFFFF);
+        int128 x64 = x.fromUInt();
+        vm.assume(x64 > 0);
 
-        int128 result = Math64x64.ln(x);
-        int128 expectedLog2 = Math64x64.log_2(x);
+
+
+        int128 result = Math64x64.ln(x64);
+        int128 expectedLog2 = Math64x64.log_2(x64);
         int128 expectedResult = int128(
             int256((uint256(uint128(expectedLog2)) * 0xB17217F7D1CF79ABC9E3B39803F2F6AF) >> 128)
         );
