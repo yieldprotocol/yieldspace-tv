@@ -71,7 +71,7 @@ contract PoolNonTv is Pool {
         // For PoolNonTv, sharesToken == baseToken. This allows for the use of the core Pool.sol contract logic with
         // non-yield-bearing tokens. As such the sharesCached state var actually represents baseTokens, since they
         // are the same.
-        retrieved = (baseToken.balanceOf(address(this)) - sharesCached).u128();
+        retrieved = (sharesToken.balanceOf(address(this)) - sharesCached).u128();
         baseToken.safeTransfer(to, retrieved);
     }
 
