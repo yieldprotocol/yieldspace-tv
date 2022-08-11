@@ -29,20 +29,15 @@ contract Deploy is TestCore {
     FYTokenMock public fyUSDC;
     FYTokenMock public fy20DECI;
 
-
     function setUp() public virtual {
         ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
         assetDAI = new ERC20Mock("DAI", "DAI", 18);
         assetUSDC = new ERC20Mock("USDC", "USDC", 6);
         asset20DECI = new ERC20Mock("20DECI", "20DECI", 20);
 
-        shares4626DAI = IERC20Like(
-            address(new ERC4626TokenMock("4626DAI", "4626DAI", 18, address(assetDAI)))
-        );
+        shares4626DAI = IERC20Like(address(new ERC4626TokenMock("4626DAI", "4626DAI", 18, address(assetDAI))));
 
-        shares4626USDC = IERC20Like(
-            address(new ERC4626TokenMock("4626USDC", "4626USDC", 6, address(assetUSDC)))
-        );
+        shares4626USDC = IERC20Like(address(new ERC4626TokenMock("4626USDC", "4626USDC", 6, address(assetUSDC))));
 
         shares462620DECI = IERC20Like(
             address(new ERC4626TokenMock("462620DECI", "462620DECI", 20, address(asset20DECI)))
@@ -56,7 +51,6 @@ contract Deploy is TestCore {
         fyDAI = new FYTokenMock("fyDAI", "fyDAI", address(assetDAI), maturity);
         fyUSDC = new FYTokenMock("fyUSDC", "fyUSDC", address(assetUSDC), maturity);
         fy20DECI = new FYTokenMock("fy20DECI", "fy20DECI", address(asset20DECI), maturity);
-
     }
 
     function testUnit_deploy1_20Decimals() public {
@@ -64,8 +58,8 @@ contract Deploy is TestCore {
         vm.expectRevert(stdError.arithmeticError); // underflows if deci > 18
         new Pool(address(shares462620DECI), address(fy20DECI), ts, g1Fee);
         // TODO: Add other pool types
-
     }
+
     function testUnit_deploy2_muIsZero() public {
         console.log("deploy() reverts in constructor if mu is zero");
         vm.expectRevert(abi.encodeWithSelector(MuCannotBeZero.selector));
