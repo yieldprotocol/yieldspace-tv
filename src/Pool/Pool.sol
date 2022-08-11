@@ -1054,7 +1054,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return Amount of base hypothetically bought.
     function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128) {
         Cache memory cache = _getCache();
-        return _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        uint128 shares = _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        return _unwrapPreview(shares).u128();
     }
 
     /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
