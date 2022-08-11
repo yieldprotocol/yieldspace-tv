@@ -114,6 +114,7 @@ abstract contract ZeroState is TestCore {
             asset.mint(address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 
+
         // Create fyToken (e.g. "fyDAI").
         fyToken = new FYTokenMock(fyName, fySymbol, address(asset), maturity);
 
@@ -121,9 +122,11 @@ abstract contract ZeroState is TestCore {
         alice = address(0xbabe);
         vm.label(alice, "alice");
         shares.mint(alice, aliceSharesInitialBalance);
+        fyToken.mint(alice, 50_000 * 10**assetDecimals);
         bob = address(0xb0b);
         vm.label(bob, "bob");
         shares.mint(bob, bobSharesInitialBalance);
+        fyToken.mint(bob, 50_000 * 10**assetDecimals);
 
         // Setup pool and grant roles:
         if (sharesType == TYPE_4626) {

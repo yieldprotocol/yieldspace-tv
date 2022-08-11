@@ -481,13 +481,19 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_Euler_tradeUSDC12() public {
     //     console.log("donates base and buys fyToken");
+
+    // marco
+    // function testUnit_Euler_tradeUSDC13
+    // function testUnit_Euler_tradeUSDC14
+    // function testUnit_Euler_tradeUSDC15
+    // function testUnit_Euler_tradeUSDC16
 }
 
 contract TradeUSDC__OnceMatureEuler is OnceMature {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
-    function testUnit_Euler_tradeUSDC13() internal {
+    function testUnit_Euler_tradeUSDC17() internal {
         console.log("doesn't allow sellBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellBasePreview(uint128(WAD));
@@ -495,7 +501,7 @@ contract TradeUSDC__OnceMatureEuler is OnceMature {
         pool.sellBase(alice, 0);
     }
 
-    function testUnit_Euler_tradeUSDC14() internal {
+    function testUnit_Euler_tradeUSDC18() internal {
         console.log("doesn't allow buyBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyBasePreview(uint128(WAD));
@@ -503,7 +509,7 @@ contract TradeUSDC__OnceMatureEuler is OnceMature {
         pool.buyBase(alice, uint128(WAD), uint128(MAX));
     }
 
-    function testUnit_Euler_tradeUSDC15() internal {
+    function testUnit_Euler_tradeUSDC19() internal {
         console.log("doesn't allow sellFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellFYTokenPreview(uint128(WAD));
@@ -511,7 +517,7 @@ contract TradeUSDC__OnceMatureEuler is OnceMature {
         pool.sellFYToken(alice, 0);
     }
 
-    function testUnit_Euler_tradeUSDC16() internal {
+    function testUnit_Euler_tradeUSDC20() internal {
         console.log("doesn't allow buyFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyFYTokenPreview(uint128(WAD));
@@ -649,7 +655,6 @@ abstract contract WithLiquidityEulerDAI is ZeroStateEulerDAI {
     }
 }
 
-
 contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
 
     function testUnit_admin1_EulerDAI() public {
@@ -759,5 +764,29 @@ contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+    }
+}
+
+abstract contract WithExtraFYTokenEulerDAI is WithLiquidityEulerDAI {
+    using Exp64x64 for uint128;
+    using Math64x64 for int128;
+    using Math64x64 for int256;
+    using Math64x64 for uint128;
+    using Math64x64 for uint256;
+
+    function setUp() public virtual override {
+        super.setUp();
+        uint256 additionalFYToken = 30 * 1e18;
+        fyToken.mint(address(pool), additionalFYToken);
+        vm.prank(alice);
+        pool.sellFYToken(address(alice), 0);
+    }
+}
+
+contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
+    //marco
+    function testUnit_tradeDAI01_EulerDAI() public {
+        //blah
+
     }
 }
