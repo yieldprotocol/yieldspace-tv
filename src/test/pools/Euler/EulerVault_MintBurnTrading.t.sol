@@ -510,7 +510,7 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
         uint256 assetBalAfter = asset.balanceOf(alice);
         uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
 
-        assertApproxEqAbs(assetBalAfter - assetBalBefore, uint256(expectedAssetOut), 1);
+        assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAssetOut, 1);
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
@@ -882,7 +882,7 @@ contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
         uint256 assetBalAfter = asset.balanceOf(alice);
         uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
 
-        assertApproxEqAbs(assetBalAfter - assetBalBefore, uint256(expectedAssetOut), 1);
+        assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAssetOut, 1);
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
