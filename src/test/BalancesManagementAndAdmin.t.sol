@@ -20,7 +20,7 @@ import "./shared/Utils.sol";
 import "./shared/Constants.sol";
 import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
 import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
-import {IERC20Like} from  "../interfaces/IERC20Like.sol";
+import {IERC20Like} from "../interfaces/IERC20Like.sol";
 
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
@@ -48,7 +48,9 @@ contract Admin__WithLiquidity is WithLiquidity {
         console.log("balance management getters return correct values");
         require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
         require(pool.getBaseBalance() > pool.getSharesBalance());
-        require(pool.getCurrentSharePrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals()));
+        require(
+            pool.getCurrentSharePrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals())
+        );
         require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
         (uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast, uint16 g1fee_) = pool.getCache();
         require(g1fee_ == g1Fee);
@@ -62,7 +64,7 @@ contract Admin__WithLiquidity is WithLiquidity {
         require(actualCurrentCumulativeRatio == expectedCurrentCumulativeRatio);
         shares.mint(address(pool), 1e18);
         pool.sync();
-        (uint104 sharesCachedNew, , ,) = pool.getCache();
+        (uint104 sharesCachedNew, , , ) = pool.getCache();
         almostEqual(sharesCachedNew, sharesCached + 1e18, 100000000);
     }
 
@@ -80,11 +82,11 @@ contract Admin__WithLiquidity is WithLiquidity {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
@@ -100,11 +102,11 @@ contract Admin__WithLiquidity is WithLiquidity {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
@@ -115,13 +117,13 @@ contract Admin__WithLiquidity is WithLiquidity {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
@@ -132,11 +134,11 @@ contract Admin__WithLiquidity is WithLiquidity {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
@@ -148,16 +150,15 @@ contract Admin__WithLiquidity is WithLiquidity {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
-
     }
 
     function testUnit_admin8() public {
@@ -168,16 +169,15 @@ contract Admin__WithLiquidity is WithLiquidity {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
     }
-
 }
