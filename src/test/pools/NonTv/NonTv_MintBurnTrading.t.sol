@@ -16,7 +16,7 @@ pragma solidity >=0.8.15;
 //
 //    NOTE:
 //    These tests are exactly copy and pasted from the MintBurn.t.sol and TradingDAI.t.sol test suites.
-//    The only difference is they are setup on the PoolYearnVault contract instead of the Pool contract
+//    The only difference is they are setup and based on the PoolNonTv contract instead of the Pool contract
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -24,30 +24,27 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../Pool/PoolErrors.sol";
-import {Exp64x64} from "../Exp64x64.sol";
-import {Math64x64} from "../Math64x64.sol";
-import {YieldMath} from "../YieldMath.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import "../../../Pool/PoolErrors.sol";
+import {Exp64x64} from "../../../Exp64x64.sol";
+import {Math64x64} from "../../../Math64x64.sol";
+import {YieldMath} from "../../../YieldMath.sol";
 
-import "./shared/Utils.sol";
-import "./shared/Constants.sol";
-import {YVTokenMock} from "./mocks/YVTokenMock.sol";
-import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
-import {IERC20Like} from  "../interfaces/IERC20Like.sol";
+import "../../shared/Utils.sol";
+import "../../shared/Constants.sol";
+import {YVTokenMock} from "../../mocks/YVTokenMock.sol";
+import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
+import {IERC20Like} from "../../../interfaces/IERC20Like.sol";
 
-abstract contract ZeroStateYearnDai is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "YearnVault")) {}
+abstract contract ZeroStateNonTv is ZeroState {
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "NonTv")) {}
 }
 
-abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
+abstract contract WithLiquidityNonTv is ZeroStateNonTv {
     function setUp() public virtual override {
         super.setUp();
-
         shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
         vm.prank(alice);
         pool.init(alice);
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
         uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
 
         fyToken.mint(address(pool), additionalFYToken);
@@ -55,13 +52,12 @@ abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
     }
 }
 
-contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
-    function testUnit_YearnVault_mint1() public {
+contract Mint__ZeroStateNonTv is ZeroStateNonTv {
+    function testUnit_NonTv_mint1() public {
         console.log("adds initial liquidity");
 
         vm.prank(bob);
-        uint256 baseIn = pool.unwrapPreview(INITIAL_YVDAI);
-        asset.mint(address(pool), baseIn);
+        shares.transfer(address(pool), INITIAL_YVDAI);
 
         vm.expectEmit(true, true, true, true);
         emit Liquidity(
@@ -69,22 +65,21 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
             alice,
             bob,
             address(0),
-            int256(-1 * int256(baseIn)),
+            int256(-1 * int256(INITIAL_YVDAI)),
             int256(0),
-            int256(pool.mulMu(INITIAL_YVDAI))
+            int256(INITIAL_YVDAI)
         );
 
         vm.prank(alice);
         pool.init(bob);
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
 
-        require(pool.balanceOf(bob) == pool.mulMu(INITIAL_YVDAI));
+        require(pool.balanceOf(bob) == INITIAL_YVDAI);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
-    function testUnit_YearnVault_mint2() public {
+    function testUnit_NonTv_mint2() public {
         console.log("adds liquidity with zero fyToken");
         shares.mint(address(pool), INITIAL_YVDAI);
 
@@ -92,32 +87,29 @@ contract Mint__ZeroStateYearnVault is ZeroStateYearnDai {
 
         pool.init(address(0));
 
-        // After initializing, donate shares and sellFyToken to simulate having reached zero fyToken through trading
+        // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
         shares.mint(address(pool), INITIAL_YVDAI);
-        pool.sellFYToken(alice, 0);
+        pool.sync();
 
-        // Send more shares to the pool.
         shares.mint(address(pool), INITIAL_YVDAI);
         pool.mint(bob, bob, 0, MAX);
 
+        require(pool.balanceOf(bob) == INITIAL_YVDAI / 2);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-        uint256 expectedLpTokens = (pool.totalSupply() * INITIAL_YVDAI) / sharesBal;
-        require(pool.balanceOf(bob) == expectedLpTokens);
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
     // Test intentionally ommitted.
-    // function testUnit_YearnVault_mint3() public {
+    // function testUnit_NonTv_mint3() public {
     //     console.log("syncs balances after donations");
 }
 
-contract Mint__WithLiquidityYearnVault is WithLiquidityYearnVault {
-    function testUnit_YearnVault_mint4() public {
-        console.log("mints liquidity tokens, returning shares surplus converted to asset");
-        uint256 bobAssetBefore = asset.balanceOf(bob);
+contract Mint__WithLiquidityNonTv is WithLiquidityNonTv {
+    function testUnit_NonTv_mint4() public {
+        console.log("mints liquidity tokens, returning shares surplus");
         uint256 fyTokenIn = WAD;
-        uint256 expectedMint = ((pool.totalSupply() * fyTokenIn) / (fyToken.balanceOf(address(pool))));
+        uint256 expectedMint = (pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e18;
         uint256 expectedSharesIn = (shares.balanceOf(address(pool)) * expectedMint) / pool.totalSupply();
 
         uint256 poolTokensBefore = pool.balanceOf(bob);
@@ -131,8 +123,7 @@ contract Mint__WithLiquidityYearnVault is WithLiquidityYearnVault {
         uint256 minted = pool.balanceOf(bob) - poolTokensBefore;
 
         almostEqual(minted, expectedMint, fyTokenIn / 10000);
-        require(shares.balanceOf(bob) == bobSharesInitialBalance);
-        require(asset.balanceOf(bob) == bobAssetBefore + YVTokenMock(address(shares)).pricePerShare()); // 1wad converted
+        almostEqual(shares.balanceOf(bob), WAD + bobSharesInitialBalance, fyTokenIn / 10000);
 
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
 
@@ -141,10 +132,9 @@ contract Mint__WithLiquidityYearnVault is WithLiquidityYearnVault {
     }
 }
 
-contract Burn__WithLiquidityYearnVault is WithLiquidityYearnVault {
-    function testUnit_YearnVault_burn1() public {
+contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
+    function testUnit_NonTv_burn1() public {
         console.log("burns liquidity tokens");
-        uint256 bobAssetBefore = asset.balanceOf(address(bob));
         uint256 sharesBalance = shares.balanceOf(address(pool));
         uint256 fyTokenBalance = fyToken.balanceOf(address(pool));
         uint256 poolSup = pool.totalSupply();
@@ -153,7 +143,6 @@ contract Burn__WithLiquidityYearnVault is WithLiquidityYearnVault {
         address charlie = address(3);
 
         uint256 expectedSharesOut = (lpTokensIn * sharesBalance) / poolSup;
-        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
         uint256 expectedFYTokenOut = (lpTokensIn * fyTokenBalance) / poolSup;
 
         // alice transfers in lp tokens then burns them
@@ -166,27 +155,27 @@ contract Burn__WithLiquidityYearnVault is WithLiquidityYearnVault {
             alice,
             bob,
             charlie,
-            int256(expectedAssetsOut),
+            int256(expectedSharesOut),
             int256(expectedFYTokenOut),
             -int256(lpTokensIn)
         );
         vm.prank(alice);
         pool.burn(bob, address(charlie), 0, MAX);
 
-        uint256 assetsOut = asset.balanceOf(bob) - bobAssetBefore;
+        uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
-        almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
+        almostEqual(sharesOut, expectedSharesOut, sharesOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
 
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
-        require(shares.balanceOf(bob) == bobSharesInitialBalance);
+        require(shares.balanceOf(bob) - bobSharesInitialBalance == sharesOut);
         require(fyToken.balanceOf(address(charlie)) == fyTokenOut);
     }
 }
 
-abstract contract WithExtraFYTokenYearnVault is WithLiquidityYearnVault {
+abstract contract WithExtraFYTokenNonTv is WithLiquidityNonTv {
     using Exp64x64 for uint128;
     using Math64x64 for int128;
     using Math64x64 for int256;
@@ -202,7 +191,7 @@ abstract contract WithExtraFYTokenYearnVault is WithLiquidityYearnVault {
     }
 }
 
-abstract contract OnceMature is WithExtraFYTokenYearnVault {
+abstract contract OnceMature is WithExtraFYTokenNonTv {
     using Exp64x64 for uint128;
     using Math64x64 for int128;
     using Math64x64 for int256;
@@ -215,18 +204,17 @@ abstract contract OnceMature is WithExtraFYTokenYearnVault {
     }
 }
 
-contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
+contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
 
-    function testUnit_YearnVault_tradeDAI01() public {
-        console.log("sells a certain amount of fyToken for base");
+    function testUnit_NonTv_tradeDAI01() public {
+        console.log("sells a certain amount of fyToken for shares");
         uint256 fyTokenIn = 25_000 * 1e18;
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = int128(ONE);
 
         fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
@@ -237,11 +225,10 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             k,
             g2,
             c_,
-            mu
+            c_
         );
-        uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
         vm.expectEmit(true, true, false, true);
-        emit Trade(maturity, alice, bob, int256(expectedBaseOut), -int256(fyTokenIn));
+        emit Trade(maturity, alice, bob, int256(expectedSharesOut), -int256(fyTokenIn));
         vm.prank(alice);
         pool.sellFYToken(bob, 0);
 
@@ -250,14 +237,14 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
-    function testUnit_YearnVault_tradeDAI02() public {
+    function testUnit_NonTv_tradeDAI02() public {
         console.log("does not sell fyToken beyond slippage");
         uint256 fyTokenIn = 1e18;
         fyToken.mint(address(pool), fyTokenIn);
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999785051469477284,
+                999768370574989354,
                 340282366920938463463374607431768211455
             )
         );
@@ -266,21 +253,20 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
     // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
-    // function testUnit_YearnVault_tradeDAI03() public {
+    // function testUnit_NonTv_tradeDAI03() public {
     //     console.log("donating shares does not affect cache balances when selling fyToken");
 
-    function testUnit_YearnVault_tradeDAI04() public {
-        console.log("buys a certain amount base for fyToken");
+    function testUnit_NonTv_tradeDAI04() public {
+        console.log("buys a certain amount shares for fyToken");
         (, uint104 fyTokenBalBefore, , ) = pool.getCache();
 
         uint256 userSharesBefore = shares.balanceOf(bob);
-        uint256 userAssetBefore = asset.balanceOf(bob);
+
         uint128 sharesOut = uint128(WAD);
-        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = int128(ONE);
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -292,20 +278,19 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             k,
             g2,
             c_,
-            mu
+            c_
         );
 
         vm.expectEmit(true, true, false, true);
-        emit Trade(maturity, bob, bob, int256(int128(assetsOut)), -int256(expectedFYTokenIn));
+        emit Trade(maturity, bob, bob, int256(int128(sharesOut)), -int256(expectedFYTokenIn));
         vm.prank(bob);
-        pool.buyBase(bob, uint128(assetsOut), type(uint128).max);
+        pool.buyBase(bob, uint128(sharesOut), type(uint128).max);
 
         (, uint104 fyTokenBal, , ) = pool.getCache();
         uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
         uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
 
-        require(shares.balanceOf(bob) == userSharesBefore);
-        require(asset.balanceOf(bob) == userAssetBefore + assetsOut);
+        require(shares.balanceOf(bob) == userSharesBefore + sharesOut);
 
         almostEqual(fyTokenIn, expectedFYTokenIn, sharesOut / 1000000);
 
@@ -315,24 +300,20 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-
     // Removed
-    // function testUnit_YearnVault_tradeDAI05() public {
+    // function testUnit_NonTv_tradeDAI05() public {
 
-    function testUnit_YearnVault_tradeDAI06() public {
-        console.log("buys base and retrieves change");
+    function testUnit_NonTv_tradeDAI06() public {
+        console.log("buys shares and retrieves change");
         uint256 userSharesBefore = shares.balanceOf(bob);
-        uint256 userAssetBefore = asset.balanceOf(bob);
         uint256 userFYTokenBefore = fyToken.balanceOf(alice);
         uint128 sharesOut = uint128(WAD);
-        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
 
         fyToken.mint(address(pool), initialFYTokens);
 
         vm.startPrank(alice);
-        pool.buyBase(bob, assetsOut, uint128(MAX));
-        require(shares.balanceOf(bob) == userSharesBefore);
-        require(asset.balanceOf(bob) == userAssetBefore + assetsOut);
+        pool.buyBase(bob, sharesOut, uint128(MAX));
+        require(shares.balanceOf(bob) == userSharesBefore + sharesOut);
 
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
@@ -344,24 +325,21 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
     }
 }
 
-contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
+contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
 
-    function testUnit_YearnVault_tradeDAI07() public {
-        console.log("sells base for a certain amount of FYTokens");
+    function testUnit_NonTv_tradeDAI07() public {
+        console.log("sells shares for a certain amount of FYTokens");
         uint256 aliceBeginningSharesBal = shares.balanceOf(alice);
         uint128 sharesIn = uint128(WAD);
-        uint128 assetsIn = pool.unwrapPreview(uint256(sharesIn)).u128();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
-
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = ONE;
 
         // Transfer shares for sale to the pool
-        asset.mint(address(pool), assetsIn);
+        shares.mint(address(pool), sharesIn);
 
         uint256 expectedFYTokenOut = YieldMath.fyTokenOutForSharesIn(
             sharesReserves,
@@ -371,31 +349,34 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             k,
             g1,
             c_,
-            mu
+            c_
         );
 
         vm.expectEmit(true, true, false, true);
-        emit Trade(maturity, alice, bob, -int128(assetsIn), int256(expectedFYTokenOut));
+        emit Trade(maturity, alice, bob, -int128(sharesIn), int256(expectedFYTokenOut));
 
         vm.prank(alice);
         pool.sellBase(bob, 0);
 
         uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
+        require(
+            aliceBeginningSharesBal == shares.balanceOf(alice),
+            "'From' wallet should have not increase shares tokens"
+        );
         require(fyTokenOut == expectedFYTokenOut);
         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
         require(sharesBal == pool.getSharesBalance());
         require(fyTokenBal == pool.getFYTokenBalance());
     }
 
-    function testUnit_YearnVault_tradeDAI08() public {
-        console.log("does not sell base beyond slippage");
+    function testUnit_NonTv_tradeDAI08() public {
+        console.log("does not sell shares beyond slippage");
         uint128 sharesIn = uint128(WAD);
-        uint128 baseIn = pool.unwrapPreview(sharesIn).u128();
-        asset.mint(address(pool), baseIn);
+        shares.mint(address(pool), sharesIn);
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100213484622196799,
+                1000209141672476586,
                 340282366920938463463374607431768211455
             )
         );
@@ -403,14 +384,13 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         pool.sellBase(bob, uint128(MAX));
     }
 
-    function testUnit_YearnVault_tradeDAI09() public {
-        console.log("donates fyToken and sells base");
+    function testUnit_NonTv_tradeDAI09() public {
+        console.log("donates fyToken and sells shares");
         uint128 sharesIn = uint128(WAD);
-        uint128 assetsIn = pool.unwrapPreview(sharesIn).u128();
         uint128 fyTokenDonation = uint128(WAD);
 
         fyToken.mint(address(pool), fyTokenDonation);
-        asset.mint(address(pool), assetsIn);
+        shares.mint(address(pool), sharesIn);
 
         vm.prank(alice);
         pool.sellBase(bob, 0);
@@ -421,19 +401,18 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
     }
 
-    function testUnit_YearnVault_tradeDAI10() public {
-        console.log("buys a certain amount of fyTokens with base");
+    function testUnit_NonTv_tradeDAI10() public {
+        console.log("buys a certain amount of fyTokens with shares");
         (uint104 sharesCachedBefore, , , ) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(WAD);
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        int128 c_ = int128(ONE);
 
-        uint128 assetsIn = pool.unwrapPreview(initialShares).u128();
         // Transfer shares for sale to the pool
-        asset.mint(address(pool), assetsIn);
+        shares.mint(address(pool), initialShares);
 
         uint256 expectedSharesIn = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -443,12 +422,11 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             k,
             g1,
             c_,
-            mu
+            c_
         );
-        uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn);
 
         vm.expectEmit(true, true, false, true);
-        emit Trade(maturity, alice, bob, -int128(int256(expectedAssetsIn)), int256(int128(fyTokenOut)));
+        emit Trade(maturity, alice, bob, -int128(int256(expectedSharesIn)), int256(int128(fyTokenOut)));
 
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
@@ -465,20 +443,19 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-
     // Removed
-    // function testUnit_YearnVault_tradeDAI11() public {
+    // function testUnit_NonTv_tradeDAI11() public {
 
-    function testUnit_YearnVault_tradeDAI12() public {
-        console.log("donates base and buys fyToken");
+    function testUnit_NonTv_tradeDAI12() public {
+        console.log("donates shares and buys fyToken");
         uint256 sharesBalances = pool.getSharesBalance();
         uint256 fyTokenBalances = pool.getFYTokenBalance();
         (uint104 sharesCachedBefore, , , ) = pool.getCache();
 
         uint128 fyTokenOut = uint128(WAD);
-        uint128 baseDonation = pool.unwrapPreview(uint128(WAD)).u128();
+        uint128 sharesDonation = uint128(WAD);
 
-        asset.mint(address(pool), pool.unwrapPreview(initialShares).u128() + baseDonation);
+        shares.mint(address(pool), initialShares + sharesDonation);
 
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
@@ -488,13 +465,19 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         require(sharesCachedCurrent == sharesBalances + sharesIn);
         require(fyTokenCachedCurrent == fyTokenBalances - fyTokenOut);
     }
+
+    // marco
+    // function testUnit_NonTv_tradeDAI13
+    // function testUnit_NonTv_tradeDAI14
+    // function testUnit_NonTv_tradeDAI15
+    // function testUnit_NonTv_tradeDAI16
 }
 
-contract TradeDAI__OnceMatureYearnVault is OnceMature {
+contract TradeDAI__OnceMatureNonTv is OnceMature {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
-    function testUnit_YearnVault_tradeDAI13() internal {
+    function testUnit_NonTv_tradeDAI17() internal {
         console.log("doesn't allow sellBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellBasePreview(uint128(WAD));
@@ -502,7 +485,7 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
         pool.sellBase(alice, 0);
     }
 
-    function testUnit_YearnVault_tradeDAI14() internal {
+    function testUnit_NonTv_tradeDAI18() internal {
         console.log("doesn't allow buyBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyBasePreview(uint128(WAD));
@@ -510,7 +493,7 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
         pool.buyBase(alice, uint128(WAD), uint128(MAX));
     }
 
-    function testUnit_YearnVault_tradeDAI15() internal {
+    function testUnit_NonTv_tradeDAI19() internal {
         console.log("doesn't allow sellFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellFYTokenPreview(uint128(WAD));
@@ -518,7 +501,7 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
         pool.sellFYToken(alice, 0);
     }
 
-    function testUnit_YearnVault_tradeDAI16() internal {
+    function testUnit_NonTv_tradeDAI20() internal {
         console.log("doesn't allow buyFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyFYTokenPreview(uint128(WAD));
@@ -527,25 +510,23 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
     }
 }
 
-
-contract Admin__WithLiquidityYearnVault is WithLiquidityYearnVault {
-
-    function testUnit_admin1_YearnVault() public {
+contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
+    function testUnit_admin1_NonTv() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
 
-    function testUnit_admin2_YearnVault() public {
+    function testUnit_admin2_NonTv() public {
         console.log("retrieveBase returns exceess");
         uint256 additionalAmount = 69;
         IERC20Like base = IERC20Like(address(pool.baseToken()));
@@ -554,32 +535,34 @@ contract Admin__WithLiquidityYearnVault is WithLiquidityYearnVault {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
+
+        // "sharesToken" and "baseToken" both point to the same token
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
-        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
     }
 
-    function testUnit_admin3_YearnVault() public {
+    function testUnit_admin3_NonTv() public {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
-    function testUnit_admin4_YearnVault() public {
+    function testUnit_admin4_NonTv() public {
         console.log("retrieveShares returns exceess");
 
         uint256 additionalAmount = 69e18;
@@ -587,35 +570,36 @@ contract Admin__WithLiquidityYearnVault is WithLiquidityYearnVault {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
+
+        // "sharesToken" and "baseToken" both point to the same token
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
-        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
     }
 
-    function testUnit_admin5_YearnVault() public {
+    function testUnit_admin5_NonTv() public {
         console.log("retrieveFYToken returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
-
     }
 
-    function testUnit_admin6_YearnVault() public {
+    function testUnit_admin6_NonTv() public {
         console.log("retrieveFYToken returns exceess");
         uint256 additionalAmount = 69e18;
         fyToken.mint(address(pool), additionalAmount);
@@ -623,11 +607,11 @@ contract Admin__WithLiquidityYearnVault is WithLiquidityYearnVault {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
@@ -635,4 +619,3 @@ contract Admin__WithLiquidityYearnVault is WithLiquidityYearnVault {
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
     }
 }
-

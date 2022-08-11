@@ -24,18 +24,18 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../Pool/PoolErrors.sol";
-import {Exp64x64} from "../Exp64x64.sol";
-import {Math64x64} from "../Math64x64.sol";
-import {YieldMath} from "../YieldMath.sol";
+import "../../../Pool/PoolErrors.sol";
+import {Exp64x64} from "../../../Exp64x64.sol";
+import {Math64x64} from "../../../Math64x64.sol";
+import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
-import "./shared/Utils.sol";
-import "./shared/Constants.sol";
-import {ETokenMock} from "./mocks/ETokenMock.sol";
-import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
-import {SyncablePoolEuler} from "./mocks/SyncablePoolEuler.sol";
-import {IERC20Like} from  "../interfaces/IERC20Like.sol";
+import "../../shared/Utils.sol";
+import "../../shared/Constants.sol";
+import {ETokenMock} from "../../mocks/ETokenMock.sol";
+import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
+import {SyncablePoolEuler} from "../../mocks/SyncablePoolEuler.sol";
+import {IERC20Like} from "../../../interfaces/IERC20Like.sol";
 
 abstract contract ZeroStateEulerUSDC is ZeroState {
     using CastU256U128 for uint256;
@@ -66,7 +66,7 @@ abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
         // There is a fractional amount of excess eUSDC shares in the pool.
         // as a result of the decimals mismatch between eUSDC (18) and actual USDC (6).
         // The amount is less than 2/10 of a wei of USDC: 0.000000181818181819 USDC
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
         uint256 fractionalExcess = pool.sharesToken().balanceOf(address(pool)) - startingSharesCached * 1e12;
         assertEq(fractionalExcess, 181818181819);
         pool.retrieveShares(address(0x0)); // clear that fractional excess out for cleaner tests below
@@ -539,16 +539,15 @@ contract TradeUSDC__OnceMatureEuler is OnceMature {
 }
 
 contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
-
     function testUnit_admin1_EulerUSDC() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
@@ -564,11 +563,11 @@ contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
@@ -579,20 +578,20 @@ contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
     function testUnit_admin4_EulerUSDC() public {
         console.log("retrieveShares returns exceess");
 
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
         uint256 additionalAmount = 69e18;
         shares.mint(address(pool), additionalAmount);
 
@@ -601,7 +600,7 @@ contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
 
         pool.retrieveShares(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
@@ -613,16 +612,15 @@ contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
-
     }
 
     function testUnit_admin6_EulerUSDC() public {
@@ -633,11 +631,11 @@ contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
@@ -668,16 +666,15 @@ abstract contract WithLiquidityEulerDAI is ZeroStateEulerDAI {
 }
 
 contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
-
     function testUnit_admin1_EulerDAI() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
@@ -693,11 +690,11 @@ contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
@@ -708,21 +705,21 @@ contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         // There is a 1 wei difference attributable to some deep nested rounding
         assertApproxEqAbs(pool.baseToken().balanceOf(alice), startingBaseBalance, 1);
         // assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
     function testUnit_admin4_EulerDAI() public {
         console.log("retrieveShares returns exceess");
 
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         uint256 additionalAmount = 69e18;
         shares.mint(address(pool), additionalAmount);
@@ -732,7 +729,7 @@ contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
 
         pool.retrieveShares(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
@@ -746,16 +743,15 @@ contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
-
     }
 
     function testUnit_admin6_EulerDAI() public {
@@ -766,11 +762,11 @@ contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached,,) = pool.getCache();
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached,,) = pool.getCache();
+        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
@@ -799,6 +795,5 @@ contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
     //marco
     function testUnit_tradeDAI01_EulerDAI() public {
         //blah
-
     }
 }

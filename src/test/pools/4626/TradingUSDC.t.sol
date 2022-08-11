@@ -16,17 +16,17 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../Pool/PoolErrors.sol";
-import {Exp64x64} from "../Exp64x64.sol";
-import {Math64x64} from "../Math64x64.sol";
-import {YieldMath} from "../YieldMath.sol";
+import "../../../Pool/PoolErrors.sol";
+import {Exp64x64} from "../../../Exp64x64.sol";
+import {Math64x64} from "../../../Math64x64.sol";
+import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
-import {almostEqual, setPrice} from "./shared/Utils.sol";
-import {IERC4626Mock} from "./mocks/ERC4626TokenMock.sol";
-import "./shared/Constants.sol";
+import {almostEqual, setPrice} from "../../shared/Utils.sol";
+import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
+import "../../shared/Constants.sol";
 // import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
-import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
+import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
 
 abstract contract ZeroStateUSDC is ZeroState {
     constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "4626")) {}
@@ -388,7 +388,6 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
-
 
     // Removed
     // function testUnit_tradeUSDC11() public {

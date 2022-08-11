@@ -18,7 +18,7 @@ import {console} from "forge-std/console.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
-import {WithLiquidity} from "./MintBurn.t.sol";
+import {WithLiquidity} from "./pools/4626/MintBurn.t.sol";
 import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
 
 import "../Pool/PoolErrors.sol";
