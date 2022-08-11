@@ -114,7 +114,6 @@ abstract contract ZeroState is TestCore {
             asset.mint(address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 
-
         // Create fyToken (e.g. "fyDAI").
         fyToken = new FYTokenMock(fyName, fySymbol, address(asset), maturity);
 

@@ -9,7 +9,6 @@ function mulMu(uint256 amount, int128 mu_) pure returns (uint256 product) {
     product = (amount * Math64x64.toUInt(Math64x64.mul(mu_, Math64x64.fromUInt(uint256(1e18))))) / 1e18;
 }
 
-
 function almostEqual(
     uint256 x,
     uint256 y,
@@ -30,5 +29,4 @@ function setPrice(address token, uint256 price) {
     // setPrice() appears on ERC4626TokenMock and other mocks
     // so this fn can be used to set price on either
     IERC4626Mock(token).setPrice(price);
-
 }
