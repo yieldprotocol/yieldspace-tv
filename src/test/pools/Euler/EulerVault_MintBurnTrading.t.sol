@@ -494,12 +494,10 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
     // function testUnit_Euler_tradeUSDC12() public {
     //     console.log("donates base and buys fyToken");
 
-    // marco
-    // test the four trading functions against their corresponding preview funcs
     function testUnit_Euler_tradeUSDC13() public {
         console.log("buyBase matches buyBasePreview");
 
-        uint128 expectedAssetOut = uint128(1000 * 10**fyToken.decimals());
+        uint128 expectedAssetOut = uint128(1000 * 10**asset.decimals());
         uint128 fyTokenIn = pool.buyBasePreview(expectedAssetOut);
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -517,48 +515,63 @@ contract TradeUSDC__WithExtraFYTokenEuler is WithExtraFYTokenEuler {
     }
 
     function testUnit_Euler_tradeUSDC14() public {
-        // console.log("buyFYToken matches buyFYTokenPreview");
-        // uint128 fyTokenIn = uint128(10000 * 10**fyToken.decimals());
-        // uint256 expectedAsset = pool.buyFYTokenPreview(fyTokenIn);
-        // uint256 assetBalBefore = asset.balanceOf(alice);
-        // uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
-        // vm.startPrank(alice);
-        // fyToken.transfer(address(pool), fyTokenIn);
-        // pool.sellFYToken(alice, 0);
-        // uint256 assetBalAfter = asset.balanceOf(alice);
-        // uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
-        // assertEq(assetBalAfter - assetBalBefore, expectedAsset);
-        // assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenIn);
+        console.log("buyFYToken matches buyFYTokenPreview");
+
+        uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
+        uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        asset.transfer(address(pool), expectedAssetsIn);
+        pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalBefore - assetBalAfter, expectedAssetsIn);
+        assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenOut);
     }
 
     function testUnit_Euler_tradeUSDC15() public {
-        // console.log("sellBase matches sellBasePreview");
-        // uint128 fyTokenIn = uint128(10000 * 10**fyToken.decimals());
-        // uint256 expectedAsset = pool.sellFYTokenPreview(fyTokenIn);
-        // uint256 assetBalBefore = asset.balanceOf(alice);
-        // uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
-        // vm.startPrank(alice);
-        // fyToken.transfer(address(pool), fyTokenIn);
-        // pool.sellFYToken(alice, 0);
-        // uint256 assetBalAfter = asset.balanceOf(alice);
-        // uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
-        // assertEq(assetBalAfter - assetBalBefore, expectedAsset);
-        // assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenIn);
+        console.log("sellBase matches sellBasePreview");
+
+        uint128 assetsIn = uint128(1000 * 10**asset.decimals());
+        uint256 expectedFyToken = pool.sellBasePreview(assetsIn);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        asset.transfer(address(pool), assetsIn);
+        pool.sellBase(alice, 0);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalBefore - assetBalAfter, assetsIn);
+        assertEq(fyTokenBalAfter - fyTokenBalBefore, expectedFyToken);
     }
 
     function testUnit_Euler_tradeUSDC16() public {
-        // console.log("sellFYToken matches sellFYTokenPreview");
-        // uint128 fyTokenIn = uint128(1_000 * 10**fyToken.decimals());
-        // uint256 expectedAsset = pool.sellFYTokenPreview(fyTokenIn);
-        // uint256 assetBalBefore = asset.balanceOf(alice);
-        // uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
-        // vm.startPrank(alice);
-        // fyToken.transfer(address(pool), fyTokenIn);
-        // pool.sellFYToken(alice, 0);
-        // uint256 assetBalAfter = asset.balanceOf(alice);
-        // uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
-        // assertEq(assetBalAfter - assetBalBefore, expectedAsset);
-        // assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenIn);
+        console.log("sellFYToken matches sellFYTokenPreview");
+
+        uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
+        uint128 expectedAsset = pool.sellFYTokenPreview(fyTokenIn);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.sellFYToken(alice, 0);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalAfter - assetBalBefore, expectedAsset);
+        assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 }
 
