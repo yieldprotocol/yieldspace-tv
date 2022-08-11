@@ -79,7 +79,6 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         );
 
         // Send some fyToken to pool and calculate expectedSharesOut
-        fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
             sharesReserves,
             virtFYTokenBal,
@@ -96,6 +95,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         emit Trade(maturity, alice, bob, int256(expectedBaseOut), -int256(fyTokenIn));
 
         // Alice calls sellFYToken.
+        fyToken.mint(address(pool), fyTokenIn);
         vm.prank(alice);
         pool.sellFYToken(bob, 0);
 
@@ -476,5 +476,24 @@ contract TradeDAI__OnceMature is OnceMature {
         pool.buyFYTokenPreview(uint128(WAD));
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyFYToken(alice, uint128(WAD), uint128(MAX));
+    }
+}
+
+contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYToken {
+    function testUnit_tradeDAI17() public {
+        console.log("sellFYTokenPreview matches sellFYToken");
+        uint256 fyTokenIn = 25_000 * 1e18;
+
+        uint256 expectedBaseOut = pool.sellFYTokenPreview(uint128(fyTokenIn));
+
+        uint256 aliceStartingBal = asset.balanceOf(alice);
+        // Alice calls sellFYToken.
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.sellFYToken(alice, 0);
+
+        uint256 aliceEndingBal = asset.balanceOf(alice);
+        assertEq(aliceEndingBal - aliceStartingBal, expectedBaseOut);
+
     }
 }
