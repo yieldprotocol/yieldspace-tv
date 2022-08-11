@@ -16,18 +16,18 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../Pool/PoolErrors.sol";
-import {Exp64x64} from "../Exp64x64.sol";
-import {Math64x64} from "../Math64x64.sol";
-import {YieldMath} from "../YieldMath.sol";
+import "../../../Pool/PoolErrors.sol";
+import {Exp64x64} from "../../../Exp64x64.sol";
+import {Math64x64} from "../../../Math64x64.sol";
+import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
-import {almostEqual, setPrice} from "./shared/Utils.sol";
-import {IERC4626Mock} from "./mocks/ERC4626TokenMock.sol";
-import "./shared/Constants.sol";
+import {almostEqual, setPrice} from "../../shared/Utils.sol";
+import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
+import "../../shared/Constants.sol";
 import {WithLiquidity} from "./MintBurn.t.sol";
-import {FYTokenMock} from "./mocks/FYTokenMock.sol";
-import {YVTokenMock} from "./mocks/YVTokenMock.sol";
+import {FYTokenMock} from "../../mocks/FYTokenMock.sol";
+import {YVTokenMock} from "../../mocks/YVTokenMock.sol";
 
 abstract contract WithExtraFYToken is WithLiquidity {
     using Exp64x64 for uint128;
@@ -386,6 +386,5 @@ contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYToken {
 
         uint256 aliceEndingBal = asset.balanceOf(alice);
         assertEq(aliceEndingBal - aliceStartingBal, expectedBaseOut);
-
     }
 }
