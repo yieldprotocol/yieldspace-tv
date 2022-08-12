@@ -1124,10 +1124,6 @@ contract YieldMathTest is Test {
      ***************************************************************/
 
     function test_maxFYTokenOut() public {
-        // uint128 _maxFYTokenOut = 1676866556835377479719384 - 1500000000000000000000000;
-        // uint128 _maxFYTokenOut = 176631.361972e18;
-        // uint128 _maxFYTokenOut = 146749.822871e18;
-        // uint128 _maxFYTokenOut = 209668.563e18;
         uint128 _maxFYTokenOut = YieldMath.maxFYTokenOut(
             sharesReserves,
             fyTokenReserves,
@@ -1138,7 +1134,8 @@ contract YieldMathTest is Test {
             mu
         );
 
-        assertApproxEqAbs(_maxFYTokenOut, 176631.361972e18, 1e12);
+        //https://www.desmos.com/calculator/msohzeucu5
+        assertApproxEqAbs(_maxFYTokenOut, 176616.991034e18, 1e12);
 
         uint256 sharesIn = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -1151,24 +1148,54 @@ contract YieldMathTest is Test {
             mu
         );
 
-        uint newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
-        require((fyTokenReserves - _maxFYTokenOut) < newSharesMulMu, "??");
+        // TODO review this assertions, maybe use the pools for this?
+        uint256 newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
+        assertGt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
 
-        console.log(newSharesMulMu);
-        console.log(fyTokenReserves - _maxFYTokenOut);
+        // _maxFYTokenOut -= 10e18;
 
-        assertApproxEqAbs(newSharesMulMu, fyTokenReserves - _maxFYTokenOut, 0);
-
-        // vm.expectRevert("YieldMath: Rate overflow (yxa)");
-        // YieldMath.sharesInForFYTokenOut(
+        // sharesIn = YieldMath.sharesInForFYTokenOut(
         //     sharesReserves,
         //     fyTokenReserves,
-        //     _maxFYTokenOut + 1e12,
+        //     _maxFYTokenOut,
         //     timeTillMaturity,
         //     k,
         //     g1,
         //     c,
         //     mu
         // );
+
+        // newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
+
+        // assertLt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
     }
+
+    /* 5. function maxBaseIn
+     ***************************************************************/
+
+    // function test_maxBaseIn() public {
+    //     uint128 _maxBaseIn = YieldMath.maxBaseIn(
+    //         sharesReserves,
+    //         fyTokenReserves,
+    //         timeTillMaturity,
+    //         k,
+    //         g1,
+    //         c,
+    //         mu
+    //     );
+
+    //     //https://www.desmos.com/calculator/q0vu2axmji
+    //     assertApproxEqAbs(_maxBaseIn, 	160364.770445e18, 0);
+
+    //     uint256 fyTokenOut = YieldMath.sharesInForFYTokenOut(
+    //         sharesReserves,
+    //         fyTokenReserves,
+    //         _maxBaseIn,
+    //         timeTillMaturity,
+    //         k,
+    //         g1,
+    //         c,
+    //         mu
+    //     );
+    // }
 }

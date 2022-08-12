@@ -12,6 +12,15 @@ pragma solidity >=0.8.15; /*
 import "./Math64x64.sol";
 
 library Exp64x64 {
+    using Math64x64 for int128;
+
+    /// @dev Raises a 64.64 number to the power of another 64.64 number    
+    /// x^y = 2^(y*log_2(x))
+    /// https://ethereum.stackexchange.com/questions/79903/exponential-function-with-fractional-numbers
+    function pow(int128 x, int128 y) internal pure returns (int128) {
+        return y.mul(x.log_2()).exp_2();
+    }
+
     /// @dev Raise given number x into power specified as a simple fraction y/z and then
     /// multiply the result by the normalization factor 2^(128 /// (1 - y/z)).
     /// Revert if z is zero, or if both x and y are zeros.
