@@ -1135,7 +1135,7 @@ contract YieldMathTest is Test {
         );
 
         //https://www.desmos.com/calculator/msohzeucu5
-        assertApproxEqAbs(_maxFYTokenOut, 176616.991034e18, 1e12);
+        assertApproxEqAbs(_maxFYTokenOut, 176616.991033e18, 1e12);
 
         uint256 sharesIn = YieldMath.sharesInForFYTokenOut(
             sharesReserves,
@@ -1149,8 +1149,19 @@ contract YieldMathTest is Test {
         );
 
         // TODO review this assertions, maybe use the pools for this?
-        uint256 newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
-        assertGt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
+        // uint256 sharesIn = YieldMath.sharesInForFYTokenOut(
+        //     sharesReserves,
+        //     fyTokenReserves,
+        //     _maxFYTokenOut,
+        //     timeTillMaturity,
+        //     k,
+        //     g1,
+        //     c,
+        //     mu
+        // );
+
+        // uint256 newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
+        // assertGt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
 
         // _maxFYTokenOut -= 10e18;
 
@@ -1170,32 +1181,25 @@ contract YieldMathTest is Test {
         // assertLt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
     }
 
-    /* 5. function maxBaseIn
+    /* 5. function maxSharesIn
      ***************************************************************/
 
-    // function test_maxBaseIn() public {
-    //     uint128 _maxBaseIn = YieldMath.maxBaseIn(
-    //         sharesReserves,
-    //         fyTokenReserves,
-    //         timeTillMaturity,
-    //         k,
-    //         g1,
-    //         c,
-    //         mu
-    //     );
+    function test_maxSharesIn() public {
+        uint128 _maxSharesIn = YieldMath.maxSharesIn(sharesReserves, fyTokenReserves, timeTillMaturity, k, g1, c, mu);
 
-    //     //https://www.desmos.com/calculator/q0vu2axmji
-    //     assertApproxEqAbs(_maxBaseIn, 	160364.770445e18, 0);
+        //https://www.desmos.com/calculator/q0vu2axmji
+        assertApproxEqAbs(_maxSharesIn, 160364.770445e18, 1e12);
 
-    //     uint256 fyTokenOut = YieldMath.sharesInForFYTokenOut(
-    //         sharesReserves,
-    //         fyTokenReserves,
-    //         _maxBaseIn,
-    //         timeTillMaturity,
-    //         k,
-    //         g1,
-    //         c,
-    //         mu
-    //     );
-    // }
+        // TODO review this assertions, maybe use the pools for this?
+        // uint256 fyTokenOut = YieldMath.sharesInForFYTokenOut(
+        //     sharesReserves,
+        //     fyTokenReserves,
+        //     _maxSharesIn,
+        //     timeTillMaturity,
+        //     k,
+        //     g1,
+        //     c,
+        //     mu
+        // );
+    }
 }

@@ -532,7 +532,7 @@ library YieldMath {
     /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
     /// @param c price of shares in terms of their base, multiplied by 2^64
     /// @param mu (μ) Normalization factor -- starts as c at initialization
-    /// @return fyTokenOut the max amount of fyToken a user could get
+    /// @return maxFYTokenOut_ the max amount of fyToken a user could get
     function maxFYTokenOut(
         uint128 sharesReserves, // z
         uint128 fyTokenReserves, // x
@@ -541,7 +541,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128) {
+    ) public pure returns (uint128 maxFYTokenOut_) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -553,8 +553,8 @@ library YieldMath {
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
                 
-                        ( (       sum                 ) / (  denominator  ) )^invA
-                        ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
+                    Y - ( (       sum                 ) / (  denominator  ) )^invA
+                    Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
                 y = Y - ( ( ( cμ^a * Z^a ) + ( μY^a ) ) / (    c + μ      ) )^(1/a)
 
                 */
@@ -591,7 +591,83 @@ library YieldMath {
 
             // return uint128(fyTokenOut);
 
-            return fyTokenReserves - (uint128(res.mulu(1e18)) - 1e12);
+            // maxFYTokenOut_ = fyTokenReserves - (uint128(res.mulu(1e18)) - 1e12);
+            maxFYTokenOut_ = fyTokenReserves - uint128(res.mulu(1e18));
+        }
+    }
+
+    /// Calculates the max amount of base a user could sell.
+    /// https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+    /// @param sharesReserves yield bearing vault shares reserve amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
+    /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
+    /// @param c price of shares in terms of their base, multiplied by 2^64
+    /// @param mu (μ) Normalization factor -- starts as c at initialization
+    /// @return maxSharesIn_ Calculates the max amount of base a user could sell.
+    function maxSharesIn(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 maxSharesIn_) {
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+
+            int128 a = int128(_computeA(timeTillMaturity, k, g));
+
+            /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+
+                y = maxSharesIn_
+                Y = fyTokenReserves (virtual)
+                Z = sharesReserves
+                
+                    Y - ( (       sum                 ) / (  denominator  ) )^invA
+                    Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
+                y = 1/μ ( ( ( cμ^a * Z^a ) + ( μY^a ) ) / (    c + μ      ) )^(1/a) - Z
+
+            */
+
+            // cmu = cμ^a
+            int128 cmu = c.mul(mu.pow(a));
+
+            // za = cmu * (sharesReserves ** a)
+            int128 za = cmu.mul(sharesReserves.divu(1e18).pow(a));
+            // int128 require(
+            //     (za = cmu.mul(int128(sharesReserves.pow(a, ONE)))) <= MAX,
+            //     "YieldMath: Rate overflow (za)"
+            // );
+
+            // ya = fyTokenReserves ** a
+            // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+            // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+            int128 ya = mu.mul(fyTokenReserves.divu(1e18).pow(a));
+
+            int128 sum = za + ya;
+
+            int128 denominator = c.add(mu);
+
+            // require(sum <= (za + ya), "YieldMath: Sum underflow");
+
+            int128 invMu = int128(ONE).div(mu);
+
+            int128 res = invMu.mul(sum.div(denominator).pow(int128(ONE).div(a)));
+
+            // result = fyTokenReserves - (sum ** (1/a))
+            // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+            // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+            // uint256 fyTokenOut;
+            // require((fyTokenOut = fyTokenReserves.divu(1e18).sub(res) - res) <= MAX, "YieldMath: Rounding error");
+
+            // require(fyTokenOut <= fyTokenReserves, "YieldMath: > fyToken reserves");
+
+            // return uint128(fyTokenOut);
+
+            maxSharesIn_ = uint128(res.mulu(1e18)) - sharesReserves;
         }
     }
 
