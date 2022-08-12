@@ -486,13 +486,93 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         require(sharesCachedCurrent == sharesBalances + sharesIn);
         require(fyTokenCachedCurrent == fyTokenBalances - fyTokenOut);
     }
+
+    function testUnit_YearnVault_tradeDAI13() public {
+        console.log("buyBase matches buyBasePreview");
+
+        uint128 expectedAssetOut = uint128(1000 * 10**asset.decimals());
+        uint128 fyTokenIn = pool.buyBasePreview(expectedAssetOut);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.buyBase(alice, expectedAssetOut, type(uint128).max);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAssetOut, 1);
+        assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
+    }
+
+    function testUnit_YearnVault_tradeDAI14() public {
+        console.log("buyFYToken matches buyFYTokenPreview");
+
+        uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
+        uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        asset.transfer(address(pool), expectedAssetsIn);
+        pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalBefore - assetBalAfter, expectedAssetsIn);
+        assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenOut);
+    }
+
+    function testUnit_YearnVault_tradeDAI15() public {
+        console.log("sellBase matches sellBasePreview");
+
+        uint128 assetsIn = uint128(1000 * 10**asset.decimals());
+        uint256 expectedFyToken = pool.sellBasePreview(assetsIn);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        asset.transfer(address(pool), assetsIn);
+        pool.sellBase(alice, 0);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalBefore - assetBalAfter, assetsIn);
+        assertEq(fyTokenBalAfter - fyTokenBalBefore, expectedFyToken);
+    }
+
+    function testUnit_YearnVault_tradeDAI16() public {
+        console.log("sellFYToken matches sellFYTokenPreview");
+
+        uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
+        uint128 expectedAsset = pool.sellFYTokenPreview(fyTokenIn);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.sellFYToken(alice, 0);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalAfter - assetBalBefore, expectedAsset);
+        assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
+    }
 }
 
 contract TradeDAI__OnceMatureYearnVault is OnceMature {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
-    function testUnit_YearnVault_tradeDAI13() internal {
+    function testUnit_YearnVault_tradeDAI17() internal {
         console.log("doesn't allow sellBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellBasePreview(uint128(WAD));
@@ -500,7 +580,7 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
         pool.sellBase(alice, 0);
     }
 
-    function testUnit_YearnVault_tradeDAI14() internal {
+    function testUnit_YearnVault_tradeDAI18() internal {
         console.log("doesn't allow buyBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyBasePreview(uint128(WAD));
@@ -508,7 +588,7 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
         pool.buyBase(alice, uint128(WAD), uint128(MAX));
     }
 
-    function testUnit_YearnVault_tradeDAI15() internal {
+    function testUnit_YearnVault_tradeDAI19() internal {
         console.log("doesn't allow sellFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellFYTokenPreview(uint128(WAD));
@@ -516,7 +596,7 @@ contract TradeDAI__OnceMatureYearnVault is OnceMature {
         pool.sellFYToken(alice, 0);
     }
 
-    function testUnit_YearnVault_tradeDAI16() internal {
+    function testUnit_YearnVault_tradeDAI20() internal {
         console.log("doesn't allow buyFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyFYTokenPreview(uint128(WAD));
