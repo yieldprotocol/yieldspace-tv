@@ -818,7 +818,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Checks
         if (sharesBalance - cache.sharesCached < sharesIn)
-            revert NotEnoughBaseIn(_wrapPreview(sharesBalance - cache.sharesCached), baseIn);
+            revert NotEnoughBaseIn(_unwrapPreview(sharesBalance - cache.sharesCached), baseIn);
 
         // Update TWAR
         _update(
