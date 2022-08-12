@@ -391,6 +391,8 @@ contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYToken {
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
+    // getting one wei difference between expected fyToken out
+    // causing revert within trade func
     function testUnit_tradeDAI18() public {
         console.log("buyFYToken matches buyFYTokenPreview");
 
