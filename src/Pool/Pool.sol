@@ -942,7 +942,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /// Returns how much fyToken would be obtained by selling `baseIn`.
-    /// @dev Note: This internal fn takes baseIn while the external fn takes sharesIn.
+    /// @dev Note: This external fn takes baseIn while the external fn takes sharesIn.
     /// @param baseIn Amount of base hypothetically sold.
     /// @return fyTokenOut Amount of fyToken hypothetically bought.
     function sellBasePreview(uint128 baseIn) external view virtual override returns (uint128 fyTokenOut) {
@@ -1044,23 +1044,26 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
+    /// @dev Note: This external fn returns baseOut while the external fn takes sharesOut.
     /// @param fyTokenIn Amount of fyToken hypothetically sold.
-    /// @return Amount of base hypothetically bought.
-    function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128) {
+    /// @return baseOut Amount of base hypothetically bought.
+    function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128 baseOut) {
         Cache memory cache = _getCache();
-        return _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        uint128 sharesOut = _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        baseOut = _unwrapPreview(sharesOut).u128();
     }
 
-    /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
+    /// Returns how much shares would be obtained by selling `fyTokenIn` fyToken.
+    /// @dev Note: This internal fn returns sharesOut while the external fn takes baseOut.
     function _sellFYTokenPreview(
         uint128 fyTokenIn,
         uint104 sharesBalance,
         uint104 fyTokenBalance,
         int128 g2_
-    ) internal view beforeMaturity returns (uint128) {
+    ) internal view beforeMaturity returns (uint128 sharesOut) {
         uint96 scaleFactor_ = scaleFactor;
 
-        return
+        sharesOut=
             YieldMath.sharesOutForFYTokenIn(
                 sharesBalance * scaleFactor_,
                 fyTokenBalance * scaleFactor_,

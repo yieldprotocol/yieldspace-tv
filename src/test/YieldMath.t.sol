@@ -1106,21 +1106,9 @@ contract YieldMathTest is Test {
         );
 
         assertApproxEqAbs(sharesOut, sharesReserves, 1e12);
-
-        vm.expectRevert("YieldMath: Rate overflow (yxa)");
-        YieldMath.sharesOutForFYTokenIn(
-            sharesReserves,
-            fyTokenReserves,
-            _maxFYTokenIn + 1e12,
-            timeTillMaturity,
-            k,
-            g2,
-            c,
-            mu
-        );
     }
 
-    /* 5. function maxFYTokenOut
+    /* 6. function maxFYTokenOut
      ***************************************************************/
 
     function test_maxFYTokenOut() public {
@@ -1136,52 +1124,9 @@ contract YieldMathTest is Test {
 
         //https://www.desmos.com/calculator/msohzeucu5
         assertApproxEqAbs(_maxFYTokenOut, 176616.991033e18, 1e12);
-
-        uint256 sharesIn = YieldMath.sharesInForFYTokenOut(
-            sharesReserves,
-            fyTokenReserves,
-            _maxFYTokenOut,
-            timeTillMaturity,
-            k,
-            g1,
-            c,
-            mu
-        );
-
-        // TODO review this assertions, maybe use the pools for this?
-        // uint256 sharesIn = YieldMath.sharesInForFYTokenOut(
-        //     sharesReserves,
-        //     fyTokenReserves,
-        //     _maxFYTokenOut,
-        //     timeTillMaturity,
-        //     k,
-        //     g1,
-        //     c,
-        //     mu
-        // );
-
-        // uint256 newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
-        // assertGt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
-
-        // _maxFYTokenOut -= 10e18;
-
-        // sharesIn = YieldMath.sharesInForFYTokenOut(
-        //     sharesReserves,
-        //     fyTokenReserves,
-        //     _maxFYTokenOut,
-        //     timeTillMaturity,
-        //     k,
-        //     g1,
-        //     c,
-        //     mu
-        // );
-
-        // newSharesMulMu = mu.mulu(sharesReserves + sharesIn);
-
-        // assertLt(newSharesMulMu, fyTokenReserves - _maxFYTokenOut);
     }
 
-    /* 5. function maxSharesIn
+    /* 7. function maxSharesIn
      ***************************************************************/
 
     function test_maxSharesIn() public {
@@ -1189,17 +1134,5 @@ contract YieldMathTest is Test {
 
         //https://www.desmos.com/calculator/q0vu2axmji
         assertApproxEqAbs(_maxSharesIn, 160364.770445e18, 1e12);
-
-        // TODO review this assertions, maybe use the pools for this?
-        // uint256 fyTokenOut = YieldMath.sharesInForFYTokenOut(
-        //     sharesReserves,
-        //     fyTokenReserves,
-        //     _maxSharesIn,
-        //     timeTillMaturity,
-        //     k,
-        //     g1,
-        //     c,
-        //     mu
-        // );
     }
 }
