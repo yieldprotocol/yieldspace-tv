@@ -1088,7 +1088,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.fyTokenCached * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
-                _computeG2(cache.g1Fee), // TODO is this the right fee?
+                _computeG2(cache.g1Fee),
                 _getC(),
                 mu
             ) / scaleFactor_;
@@ -1103,7 +1103,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.fyTokenCached * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
-                _computeG1(cache.g1Fee), // TODO is this the right fee?
+                _computeG1(cache.g1Fee),
                 _getC(),
                 mu
             ) / scaleFactor_;
@@ -1117,12 +1117,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached * scaleFactor_,
             maturity - uint32(block.timestamp), // This can't be called after maturity
             ts,
-            _computeG1(cache.g1Fee), // TODO is this the right fee?
+            _computeG1(cache.g1Fee),
             _getC(),
             mu
         ) / scaleFactor_;
 
-        // TODO I'm not so sure about this conversion here
         baseIn = _unwrapPreview(sharesIn).u128();
     }
 
