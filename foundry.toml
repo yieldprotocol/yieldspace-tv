@@ -20,7 +20,10 @@ fuzz_runs = 20000
 fuzz_runs = 100000
 
 [profile.dev]
-ignored_error_codes = [5667, 5574] # code size warning
+ignored_error_codes = [
+    5667, # unused args warning
+    5574  # code size warning
+] 
 optimizer = false
 
 # See more config options https://github.com/gakonst/foundry/tree/master/config
