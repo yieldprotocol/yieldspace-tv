@@ -70,12 +70,17 @@ contract Admin__WithLiquidity is WithLiquidity {
 
     function testUnit_admin2() public {
         console.log("setFees cannot be set without auth");
-
+        (, , , uint fee) = pool.getCache();
+        assertEq(fee, 9500);
         vm.expectRevert(bytes("Access denied"));
-        pool.setFees(600);
+        pool.setFees(9600);
+        (, , , fee) = pool.getCache();
+        assertEq(fee, 9500);
 
         vm.prank(bob);
-        pool.setFees(600);
+        pool.setFees(9600);
+        (, , , fee) = pool.getCache();
+        assertEq(fee, 9600);
     }
 
     function testUnit_admin3() public {
@@ -180,4 +185,5 @@ contract Admin__WithLiquidity is WithLiquidity {
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
     }
+
 }
