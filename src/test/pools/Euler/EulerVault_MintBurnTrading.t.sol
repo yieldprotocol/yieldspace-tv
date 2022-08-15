@@ -858,15 +858,294 @@ abstract contract WithExtraFYTokenEulerDAI is WithLiquidityEulerDAI {
 
     function setUp() public virtual override {
         super.setUp();
-        uint256 additionalFYToken = 30 * 1e18;
+        uint256 additionalFYToken = 30 * 10**fyToken.decimals();
         fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
         pool.sellFYToken(address(alice), 0);
     }
 }
 
-contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
+contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
+    using Math64x64 for int128;
+    using Math64x64 for uint256;
+    using CastU256U128 for uint256;
+
+    function test_forky() external {
+        address EDAI = 0xe025E3ca2bE02316033184551D4d3Aa22024D9DC;
+        uint256 shares = 24616823692986978617466;
+        console.log("eDai.convertBalanceToUnderlying(", "1e18", ")");
+        uint256 rate = Forky(EDAI).convertBalanceToUnderlying(1e18);
+        console.log(rate);
+        console.log("convertBalanceToUnderlying(", shares, ")");
+        uint256 base = Forky(EDAI).convertBalanceToUnderlying(shares);
+        console.log(base);
+        console.log("convertUnderlyingToBalance(", base, ")");
+        uint256 newShares = Forky(EDAI).convertUnderlyingToBalance(base);
+        console.log(newShares);
+    }
+
     function testUnit_Euler_tradeDAI01() public {
+        console.log("sells a certain amount of fyToken for base");
+
+        (uint104 sharesReserveBefore, uint104 fyTokenReserveBefore, , ) = pool.getCache();
+
+        uint256 fyTokenIn = 25_000 * 10**fyToken.decimals();
+        uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
+        uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+            uint256(1e18).fromUInt()
+        );
+
+        uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
+            sharesReserves * pool.scaleFactor(),
+            virtFYTokenBal * pool.scaleFactor(),
+            uint128(fyTokenIn) * pool.scaleFactor(),
+            maturity - uint32(block.timestamp),
+            k,
+            g2,
+            c_,
+            mu
+        ) / pool.scaleFactor();
+        uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
+
+        uint256 userAssetBalanceBefore = asset.balanceOf(alice);
+        vm.expectEmit(true, true, false, true);
+        emit Trade(maturity, alice, alice, int256(expectedBaseOut), -int256(fyTokenIn));
+
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        console.log("sellFYToken niceeeeeeeeee");
+        pool.sellFYToken(alice, 0);
+
+        uint256 userAssetBalanceAfter = asset.balanceOf(alice);
+        assertEq(userAssetBalanceAfter - userAssetBalanceBefore, expectedBaseOut);
+
+        (uint104 sharesReserveAfter, uint104 fyTokenReserveAfter, , ) = pool.getCache();
+        assertEq(sharesReserveAfter, pool.getSharesBalance());
+        assertEq(fyTokenReserveAfter, pool.getFYTokenBalance());
+
+        assertEq(fyTokenReserveAfter - fyTokenReserveBefore, fyTokenIn);
+        assertEq(sharesReserveBefore - sharesReserveAfter, expectedSharesOut);
+    }
+
+    function testUnit_Euler_tradeDAI02() public {
+        console.log("does not sell fyToken beyond slippage");
+        uint256 fyTokenIn = 1 * 10**fyToken.decimals();
+        fyToken.mint(address(pool), fyTokenIn);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SlippageDuringSellFYToken.selector,
+                999785051469477285,
+                340282366920938463463374607431768211455
+            )
+        );
+        pool.sellFYToken(bob, type(uint128).max);
+    }
+
+    // This test intentionally removed. Donating no longer affects reserve balances because extra shares are unwrapped
+    // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
+    // function testUnit_Euler_tradeDAI03() public {
+    //     console.log("donating shares does not affect cache balances when selling fyToken");
+
+    function testUnit_Euler_tradeDAI04() public {
+        console.log("buys a certain amount base for fyToken");
+        (, uint104 fyTokenBalBefore, , ) = pool.getCache();
+
+        uint256 userSharesBefore = shares.balanceOf(bob);
+        uint256 userAssetBefore = asset.balanceOf(bob);
+        uint128 sharesOut = uint128(1000 * 10**shares.decimals());
+        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
+
+        uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
+        uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+            uint256(1e18).fromUInt()
+        );
+
+        fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
+
+        uint256 expectedFYTokenIn = YieldMath.fyTokenInForSharesOut(
+            sharesReserves * pool.scaleFactor(),
+            virtFYTokenBal * pool.scaleFactor(),
+            sharesOut * pool.scaleFactor(),
+            maturity - uint32(block.timestamp),
+            k,
+            g2,
+            c_,
+            mu
+        ) / pool.scaleFactor();
+
+        vm.expectEmit(true, true, false, true);
+        emit Trade(maturity, bob, bob, int256(int128(assetsOut)), -int256(expectedFYTokenIn));
+        vm.prank(bob);
+        pool.buyBase(bob, uint128(assetsOut), type(uint128).max);
+
+        (, uint104 fyTokenBal, , ) = pool.getCache();
+        uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
+        uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
+
+        assertEq(shares.balanceOf(bob), userSharesBefore);
+        assertApproxEqAbs(asset.balanceOf(bob), userAssetBefore + assetsOut, 1);
+
+        assertEq(fyTokenIn, expectedFYTokenIn);
+
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
+
+        assertApproxEqAbs(sharesBalAfter, pool.getSharesBalance(), 1);
+        assertApproxEqAbs(fyTokenBalAfter + fyTokenChange, pool.getFYTokenBalance(), 1);
+    }
+
+    // Removed
+    // function testUnit_Euler_tradeDAI05() public {
+
+    function testUnit_Euler_tradeDAI06() public {
+        console.log("buys base and retrieves change");
+        uint256 userSharesBefore = shares.balanceOf(bob);
+        uint256 userAssetBefore = asset.balanceOf(bob);
+        uint256 userFYTokenBefore = fyToken.balanceOf(alice);
+        uint128 sharesOut = uint128(1000e6);
+        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
+
+        fyToken.mint(address(pool), initialFYTokens);
+
+        vm.startPrank(alice);
+        pool.buyBase(bob, assetsOut, uint128(MAX));
+        require(shares.balanceOf(bob) == userSharesBefore);
+        require(asset.balanceOf(bob) == userAssetBefore + assetsOut);
+
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
+        require(sharesBal == pool.getSharesBalance());
+        require(fyTokenBal != pool.getFYTokenBalance());
+
+        pool.retrieveFYToken(alice);
+
+        require(fyToken.balanceOf(alice) > userFYTokenBefore);
+    }
+}
+
+contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
+    using Math64x64 for int128;
+    using Math64x64 for uint256;
+    using CastU256U128 for uint256;
+
+    function testUnit_Euler_tradeDAI07() public {
+        console.log("sells base for a certain amount of FYTokens");
+        uint256 aliceBeginningSharesBal = shares.balanceOf(alice);
+        uint128 sharesIn = uint128(1000e18);
+        uint128 assetsIn = pool.unwrapPreview(uint256(sharesIn)).u128();
+        uint256 userFYTokenBefore = fyToken.balanceOf(bob);
+
+        uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
+        uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+            uint256(1e18).fromUInt()
+        );
+
+        // Transfer base for sale to the pool
+        asset.mint(address(pool), assetsIn);
+
+        uint256 expectedFYTokenOut = YieldMath.fyTokenOutForSharesIn(
+            sharesReserves * pool.scaleFactor(),
+            virtFYTokenBal * pool.scaleFactor(),
+            sharesIn * pool.scaleFactor(),
+            maturity - uint32(block.timestamp),
+            k,
+            g1,
+            c_,
+            mu
+        ) / pool.scaleFactor();
+
+        vm.expectEmit(true, true, false, true);
+        emit Trade(maturity, alice, bob, -int128(assetsIn), int256(expectedFYTokenOut));
+        vm.prank(alice);
+        pool.sellBase(bob, 0);
+
+        uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
+        require(fyTokenOut == expectedFYTokenOut);
+        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
+        require(sharesBal == pool.getSharesBalance());
+        require(fyTokenBal == pool.getFYTokenBalance());
+    }
+
+    function testUnit_Euler_tradeDAI08() public {
+        console.log("does not sell base beyond slippage");
+        uint128 sharesIn = uint128(1000e6);
+        uint128 baseIn = pool.unwrapPreview(sharesIn).u128();
+        asset.mint(address(pool), baseIn);
+        vm.expectRevert(
+            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100212520, 340282366920938463463374607431768211455)
+        );
+        vm.prank(alice);
+        pool.sellBase(bob, uint128(MAX));
+    }
+
+    function testUnit_Euler_tradeDAI09() public {
+        console.log("donates fyToken and sells base");
+        uint128 sharesIn = uint128(10000e6);
+        uint128 assetsIn = pool.unwrapPreview(sharesIn).u128();
+        uint128 fyTokenDonation = uint128(5000e6);
+
+        fyToken.mint(address(pool), fyTokenDonation);
+        asset.mint(address(pool), assetsIn);
+
+        vm.prank(alice);
+        pool.sellBase(bob, 0);
+
+        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
+
+        require(sharesBalAfter == pool.getSharesBalance());
+        require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
+    }
+
+    function testUnit_Euler_tradeDAI10() public {
+        console.log("buys a certain amount of fyTokens with base");
+        (uint104 sharesCachedBefore, , , ) = pool.getCache();
+        uint256 userFYTokenBefore = fyToken.balanceOf(bob);
+        uint128 fyTokenOut = uint128(1000e6);
+
+        uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
+        uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
+        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+            uint256(1e18).fromUInt()
+        );
+
+        uint128 assetsIn = pool.unwrapPreview(initialShares).u128();
+        // Transfer shares for sale to the pool
+        asset.mint(address(pool), assetsIn);
+
+        uint256 expectedSharesIn = YieldMath.sharesInForFYTokenOut(
+            sharesReserves * pool.scaleFactor(),
+            virtFYTokenBal * pool.scaleFactor(),
+            fyTokenOut * pool.scaleFactor(),
+            maturity - uint32(block.timestamp),
+            k,
+            g1,
+            c_,
+            mu
+        ) / pool.scaleFactor();
+
+        uint256 expectedBaseIn = pool.unwrapPreview(expectedSharesIn);
+        vm.expectEmit(true, true, false, true);
+        emit Trade(maturity, alice, bob, -int128(uint128(expectedBaseIn)), int256(int128(fyTokenOut)));
+
+        vm.prank(alice);
+        pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
+
+        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
+
+        uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
+        uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
+
+        require(fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut, "'User2' wallet should have 1 fyToken token");
+
+        almostEqual(sharesIn, expectedSharesIn, sharesIn / 1000000);
+        require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
+        require(fyTokenCachedCurrent == pool.getFYTokenBalance());
+    }
+}
+
+contract TradeDAI__PreviewFuncs is WithExtraFYTokenEulerDAI {
+    function testUnit_Euler_tradeDAI11() public {
         console.log("buyBase matches buyBasePreview");
 
         uint128 expectedAssetOut = uint128(1000 * 10**asset.decimals());
@@ -886,7 +1165,7 @@ contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
-    function testUnit_Euler_tradeDAI02() public {
+    function testUnit_Euler_tradeDAI12() public {
         console.log("buyFYToken matches buyFYTokenPreview");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
@@ -906,7 +1185,7 @@ contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
         assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenOut);
     }
 
-    function testUnit_Euler_tradeDAI03() public {
+    function testUnit_Euler_tradeDAI13() public {
         console.log("sellBase matches sellBasePreview");
 
         uint128 assetsIn = uint128(1000 * 10**asset.decimals());
@@ -926,7 +1205,7 @@ contract TradeDAI__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
         assertEq(fyTokenBalAfter - fyTokenBalBefore, expectedFyToken);
     }
 
-    function testUnit_Euler_tradeDAI04() public {
+    function testUnit_Euler_tradeDAI14() public {
         console.log("sellFYToken matches sellFYTokenPreview");
 
         uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
