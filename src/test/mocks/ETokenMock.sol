@@ -4,6 +4,7 @@ import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
 import {EulerMock} from "./EulerMock.sol";
 import "forge-std/console.sol";
+
 abstract contract Mintable is ERC20 {
     /// @dev Give tokens to whoever asks for them.
     function mint(address to, uint256 amount) public virtual {
@@ -34,14 +35,21 @@ contract ETokenMock is Mintable {
     /// @param balance eToken balance, in internal book-keeping units (18 decimals)
     /// @return Amount in underlying units, (same decimals as underlying token)
     function convertBalanceToUnderlying(uint256 balance) public view returns (uint256) {
-        return price * balance / 1e18 / scaleFactor;
+        uint256 something = (price * balance) / 1e18;
+        console.log("~ file: ETokenMock.sol ~ line 39 ~ convertBalanceToUnderlying ~ price", price);
+        console.log("~ file: ETokenMock.sol ~ line 39 ~ convertBalanceToUnderlying ~ something und", something);
+        console.log("~ file: ETokenMock.sol ~ line 39 ~ convertBalanceToUnderlying ~ balance", balance);
+        return something;
     }
 
     /// @notice Convert an underlying amount to an eToken balance, taking into account current exchange rate
     /// @param underlyingAmount Amount in underlying units (same decimals as underlying token)
     /// @return eToken balance, in internal book-keeping units (18 decimals)
     function convertUnderlyingToBalance(uint256 underlyingAmount) public view returns (uint256) {
-        return (underlyingAmount * 1e18 * scaleFactor / price);
+        uint256 something = ((underlyingAmount * 1e18) / price);
+        console.log("~ file: ETokenMock.sol ~ line 49 ~ convertUnderlyingToBalance ~ price", price);
+        console.log("~ file: ETokenMock.sol ~ line 48 ~ convertUnderlyingToBalance ~ something und to bal ", something);
+        return something;
     }
 
     /// @notice Transfer underlying tokens from sender to the Euler pool, and increase account's eTokens.
@@ -67,6 +75,7 @@ contract ETokenMock is Mintable {
     /// @param amount In underlying units (use max uint256 for full pool balance)
     function withdraw(uint256, uint256 amount) external {
         uint256 burned = convertUnderlyingToBalance(amount);
+        console.log("~ file: ETokenMock.sol ~ line 70 ~ withdraw ~ burned ", burned);
         _burn(msg.sender, burned);
         _underlyingAsset.transfer(msg.sender, amount);
     }

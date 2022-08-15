@@ -391,19 +391,23 @@ contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYToken {
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
-    // getting one wei difference between expected fyToken out
-    // causing revert within trade func
+    // getting one wei underestimate between preview function output and the trading func input,
+    // which is causing a revert within the trade func
+    // find potential rounding discrepancies within trading func
     function testUnit_tradeDAI18() public {
         console.log("buyFYToken matches buyFYTokenPreview");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
-        uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut);
+        uint128 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut);
+        uint256 wrapped = pool.wrapPreview(expectedAssetsIn);
+        console.log("~ file: TradingDAI.t.sol ~ line 403 ~ testUnit_tradeDAI18 ~ wrapped ", wrapped);
 
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
 
         vm.startPrank(alice);
         asset.transfer(address(pool), expectedAssetsIn);
+
         pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
 
         uint256 assetBalAfter = asset.balanceOf(alice);

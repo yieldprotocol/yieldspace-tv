@@ -74,13 +74,13 @@ contract PoolEuler is Pool {
 
     /// Internal function for wrapping base asset tokens.
     /// @param receiver The address the wrapped tokens should be sent.
-    /// @return shares The amount of wrapped tokens that are sent to the receiver.
-    function _wrap(address receiver) internal virtual override returns (uint256 shares) {
+    /// @return sharesReceived The amount of wrapped tokens that are sent to the receiver.
+    function _wrap(address receiver) internal virtual override returns (uint256 sharesReceived) {
         uint256 baseOut = baseToken.balanceOf(address(this));
         if (baseOut == 0) return 0;
 
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
-        uint256 sharesReceived = _getSharesBalance() - sharesCached;  // this includes any shares in pool previously
+        sharesReceived = _getSharesBalance() - sharesCached; // this includes any shares in pool previously
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, sharesReceived);
         }
@@ -98,11 +98,19 @@ contract PoolEuler is Pool {
     /// @return assets The amount of assets sent to the receiver in native decimals.
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
+        console.log(
+            "~ file: PoolEuler.sol ~ line 101 ~ _unwrap ~ _getSharesBalance() before unwrap",
+            _getSharesBalance()
+        );
+        console.log("~ file: PoolEuler.sol ~ line 101 ~ _unwrap ~ surplus ", surplus);
         if (surplus == 0) return 0;
         // convert to base
         assets = _unwrapPreview(surplus);
         IEToken(address(sharesToken)).withdraw(0, assets); // first param is subaccount, 0 for primary
-
+        console.log(
+            "~ file: PoolEuler.sol ~ line 107 ~ _unwrap ~ _getSharesBalance() after unwrap",
+            _getSharesBalance()
+        );
         if (receiver != address(this)) {
             baseToken.safeTransfer(receiver, baseToken.balanceOf(address(this)));
         }
@@ -128,7 +136,7 @@ contract PoolEuler is Pool {
     function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
         // sharesCached is stored by Yield with the same decimals as the underlying base, but actually the Euler
         // eTokens are always fp18.  So we scale up the sharesCached and subtract from real eToken balance.
-        retrieved =(sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
+        retrieved = (sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
         sharesToken.safeTransfer(to, retrieved);
         // Now the current balances match the cache, so no need to update the TWAR
     }

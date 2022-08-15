@@ -60,8 +60,8 @@ abstract contract TestCore is Test {
     int128 public g1; // g to use when selling shares to pool
     int128 public g2; // g to use when selling fyTokens to pool
 
-    uint256 public constant cNumerator = 11;
-    uint256 public constant cDenominator = 10;
+    uint256 public constant cNumerator = 1015314159861887025;
+    uint256 public constant cDenominator = 1e18;
 
     uint256 public constant muNumerator = 105;
     uint256 public constant muDenominator = 100;

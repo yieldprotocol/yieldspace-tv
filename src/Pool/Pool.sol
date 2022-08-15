@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
+import "forge-std/console.sol";
 import "./PoolImports.sol"; /*
 
    __     ___      _     _
@@ -287,9 +288,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
-    function init(
-        address to
-    )
+    function init(address to)
         external
         virtual
         auth
@@ -544,11 +543,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         address to,
         uint256 minRatio,
         uint256 maxRatio
-    )
-        external virtual override
-        beforeMaturity
-        returns (uint256 lpTokensBurned, uint256 baseOut)
-    {
+    ) external virtual override beforeMaturity returns (uint256 lpTokensBurned, uint256 baseOut) {
         (lpTokensBurned, baseOut, ) = _burn(to, address(0), true, minRatio, maxRatio);
     }
 
@@ -635,7 +630,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if ((cache.fyTokenCached - fyTokenOut - lpTokensBurned) < supply - lpTokensBurned) {
             revert FYTokenCachedBadState();
         }
-
 
         emit Liquidity(
             maturity,
@@ -760,6 +754,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             ) /
             scaleFactor_;
     }
+
     /*buyFYToken
 
                          I want to buy `uint128 fyTokenOut` worth of fyTokens.
@@ -802,11 +797,23 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint128 fyTokenOut,
         uint128 max
     ) external virtual override returns (uint128 baseIn) {
+        uint128 beginningSharesBalance = _getSharesBalance();
+        console.log(
+            "~ file: Pool.sol ~ line 802 ~ )externalvirtualoverridereturns ~ beginToCacheDiff",
+            beginningSharesBalance - sharesCached
+        );
         // Wrap any base assets found in contract.
-        _wrap(address(this));
+        uint256 wrapReturn = _wrap(address(this));
+        console.log("niceeeee**********");
+        console.log("~ file: Pool.sol ~ line 804 ~ )externalvirtualoverridereturns ~ wrapReturn", wrapReturn);
 
         // Calculate trade
         uint128 sharesBalance = _getSharesBalance();
+        uint256 diff = sharesBalance - beginningSharesBalance;
+        console.log("~ file: Pool.sol ~ line 809 ~ )externalvirtualoverridereturns ~ diff", diff);
+        uint256 diff2 = sharesBalance - sharesCached;
+        console.log("~ file: Pool.sol ~ line 811 ~ )externalvirtualoverridereturns ~ diff2 ", diff2);
+
         Cache memory cache = _getCache();
         uint128 sharesIn = _buyFYTokenPreview(
             fyTokenOut,
@@ -1036,12 +1043,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached,
             _computeG2(cache.g1Fee)
         );
-
-        // Update TWAR
-        _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
+        console.log("~ file: Pool.sol ~ line 1029 ~ sellFYToken ~ sharesOut", sharesOut);
 
         // Transfer
         baseOut = _unwrap(to).u128();
+
+        // Update TWAR
+        _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
+        console.log("~ file: Pool.sol ~ line 1038 ~ sellFYToken ~ sharesCached", sharesCached);
 
         // Check slippage
         if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
@@ -1054,7 +1063,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return Amount of base hypothetically bought.
     function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128) {
         Cache memory cache = _getCache();
-        uint128 shares = _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        uint128 shares = _sellFYTokenPreview(
+            fyTokenIn,
+            cache.sharesCached,
+            cache.fyTokenCached,
+            _computeG2(cache.g1Fee)
+        );
         return _unwrapPreview(shares).u128();
     }
 
@@ -1225,6 +1239,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint104 sharesCached_,
         uint104 fyTokenCached_
     ) internal {
+        console.log("********nicest******", _getSharesBalance() - sharesBalance);
         // No need to update and spend gas on SSTORE if reserves haven't changed.
         if (sharesBalance == sharesCached_ && fyBalance == fyTokenCached_) return;
 
