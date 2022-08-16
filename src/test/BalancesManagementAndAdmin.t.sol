@@ -44,6 +44,17 @@ abstract contract WithLiquidity is ZeroState {
 }
 
 contract Admin__WithLiquidity is WithLiquidity {
+
+    function invariant0() public {}
+
+    // function invariant1() public {
+    //     require(2 > 1);
+    // }
+
+    // function invariant2() public {
+    //     require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
+    // }
+
     function testUnit_admin1() public {
         console.log("balance management getters return correct values");
         require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
