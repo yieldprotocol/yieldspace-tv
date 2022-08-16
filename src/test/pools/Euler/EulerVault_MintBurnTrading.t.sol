@@ -873,9 +873,11 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
     function testUnit_Euler_tradeDAI01() public {
         console.log("sells a certain amount of fyToken for base");
 
-        (uint104 sharesReserveBefore, uint104 fyTokenReserveBefore, , ) = pool.getCache();
-
         uint256 fyTokenIn = 25_000 * 10**fyToken.decimals();
+        uint256 assetBalanceBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalanceBefore = fyToken.balanceOf(alice);
+
+        (uint104 sharesReserveBefore, uint104 fyTokenReserveBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
         int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
@@ -894,24 +896,24 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
         ) / pool.scaleFactor();
         uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
 
-        uint256 userAssetBalanceBefore = asset.balanceOf(alice);
         vm.expectEmit(true, true, false, true);
         emit Trade(maturity, alice, alice, int256(expectedBaseOut), -int256(fyTokenIn));
 
+        // trade
         vm.startPrank(alice);
         fyToken.transfer(address(pool), fyTokenIn);
-        console.log("sellFYToken niceeeeeeeeee");
         pool.sellFYToken(alice, 0);
 
-        uint256 userAssetBalanceAfter = asset.balanceOf(alice);
-        assertEq(userAssetBalanceAfter - userAssetBalanceBefore, expectedBaseOut);
+        // check user balances
+        assertEq(asset.balanceOf(alice) - assetBalanceBefore, expectedBaseOut);
+        assertEq(fyTokenBalanceBefore - fyToken.balanceOf(alice), fyTokenIn);
 
+        // check pool reserves
         (uint104 sharesReserveAfter, uint104 fyTokenReserveAfter, , ) = pool.getCache();
-        assertEq(sharesReserveAfter, pool.getSharesBalance());
+        assertApproxEqAbs(sharesReserveAfter, pool.getSharesBalance(), 1);
+        assertApproxEqAbs(sharesReserveBefore - sharesReserveAfter, expectedSharesOut, 1);
         assertEq(fyTokenReserveAfter, pool.getFYTokenBalance());
-
         assertEq(fyTokenReserveAfter - fyTokenReserveBefore, fyTokenIn);
-        assertEq(sharesReserveBefore - sharesReserveAfter, expectedSharesOut);
     }
 
     function testUnit_Euler_tradeDAI02() public {
