@@ -577,23 +577,20 @@ library YieldMath {
                 
                     Y - ( (       numerator           ) / (  denominator  ) )^invA
                     Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
-                y = Y - ( ( ( cμ^a * Z^a ) + ( μY^a ) ) / (    c + μ      ) )^(1/a)
+                y = Y - ( (   c/μ * (μZ)^a +    y^a   ) / (    c/μ + 1    ) )^(1/a)
             */
 
-            // cmu = c * μ^a
-            int128 cmu = c.mul(mu.pow(a));
+            // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
+            int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
 
-            // za = cmu * ((sharesReserves * 1e18) ** a)
-            int128 za = cmu.mul(sharesReserves.divu(WAD).pow(a));
-
-            // ya = μ * ((fyTokenReserves * 1e18) ** a)
-            int128 ya = mu.mul(fyTokenReserves.divu(WAD).pow(a));
+            // ya = (fyTokenReserves / 1e18) ** a
+            int128 ya = fyTokenReserves.divu(WAD).pow(a);
 
             // numerator = za + ya
             int128 numerator = za.add(ya);
 
-            // denominator = c + μ
-            int128 denominator = c.add(mu);
+            // denominator = c/u + 1
+            int128 denominator = c.div(mu).add(int128(ONE));
 
             // rightTerm = (numerator / denominator) ** (1/a)
             int128 rightTerm = numerator.div(denominator).pow(int128(ONE).div(a));
@@ -635,8 +632,8 @@ library YieldMath {
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
                 
-                    Y - ( (       numerator           ) / (  denominator  ) )^invA  - Z
-                    Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  - Z
+                    1/μ ( (       numerator           ) / (  denominator  ) )^invA  - Z
+                    1/μ ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  - Z
                 y = 1/μ ( ( c/μ * (μZ)^a   +    Y^a   ) / (     c/u + 1   ) )^(1/a) - Z
             */
 
