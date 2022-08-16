@@ -1026,22 +1026,21 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
     using CastU256U128 for uint256;
 
     function testUnit_Euler_tradeDAI07() public {
-        console.log("sells base for a certain amount of FYTokens");
-        uint256 aliceBeginningSharesBal = shares.balanceOf(alice);
-        uint128 sharesIn = uint128(1000e18);
-        uint128 assetsIn = pool.unwrapPreview(uint256(sharesIn)).u128();
-        uint256 userFYTokenBefore = fyToken.balanceOf(bob);
+        console.log("sells base (asset) for a certain amount of FYTokens");
 
+        uint128 assetsIn = uint128(1000 * 10**asset.decimals());
+        uint128 sharesIn = pool.wrapPreview(assetsIn).u128();
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
         int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
         );
 
-        // Transfer base for sale to the pool
-        asset.mint(address(pool), assetsIn);
-
-        uint256 expectedFYTokenOut = YieldMath.fyTokenOutForSharesIn(
+        uint256 expectedFyTokenOut = YieldMath.fyTokenOutForSharesIn(
             sharesReserves * pool.scaleFactor(),
             virtFYTokenBal * pool.scaleFactor(),
             sharesIn * pool.scaleFactor(),
@@ -1053,15 +1052,23 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
         ) / pool.scaleFactor();
 
         vm.expectEmit(true, true, false, true);
-        emit Trade(maturity, alice, bob, -int128(assetsIn), int256(expectedFYTokenOut));
-        vm.prank(alice);
-        pool.sellBase(bob, 0);
+        emit Trade(maturity, alice, alice, -int128(assetsIn), int256(expectedFyTokenOut));
 
-        uint256 fyTokenOut = fyToken.balanceOf(bob) - userFYTokenBefore;
-        require(fyTokenOut == expectedFYTokenOut);
-        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-        require(sharesBal == pool.getSharesBalance());
-        require(fyTokenBal == pool.getFYTokenBalance());
+        // trade
+        vm.startPrank(alice);
+        asset.transfer(address(pool), assetsIn);
+        pool.sellBase(alice, 0);
+
+        // check user balances
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), assetsIn, 1);
+        assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
     }
 
     function testUnit_Euler_tradeDAI08() public {
