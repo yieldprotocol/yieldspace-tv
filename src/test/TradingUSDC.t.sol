@@ -389,6 +389,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
+
     // Removed
     // function testUnit_tradeUSDC11() public {
 
