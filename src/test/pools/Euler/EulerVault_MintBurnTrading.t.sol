@@ -986,26 +986,37 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
 
     function testUnit_Euler_tradeDAI06() public {
         console.log("buys base and retrieves change");
-        uint256 userSharesBefore = shares.balanceOf(bob);
-        uint256 userAssetBefore = asset.balanceOf(bob);
-        uint256 userFYTokenBefore = fyToken.balanceOf(alice);
-        uint128 sharesOut = uint128(1000e6);
-        uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
 
-        fyToken.mint(address(pool), initialFYTokens);
+        uint128 assetsOut = uint128(1000 * 10**asset.decimals());
+        uint256 sharesOut = pool.wrapPreview(assetsOut);
+        uint128 expectedFyTokenIn = pool.buyBasePreview(assetsOut);
+        uint128 surplusFyTokenIn = expectedFyTokenIn * 2;
 
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+
+        // trade
         vm.startPrank(alice);
-        pool.buyBase(bob, assetsOut, uint128(MAX));
-        require(shares.balanceOf(bob) == userSharesBefore);
-        require(asset.balanceOf(bob) == userAssetBefore + assetsOut);
+        fyToken.transfer(address(pool), surplusFyTokenIn); // transfer more than is required from the trade into the pool
+        pool.buyBase(alice, assetsOut, uint128(MAX));
 
-        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-        require(sharesBal == pool.getSharesBalance());
-        require(fyTokenBal != pool.getFYTokenBalance());
+        // check user balances before retrieving
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1);
+        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), surplusFyTokenIn);
 
         pool.retrieveFYToken(alice);
 
-        require(fyToken.balanceOf(alice) > userFYTokenBefore);
+        // check user balances after retrieving
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1);
+        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFyTokenIn);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertEq(sharesReservesBefore - sharesReservesAfter, sharesOut);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFyTokenIn);
     }
 }
 
