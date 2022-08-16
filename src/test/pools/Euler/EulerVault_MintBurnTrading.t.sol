@@ -1073,11 +1073,15 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
 
     function testUnit_Euler_tradeDAI08() public {
         console.log("does not sell base beyond slippage");
-        uint128 sharesIn = uint128(1000e6);
+        uint128 sharesIn = uint128(1000 * 10**shares.decimals());
         uint128 baseIn = pool.unwrapPreview(sharesIn).u128();
         asset.mint(address(pool), baseIn);
         vm.expectRevert(
-            abi.encodeWithSelector(SlippageDuringSellBase.selector, 1100212520, 340282366920938463463374607431768211455)
+            abi.encodeWithSelector(
+                SlippageDuringSellBase.selector,
+                1100212520384791756398,
+                340282366920938463463374607431768211455
+            )
         );
         vm.prank(alice);
         pool.sellBase(bob, uint128(MAX));
