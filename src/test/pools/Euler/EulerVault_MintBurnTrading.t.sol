@@ -937,20 +937,18 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
 
     function testUnit_Euler_tradeDAI04() public {
         console.log("buys a certain amount base for fyToken");
-        (, uint104 fyTokenBalBefore, , ) = pool.getCache();
 
-        uint256 userSharesBefore = shares.balanceOf(bob);
-        uint256 userAssetBefore = asset.balanceOf(bob);
         uint128 sharesOut = uint128(1000 * 10**shares.decimals());
         uint128 assetsOut = pool.unwrapPreview(sharesOut).u128();
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
 
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
         int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
         );
-
-        fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
         uint256 expectedFYTokenIn = YieldMath.fyTokenInForSharesOut(
             sharesReserves * pool.scaleFactor(),
@@ -964,23 +962,23 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
         ) / pool.scaleFactor();
 
         vm.expectEmit(true, true, false, true);
-        emit Trade(maturity, bob, bob, int256(int128(assetsOut)), -int256(expectedFYTokenIn));
-        vm.prank(bob);
-        pool.buyBase(bob, uint128(assetsOut), type(uint128).max);
+        emit Trade(maturity, alice, alice, int256(int128(assetsOut)), -int256(expectedFYTokenIn));
 
-        (, uint104 fyTokenBal, , ) = pool.getCache();
-        uint256 fyTokenIn = fyTokenBal - fyTokenBalBefore;
-        uint256 fyTokenChange = pool.getFYTokenBalance() - fyTokenBal;
+        // trade
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), expectedFYTokenIn);
+        pool.buyBase(alice, uint128(assetsOut), type(uint128).max);
 
-        assertEq(shares.balanceOf(bob), userSharesBefore);
-        assertApproxEqAbs(asset.balanceOf(bob), userAssetBefore + assetsOut, 1);
+        // check user balances
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1);
+        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFYTokenIn);
 
-        assertEq(fyTokenIn, expectedFYTokenIn);
-
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
-
-        assertApproxEqAbs(sharesBalAfter, pool.getSharesBalance(), 1);
-        assertApproxEqAbs(fyTokenBalAfter + fyTokenChange, pool.getFYTokenBalance(), 1);
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertEq(sharesReservesBefore - sharesReservesAfter, sharesOut);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn);
     }
 
     // Removed
