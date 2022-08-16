@@ -15,6 +15,8 @@ import {Math64x64} from "./Math64x64.sol";
 import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 import {CastU128I128} from  "@yield-protocol/utils-v2/contracts/cast/CastU128I128.sol";
 
+import "forge-std/Test.sol";
+
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
 library YieldMath {
@@ -633,32 +635,29 @@ library YieldMath {
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
                 
-                    Y - ( (       numerator           ) / (  denominator  ) )^invA
-                    Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
-                y = 1/μ ( ( ( cμ^a * Z^a ) + ( μY^a ) ) / (    c + μ      ) )^(1/a) - Z
+                    Y - ( (       numerator           ) / (  denominator  ) )^invA  - Z
+                    Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  - Z
+                y = 1/μ ( ( c/μ * (μZ)^a   +    Y^a   ) / (     c/u + 1   ) )^(1/a) - Z
             */
 
-            // cmu = c * μ^a
-            int128 cmu = c.mul(mu.pow(a));
+            // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
+            int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
 
-            // za = cmu * ((sharesReserves * 1e18) ** a)
-            int128 za = cmu.mul(sharesReserves.divu(WAD).pow(a));
-
-            // ya = μ * ((fyTokenReserves * 1e18) ** a)
-            int128 ya = mu.mul(fyTokenReserves.divu(WAD).pow(a));
+            // ya = (fyTokenReserves / 1e18) ** a
+            int128 ya = fyTokenReserves.divu(WAD).pow(a);
 
             // numerator = za + ya
             int128 numerator = za.add(ya);
 
-            // denominator = c + μ
-            int128 denominator = c.add(mu);
+            // denominator = c/u + 1
+            int128 denominator = c.div(mu).add(int128(ONE));
 
-            // rightTerm = 1/μ * (numerator / denominator) ** (1/a)
-            int128 rightTerm = int128(ONE).div(mu).mul(numerator.div(denominator).pow(int128(ONE).div(a)));
+            // leftTerm = 1/μ * (numerator / denominator) ** (1/a)
+            int128 leftTerm = int128(ONE).div(mu).mul(numerator.div(denominator).pow(int128(ONE).div(a)));
 
-            // maxSharesIn_ = (rightTerm * 1e18) - sharesReserves
+            // maxSharesIn_ = (leftTerm * 1e18) - sharesReserves
             require(
-                (maxSharesIn_ = uint128(rightTerm.mulu(WAD)) - sharesReserves) <= MAX,
+                (maxSharesIn_ = uint128(leftTerm.mulu(WAD)) - sharesReserves) <= MAX,
                 "YieldMath: Underflow error"
             );
         }
