@@ -1089,20 +1089,38 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
 
     function testUnit_Euler_tradeDAI09() public {
         console.log("donates fyToken and sells base");
-        uint128 sharesIn = uint128(10000e6);
-        uint128 assetsIn = pool.unwrapPreview(sharesIn).u128();
-        uint128 fyTokenDonation = uint128(5000e6);
 
-        fyToken.mint(address(pool), fyTokenDonation);
-        asset.mint(address(pool), assetsIn);
+        uint128 assetsIn = uint128(10000 * 10**asset.decimals());
+        uint128 sharesIn = pool.wrapPreview(assetsIn).u128();
+        uint128 fyTokenDonation = uint128(5000 * 10**fyToken.decimals());
+        uint128 expectedFyTokenOut = pool.sellBasePreview(assetsIn);
+        asset.mint(address(bob), assetsIn);
 
+        // bob's balances
+        uint256 assetBalBefore = asset.balanceOf(bob);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(bob);
+
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+
+        // alice donates fyToken to the pool
         vm.prank(alice);
+        fyToken.transfer(address(pool), fyTokenDonation);
+
+        // bob trades
+        vm.startPrank(bob);
+        asset.transfer(address(pool), assetsIn);
         pool.sellBase(bob, 0);
 
-        (uint104 sharesBalAfter, uint104 fyTokenBalAfter, , ) = pool.getCache();
+        // check bob's balances
+        assertEq(assetBalBefore - asset.balanceOf(bob), assetsIn);
+        assertEq(fyToken.balanceOf(bob) - fyTokenBalBefore, expectedFyTokenOut);
 
-        require(sharesBalAfter == pool.getSharesBalance());
-        require(fyTokenBalAfter == pool.getFYTokenBalance() - fyTokenDonation);
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, sharesIn, 1);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance() - fyTokenDonation); // the reserves should not take into consideration the donated fyToken
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
     }
 
     function testUnit_Euler_tradeDAI10() public {
