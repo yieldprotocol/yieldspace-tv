@@ -50,6 +50,47 @@ abstract contract ZeroStateEulerUSDC is ZeroState {
     }
 }
 
+contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
+    using Math64x64 for uint256;
+
+    function testUnit_Euler_setFees01() public {
+        console.log("does not set invalid fee");
+
+        uint16 g1Fee = 10001;
+
+        vm.prank(bob);
+        vm.expectRevert(abi.encodeWithSelector(InvalidFee.selector, g1Fee));
+        pool.setFees(g1Fee);
+    }
+
+    function testUnit_Euler_setFees02() public {
+        console.log("does not set fee without auth");
+
+        uint16 g1Fee = 9000;
+
+        vm.prank(alice);
+        vm.expectRevert("Access denied");
+        pool.setFees(g1Fee);
+    }
+
+    function testUnit_Euler_setFees03() public {
+        console.log("sets valid fee");
+
+        uint16 g1Fee = 8000;
+        int128 expectedG1 = uint256(g1Fee).divu(10000);
+        int128 expectedG2 = uint256(10000).divu(g1Fee);
+
+        vm.prank(bob);
+        vm.expectEmit(true, true, true, true);
+        emit FeesSet(g1Fee);
+
+        pool.setFees(g1Fee);
+
+        assertEq(pool.g1(), expectedG1);
+        assertEq(pool.g2(), expectedG2);
+    }
+}
+
 abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
     function setUp() public virtual override {
         super.setUp();
