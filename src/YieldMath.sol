@@ -491,15 +491,15 @@ library YieldMath {
         return uint128(a);
     }
 
-    /// Calculate a YieldSpace pool invariant according to the whitepaper
+    /// Calculate a YieldSpace pool hoagies according to the whitepaper
     /// @dev Implemented using base reserves and uint128 to be backwards compatible with yieldspace-v2
     /// @param baseReserves base reserve amount
     /// @param fyTokenReserves fyToken reserves amount
     /// @param totalSupply pool token total amount
     /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
     /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
-    /// @return result the invariant value
-    function invariant(uint128 baseReserves, uint128 fyTokenReserves, uint256 totalSupply, uint128 timeTillMaturity, int128 k)
+    /// @return result the hoagies value
+    function hoagies(uint128 baseReserves, uint128 fyTokenReserves, uint256 totalSupply, uint128 timeTillMaturity, int128 k)
         public pure returns(uint128 result)
     {
         if (totalSupply == 0) return 0;

@@ -390,7 +390,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Wrap all base found in this contract.
         baseIn = baseToken.balanceOf(address(this));
 
-        _wrap(address(this));
+        _wrap(baseIn, address(this));
 
         // Gather data
         uint256 supply = _totalSupply;
@@ -454,7 +454,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _mint(to, lpTokensMinted);
 
         // Return any unused base tokens
-        if (sharesBalance > cache.sharesCached + sharesIn) _unwrap(remainder);
+        if (sharesBalance > cache.sharesCached + sharesIn) _unwrap(baseToken.balanceOf(address(this)), remainder);
 
         // confirm new virtual fyToken balance is not less than new supply
         if ((cache.fyTokenCached + fyTokenIn + lpTokensMinted) < supply + lpTokensMinted) {
@@ -627,7 +627,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // Burn and transfer
         _burn(address(this), lpTokensBurned); // This is calling the actual ERC20 _burn.
-        baseOut = _unwrap(baseTo);
+        baseOut = _unwrap(sharesOut, baseTo);
 
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
 
@@ -719,7 +719,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         );
 
         // Transfer
-        _unwrap(to);
+        _unwrap(sharesOut, to);
 
         emit Trade(maturity, msg.sender, to, baseOut.i128(), -(fyTokenIn.i128()));
     }
@@ -802,11 +802,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint128 fyTokenOut,
         uint128 max
     ) external virtual override returns (uint128 baseIn) {
-        // Wrap any base assets found in contract.
-        _wrap(address(this));
 
         // Calculate trade
-        uint128 sharesBalance = _getSharesBalance();
         Cache memory cache = _getCache();
         uint128 sharesIn = _buyFYTokenPreview(
             fyTokenOut,
@@ -814,7 +811,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached,
             _computeG1(cache.g1Fee)
         );
+
+        // convert base to shares
         baseIn = _unwrapPreview(sharesIn).u128();
+        _wrap(baseIn, address(this));
+
+        uint128 sharesBalance = _getSharesBalance();
 
         // Checks
         if (sharesBalance - cache.sharesCached < sharesIn)
@@ -922,7 +924,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return fyTokenOut Amount of fyToken that will be deposited on `to` wallet.
     function sellBase(address to, uint128 min) external virtual override returns (uint128 fyTokenOut) {
         // Wrap any base assets found in contract.
-        _wrap(address(this));
+        uint256 baseIn = baseToken.balanceOf(address(this));
+        _wrap(baseIn, address(this));
 
         // Calculate trade
         Cache memory cache = _getCache();
@@ -944,7 +947,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             revert FYTokenCachedBadState();
         }
 
-        emit Trade(maturity, msg.sender, to, -(_unwrapPreview(sharesIn).u128().i128()), fyTokenOut.i128());
+        emit Trade(maturity, msg.sender, to, -(baseIn.u128().i128()), fyTokenOut.i128());
     }
 
     /// Returns how much fyToken would be obtained by selling `baseIn`.
@@ -1041,7 +1044,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         _update(cache.sharesCached - sharesOut, fyTokenBalance, cache.sharesCached, cache.fyTokenCached);
 
         // Transfer
-        baseOut = _unwrap(to).u128();
+        baseOut = _unwrap(baseToken.balanceOf(address(this)), to).u128();
 
         // Check slippage
         if (baseOut < min) revert SlippageDuringSellFYToken(baseOut, min);
@@ -1087,15 +1090,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param receiver The address to which the wrapped tokens will be sent.
     /// @return shares The amount of wrapped tokens sent to the receiver.
     function wrap(address receiver) external returns (uint256 shares) {
-        shares = _wrap(receiver);
+        uint256 assets = baseToken.balanceOf(address(this));
+        shares = _wrap(assets, receiver);
     }
 
     /// Internal function for wrapping base tokens whichwraps the entire balance of base found in this contract.
     /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
-    function _wrap(address receiver) internal virtual returns (uint256 shares) {
-        uint256 assets = baseToken.balanceOf(address(this));
+    function _wrap(uint256 assets, address receiver) internal virtual returns (uint256 shares) {
         if (assets == 0) {
             shares = 0;
         } else {
@@ -1127,15 +1130,19 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param receiver The address to which the assets will be sent.
     /// @return assets The amount of asset tokens sent to the receiver.
     function unwrap(address receiver) external returns (uint256 assets) {
-        assets = _unwrap(receiver);
+        uint256 surplus = _getSharesBalance() - sharesCached;
+        assets = _unwrap(surplus, receiver);
     }
 
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// @dev This should be overridden by modules.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return assets The amount of base assets sent to the receiver.
-    function _unwrap(address receiver) internal virtual returns (uint256 assets) {
+    function _unwrap(uint256 amount, address receiver) internal virtual returns (uint256 assets) {
         uint256 surplus = _getSharesBalance() - sharesCached;
+        if (amount > surplus) {
+            revert CannotUnwrapMoreThanSurplus(amount, surplus);
+        }
         if (surplus == 0) {
             assets = 0;
         } else {

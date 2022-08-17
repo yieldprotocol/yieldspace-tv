@@ -95,10 +95,15 @@ contract PoolNonTv is Pool {
     /// Internal function for wrapping base asset tokens.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
-    function _wrap(address receiver) internal virtual override returns (uint256 shares) {
-        shares = _getSharesBalance() - sharesCached;
+    function _wrap(uint256 assets, address receiver) internal virtual override returns (uint256 shares) {
+        uint256 surplus = _getSharesBalance() - sharesCached;
+
+        if (shares > surplus) {
+            revert CannotWrapMoreThanSurplus(assets, surplus);
+        }
+
         if (receiver != address(this)) {
-            sharesToken.safeTransfer(receiver, shares);
+            sharesToken.safeTransfer(receiver, assets);
         }
     }
 
@@ -112,8 +117,12 @@ contract PoolNonTv is Pool {
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return assets The amount of base assets sent to the receiver.
-    function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
-        assets = _getSharesBalance() - sharesCached;
+    function _unwrap(uint256 shares, address receiver) internal virtual override returns (uint256 assets) {
+        uint256 surplus = _getSharesBalance() - sharesCached;
+        if (shares > surplus) {
+            revert CannotUnwrapMoreThanSurplus(shares, surplus);
+        }
+
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, assets);
         }

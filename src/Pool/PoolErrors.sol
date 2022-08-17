@@ -10,6 +10,12 @@ error AfterMaturity();
 /// The approval of the sharesToken failed miserably.
 error ApproveFailed();
 
+/// Cannot unwrap more than the surplus over the reserves. Wrap your head around that one.
+error CannotUnwrapMoreThanSurplus(uint256 amount, uint256 surplus);
+
+/// For Non-TV pools, cannot wrap more than the surplus over the reserves. No exceptions!
+error CannotWrapMoreThanSurplus(uint256 amount, uint256 surplus);
+
 /// The update would cause the FYToken cached to be less than the total supply. This should never happen but may
 /// occur due to unexpected rounding errors.  We cannot allow this to happen as it could have many unexpected and
 /// side effects which may pierce the fabric of the space-time continuum.

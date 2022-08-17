@@ -56,10 +56,9 @@ contract PoolYearnVault is Pool {
     /// Internal function for wrapping base tokens.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
-    function _wrap(address receiver) internal virtual override returns (uint256 shares) {
-        uint256 baseOut = baseToken.balanceOf(address(this));
-        if (baseOut == 0) return 0;
-        shares = IYVToken(address(sharesToken)).deposit(baseOut, receiver);
+    function _wrap(uint256 assets, address receiver) internal virtual override returns (uint256 shares) {
+        if (assets == 0) return 0;
+        shares = IYVToken(address(sharesToken)).deposit(assets, receiver);
     }
 
     /// Internal function to preview how many shares will be received when depositing a given amount of base.
@@ -73,10 +72,14 @@ contract PoolYearnVault is Pool {
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return base_ The amount of base base sent to the receiver.
-    function _unwrap(address receiver) internal virtual override returns (uint256 base_) {
+    function _unwrap(uint256 shares, address receiver) internal virtual override returns (uint256 base_) {
+        if (shares == 0) return 0;
+
         uint256 surplus = _getSharesBalance() - sharesCached;
-        if (surplus == 0) return 0;
-        base_ = IYVToken(address(sharesToken)).withdraw(surplus, receiver);
+        if (shares > surplus) {
+            revert CannotUnwrapMoreThanSurplus(shares, surplus);
+        }
+        base_ = IYVToken(address(sharesToken)).withdraw(shares, receiver);
     }
 
     /// Internal function to preview how many base tokens will be received when unwrapping a given amount of shares.

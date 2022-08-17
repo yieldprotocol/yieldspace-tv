@@ -66,7 +66,7 @@ contract PoolEuler is Pool {
         return IEToken(address(sharesToken)).convertBalanceToUnderlying(1e18);
     }
 
-    /// Returns the shares balance TODO: lots of notes
+    /// Returns the shares balance
     /// The decimals of the shares amount returned is adjusted to match the decimals of the baseToken
     function _getSharesBalance() internal view virtual override returns (uint104) {
         return (sharesToken.balanceOf(address(this)) / scaleFactor).u104();
@@ -75,14 +75,13 @@ contract PoolEuler is Pool {
     /// Internal function for wrapping base asset tokens.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
-    function _wrap(address receiver) internal virtual override returns (uint256 shares) {
-        uint256 baseOut = baseToken.balanceOf(address(this));
-        if (baseOut == 0) return 0;
+    function _wrap(uint256 assets, address receiver) internal virtual override returns (uint256 shares) {
+        if (assets == 0) return 0;
 
-        IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
-        uint256 sharesReceived = _getSharesBalance() - sharesCached;  // this includes any shares in pool previously
+        IEToken(address(sharesToken)).deposit(0, assets); // first param is subaccount, 0 for primary
+        shares = _getSharesBalance() - sharesCached;  // this includes any shares in pool previously
         if (receiver != address(this)) {
-            sharesToken.safeTransfer(receiver, sharesReceived);
+            sharesToken.safeTransfer(receiver, shares);
         }
     }
 
@@ -96,11 +95,16 @@ contract PoolEuler is Pool {
     /// Internal function for unwrapping unaccounted for base in this contract.
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return assets The amount of assets sent to the receiver in native decimals.
-    function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
+    function _unwrap(uint256 shares, address receiver) internal virtual override returns (uint256 assets) {
+        if (shares == 0) return 0;
+
         uint256 surplus = _getSharesBalance() - sharesCached;
-        if (surplus == 0) return 0;
+        if (shares > surplus) {
+            revert CannotUnwrapMoreThanSurplus(shares, surplus);
+        }
+
         // convert to base
-        assets = _unwrapPreview(surplus);
+        assets = _unwrapPreview(shares);
         IEToken(address(sharesToken)).withdraw(0, assets); // first param is subaccount, 0 for primary
 
         if (receiver != address(this)) {
