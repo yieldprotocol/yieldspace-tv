@@ -216,6 +216,40 @@ contract Burn__WithLiquidityNonTv is WithLiquidityNonTv {
     }
 }
 
+contract MatureBurn_WithLiquidityNonTv is WithLiquidityNonTv {
+    function testUnit_NonTv_matureBurn01() public {
+        console.log("burns after maturity");
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 lpTokensIn = poolBalBefore;
+
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
+        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
+        // fyTokenOut = lpTokensIn * realFyTokenReserves / totalSupply
+        uint256 expectedFyTokenOut = (lpTokensIn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
+
+        vm.warp(pool.maturity());
+        vm.startPrank(alice);
+
+        pool.transfer(address(pool), lpTokensIn);
+        pool.burn(alice, alice, 0, uint128(MAX));
+
+        // check user balances
+        assertEq(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut);
+        assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut + lpTokensIn); // after burning, the reserves are updated to exclude the burned lp tokens
+    }
+}
+
 abstract contract WithExtraFYTokenNonTv is WithLiquidityNonTv {
     using Exp64x64 for uint128;
     using Math64x64 for int128;
