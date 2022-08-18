@@ -1340,6 +1340,15 @@ contract MintWithBase__ZeroStateEulerUSDC is ZeroStateEulerUSDC {
 
 contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
     function testUnit_Euler_mintWithBaseUSDC02() public {
+        console.log("does not mintWithBase when mature");
+
+        vm.warp(pool.maturity());
+        vm.expectRevert(AfterMaturity.selector);
+        vm.prank(alice);
+        pool.mintWithBase(alice, alice, 0, 0, uint128(MAX));
+    }
+
+    function testUnit_Euler_mintWithBaseUSDC03() public {
         console.log("mints with only base (asset)");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
