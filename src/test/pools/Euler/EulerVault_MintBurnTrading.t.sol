@@ -1358,8 +1358,7 @@ contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
         // estimate how many shares need to be sold using arbitrary fyTokenToBuy amount and estimate lp tokens minted,
         // to be able to calculate how much asset to send to the pool
         uint128 fyTokenToBuy = uint128(1000 * 10**fyToken.decimals());
-        // TODO fix the line below to not arbitrarily add one
-        uint128 assetsToSell = pool.buyFYTokenPreview(fyTokenToBuy) + 1;
+        uint128 assetsToSell = pool.buyFYTokenPreview(fyTokenToBuy);
         uint256 sharesToSell = pool.wrapPreview(assetsToSell);
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint256 realFyTokenReserves = fyTokenReservesBefore - pool.totalSupply();
@@ -1370,8 +1369,7 @@ contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
             (realFyTokenReserves - fyTokenToBuy);
 
         uint256 sharesIn = sharesToSell + ((sharesReservesBefore + sharesToSell) * lpTokensMinted) / pool.totalSupply();
-        // TODO fix the line below to not arbitrarily add one
-        uint256 assetsIn = pool.unwrapPreview(sharesIn) + 1;
+        uint256 assetsIn = pool.unwrapPreview(sharesIn);
 
         // mintWithBase
         vm.startPrank(alice);
