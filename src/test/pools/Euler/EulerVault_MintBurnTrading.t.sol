@@ -1389,3 +1389,65 @@ contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, lpTokensMinted);
     }
 }
+
+contract BurnForBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
+    using Math64x64 for uint256;
+    using CastU256U128 for uint256;
+
+    function testUnit_Euler_burnForBaseUSDC01() public {
+        console.log("does not burnForBase when mature");
+
+        vm.warp(pool.maturity());
+        vm.expectRevert(AfterMaturity.selector);
+        vm.prank(alice);
+        pool.burnForBase(alice, 0, uint128(MAX));
+    }
+
+    function testUnit_Euler_burnForBaseUSDC02() public {
+        console.log("burns for only base (asset)");
+
+        // using a value that we assume will be below maxSharesOut and maxFYTokenOut, and will allow for trading to base
+        uint256 lpTokensToBurn = 1000 * 10**asset.decimals(); // using the asset decimals, since they match the pool
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+
+        // estimate how many shares and fyToken we will get back from burn
+        uint256 sharesOut = (lpTokensToBurn * sharesReservesBefore) / pool.totalSupply();
+        // fyTokenOut = lpTokensBurned * realFyTokenReserves / totalSupply
+        uint256 fyTokenOut = (lpTokensToBurn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
+
+        // estimate how much shares (and base) we can trade fyToken for, using the new pool state
+        uint256 fyTokenOutToShares = YieldMath.sharesOutForFYTokenIn(
+            (sharesReservesBefore - sharesOut).u128(),
+            (fyTokenReservesBefore - fyTokenOut).u128(),
+            fyTokenOut.u128(),
+            maturity - uint32(block.timestamp),
+            k,
+            g2,
+            pool.getC(),
+            mu
+        );
+        uint256 totalSharesOut = sharesOut + fyTokenOutToShares;
+        uint256 expectedAssetsOut = pool.unwrapPreview(totalSharesOut);
+
+        // burnForBase
+        vm.startPrank(alice);
+        pool.transfer(address(pool), lpTokensToBurn);
+        pool.burnForBase(alice, 0, uint128(MAX));
+
+        // check user balances
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut, 1);
+        assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
+        assertEq(poolBalBefore - pool.balanceOf(alice), lpTokensToBurn);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, totalSharesOut, 1);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, lpTokensToBurn);
+    }
+}
