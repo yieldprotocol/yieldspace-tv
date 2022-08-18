@@ -768,3 +768,65 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
     }
 }
+
+contract MintWithBase__ZeroStateNonTv is ZeroStateNonTv {
+    function testUnit_NonTv_mintWithBase01() public {
+        console.log("does not mintWithBase when pool is not initialized");
+
+        vm.expectRevert(NotInitialized.selector);
+        vm.prank(alice);
+        pool.mintWithBase(alice, alice, 0, 0, uint128(MAX));
+    }
+}
+
+contract MintWithBase__WithLiquidityNonTv is WithLiquidityNonTv {
+    function testUnit_NonTv_mintWithBase02() public {
+        console.log("does not mintWithBase when mature");
+
+        vm.warp(pool.maturity());
+        vm.expectRevert(AfterMaturity.selector);
+        vm.prank(alice);
+        pool.mintWithBase(alice, alice, 0, 0, uint128(MAX));
+    }
+
+    function testUnit_NonTv_mintWithBase03() public {
+        console.log("mints with only base (asset)");
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
+
+        // estimate how many shares need to be sold using arbitrary fyTokenToBuy amount and estimate lp tokens minted,
+        // to be able to calculate how much asset to send to the pool
+        uint128 fyTokenToBuy = uint128(1000 * 10**fyToken.decimals());
+        uint128 assetsToSell = pool.buyFYTokenPreview(fyTokenToBuy);
+        uint256 sharesToSell = pool.wrapPreview(assetsToSell);
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+        uint256 realFyTokenReserves = fyTokenReservesBefore - pool.totalSupply();
+
+        uint256 fyTokenIn = fyToken.balanceOf(address(pool)) - realFyTokenReserves;
+        // lpTokensMinted = totalSupply * (fyTokenToBuy + fyTokenIn) / realFyTokenReserves - fyTokenToBuy
+        uint256 lpTokensMinted = (pool.totalSupply() * (fyTokenToBuy + fyTokenIn)) /
+            (realFyTokenReserves - fyTokenToBuy);
+
+        uint256 sharesIn = sharesToSell + ((sharesReservesBefore + sharesToSell) * lpTokensMinted) / pool.totalSupply();
+        uint256 assetsIn = pool.unwrapPreview(sharesIn);
+
+        // mintWithBase
+        vm.startPrank(alice);
+        asset.transfer(address(pool), assetsIn);
+        pool.mintWithBase(alice, alice, fyTokenToBuy, 0, uint128(MAX));
+
+        // check user balances
+        assertEq(assetBalBefore - asset.balanceOf(alice), assetsIn);
+        assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
+        assertEq(pool.balanceOf(alice) - poolBalBefore, lpTokensMinted);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, lpTokensMinted);
+    }
+}
