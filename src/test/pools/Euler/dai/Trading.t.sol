@@ -31,9 +31,6 @@ import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ETokenMock} from "../../../mocks/ETokenMock.sol";
-import {ZeroState, ZeroStateParams} from "../../../shared/ZeroState.sol";
-import {SyncablePoolEuler} from "../../../mocks/SyncablePoolEuler.sol";
-import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
 import "./State.sol";
 
 contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
