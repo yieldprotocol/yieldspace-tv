@@ -25,7 +25,6 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
 import "../../../../Pool/PoolErrors.sol";
-import {Exp64x64} from "../../../../Exp64x64.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
@@ -33,8 +32,6 @@ import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ETokenMock} from "../../../mocks/ETokenMock.sol";
-import {ZeroState, ZeroStateParams} from "../../../shared/ZeroState.sol";
-import {SyncablePoolEuler} from "../../../mocks/SyncablePoolEuler.sol";
 import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
 import "./State.sol";
 
