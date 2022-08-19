@@ -38,7 +38,7 @@ import "./State.sol";
 contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
     using Math64x64 for uint256;
 
-    function testUnit_Euler_setFees01() public {
+    function testUnit_Euler_setFeesUSDC01() public {
         console.log("does not set invalid fee");
 
         uint16 g1Fee = 10001;
@@ -48,7 +48,7 @@ contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
         pool.setFees(g1Fee);
     }
 
-    function testUnit_Euler_setFees02() public {
+    function testUnit_Euler_setFeesUSDC02() public {
         console.log("does not set fee without auth");
 
         uint16 g1Fee = 9000;
@@ -58,7 +58,7 @@ contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
         pool.setFees(g1Fee);
     }
 
-    function testUnit_Euler_setFees03() public {
+    function testUnit_Euler_setFeesUSDC03() public {
         console.log("sets valid fee");
 
         uint16 g1Fee = 8000;
