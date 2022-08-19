@@ -23,6 +23,8 @@ import {IERC20Like} from "../../interfaces/IERC20Like.sol";
 // - Declares constants.
 // No new contracts are created
 abstract contract TestCore is Test {
+    event FeesSet(uint16 g1Fee);
+
     event Liquidity(
         uint32 maturity,
         address indexed from,
