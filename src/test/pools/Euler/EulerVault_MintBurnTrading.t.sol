@@ -1426,9 +1426,9 @@ contract BurnForBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
             fyTokenOut.u128(),
             maturity - uint32(block.timestamp),
             k,
-            g2,
+            pool.g2(),
             pool.getC(),
-            mu
+            pool.mu()
         );
         uint256 totalSharesOut = sharesOut + fyTokenOutToShares;
         uint256 expectedAssetsOut = pool.unwrapPreview(totalSharesOut);
