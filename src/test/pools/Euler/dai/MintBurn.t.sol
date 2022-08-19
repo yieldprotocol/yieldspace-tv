@@ -80,7 +80,7 @@ contract Mint__ZeroStateEulerDAI is ZeroStateEulerDAI {
     function testUnit_Euler_mintDAI01() public {
         console.log("adds initial liquidity");
 
-        uint256 assetsIn = 1000 * asset.decimals();
+        uint256 assetsIn = 1000 * 10**asset.decimals();
         uint256 sharesIn = pool.wrapPreview(assetsIn);
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 poolBalBefore = pool.balanceOf(alice);
@@ -111,135 +111,158 @@ contract Mint__ZeroStateEulerDAI is ZeroStateEulerDAI {
 
     function testUnit_Euler_mintDAI02() public {
         console.log("adds liquidity with zero fyToken");
-        shares.mint(address(pool), INITIAL_EUSDC);
+
+        uint256 assetsIn = 1000 * 10**asset.decimals();
+        uint256 sharesIn = pool.wrapPreview(assetsIn);
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
 
         vm.startPrank(alice);
+        asset.transfer(address(pool), assetsIn);
+        pool.init(address(0)); // don't send init lpTokens to alice, to be able to check expectedMint more easily below
 
-        pool.init(address(0));
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+        uint256 realFyTokenReserves = fyTokenReservesBefore - pool.totalSupply();
+        // estimate expected lpToken mint during edge case of 0 real fyToken reserves, and after init
+        uint256 expectedMint = (pool.totalSupply() * sharesIn) / sharesReservesBefore;
 
-        // After initializing, donate shares and sync to simulate having reached zero fyToken through trading
-        shares.mint(address(pool), INITIAL_EUSDC);
-        pool.sync();
+        // check there is 0 fyToken reserves after initialization
+        assertEq(realFyTokenReserves, 0);
 
-        shares.mint(address(pool), INITIAL_EUSDC);
-        pool.mint(bob, bob, 0, MAX);
+        // pool mint
+        asset.transfer(address(pool), assetsIn);
+        pool.mint(alice, alice, 0, MAX);
 
-        almostEqual(pool.balanceOf(bob), ((INITIAL_EUSDC / 1e12 / 2) * muNumerator) / muDenominator, 2);
-        (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-        require(sharesBal == pool.getSharesBalance());
-        require(fyTokenBal == pool.getFYTokenBalance());
+        // check user balances
+        assertEq(assetBalBefore - asset.balanceOf(alice), assetsIn * 2); // alice transferred assetsIn to init, then again to pool mint (2x assetsIn)
+        assertEq(pool.balanceOf(alice) - poolBalBefore, expectedMint);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedMint);
     }
 }
 
-// contract Mint__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
-//     function testUnit_Euler_mint4() public {
-//         console.log("mints liquidity tokens, returning shares surplus converted to asset");
-//         uint256 bobAssetBefore = asset.balanceOf(bob);
-//         uint256 fyTokenIn = 1e6;
-//         uint256 expectedMint = ((pool.totalSupply() / (fyToken.balanceOf(address(pool)))) * 1e6 * muNumerator) /
-//             muDenominator;
-//         uint256 expectedSharesIn = (getSharesBalanceWithDecimalsAdjusted(address(pool)) * expectedMint) /
-//             pool.totalSupply();
+contract Mint__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
+    function testUnit_Euler_mintDAI03() public {
+        console.log("mints liquidity tokens, returning shares surplus converted to asset");
 
-//         uint256 poolTokensBefore = pool.balanceOf(bob);
+        uint256 fyTokenIn = 1000 * 10**fyToken.decimals();
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
 
-//         shares.mint(address(pool), (expectedSharesIn * 1e12) + 1e18); // send an extra wad of shares
-//         fyToken.mint(address(pool), fyTokenIn);
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+        uint256 realFyTokenReserves = fyTokenReservesBefore - pool.totalSupply();
 
-//         vm.startPrank(alice);
-//         pool.mint(bob, bob, 0, MAX);
+        // lpTokensMinted = totalSupply * fyTokenIn / realFyTokenReserves
+        uint256 expectedMint = (pool.totalSupply() * fyTokenIn) / realFyTokenReserves;
+        // expectedSharesIn = sharesReserves * lpTokensMinted / totalSupply
+        uint256 expectedSharesIn = (sharesReservesBefore * expectedMint) / pool.totalSupply();
+        uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn);
 
-//         uint256 minted = pool.balanceOf(bob) - poolTokensBefore;
+        uint256 poolTokensBefore = pool.balanceOf(bob);
 
-//         almostEqual(minted, expectedMint, fyTokenIn / 10000);
-//         require(shares.balanceOf(bob) == bobSharesInitialBalance);
-//         require(asset.balanceOf(bob) == bobAssetBefore + ETokenMock(address(shares)).convertBalanceToUnderlying(1e18)); // 1wad converted
+        // pool mint
+        vm.startPrank(alice);
+        asset.transfer(address(pool), expectedAssetsIn * 2); // alice sends too many assets
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.mint(alice, alice, 0, MAX);
 
-//         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
+        // check user balances
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 1); // alice sent too many assets, but still gets back surplus
+        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn);
+        assertEq(pool.balanceOf(alice) - poolBalBefore, expectedMint);
 
-//         require(sharesBal == pool.getSharesBalance());
-//         require(fyTokenBal == pool.getFYTokenBalance());
-//     }
-// }
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertEq(sharesReservesAfter - sharesReservesBefore, expectedSharesIn);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn + expectedMint);
+    }
+}
 
-// contract Burn__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
-//     function testUnit_Euler_burn1() public {
-//         console.log("burns liquidity tokens");
-//         uint256 bobAssetBefore = asset.balanceOf(address(bob));
-//         uint256 sharesBalance = getSharesBalanceWithDecimalsAdjusted(address(pool));
-//         uint256 fyTokenBalance = fyToken.balanceOf(address(pool));
-//         uint256 poolSup = pool.totalSupply();
-//         uint256 lpTokensIn = 1e6;
+contract Burn__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
+    function testUnit_Euler_burnDAI01() public {
+        console.log("burns liquidity tokens");
 
-//         address charlie = address(3);
+        uint256 lpTokensIn = 1000 * 10**asset.decimals(); // using asset decimals here, since they match the pool
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
 
-//         uint256 expectedSharesOut = (lpTokensIn * sharesBalance) / poolSup;
-//         uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
-//         uint256 expectedFYTokenOut = (lpTokensIn * fyTokenBalance) / poolSup;
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
+        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
+        uint256 expectedFyTokenOut = (lpTokensIn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
 
-//         // alice transfers in lp tokens then burns them
-//         vm.prank(alice);
-//         pool.transfer(address(pool), lpTokensIn);
+        vm.startPrank(alice);
+        pool.transfer(address(pool), lpTokensIn);
 
-//         vm.expectEmit(true, true, true, true);
-//         emit Liquidity(
-//             maturity,
-//             alice,
-//             bob,
-//             charlie,
-//             int256(expectedAssetsOut),
-//             int256(expectedFYTokenOut),
-//             -int256(lpTokensIn)
-//         );
-//         vm.prank(alice);
-//         pool.burn(bob, address(charlie), 0, MAX);
+        // burn
+        vm.expectEmit(true, true, true, true);
+        emit Liquidity(
+            maturity,
+            alice,
+            alice,
+            alice,
+            int256(expectedAssetsOut + 1), // ahhhhhhhhhhh
+            int256(expectedFyTokenOut),
+            -int256(lpTokensIn)
+        );
+        pool.burn(alice, alice, 0, MAX);
 
-//         uint256 assetsOut = asset.balanceOf(bob) - bobAssetBefore;
-//         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
-//         almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
-//         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);
+        // check user balances
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut, 1);
+        assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
+        assertEq(poolBalBefore - pool.balanceOf(alice), lpTokensIn);
 
-//         (uint104 sharesBal, uint104 fyTokenBal, , ) = pool.getCache();
-//         require(sharesBal == pool.getSharesBalance());
-//         require(fyTokenBal == pool.getFYTokenBalance());
-//         require(shares.balanceOf(bob) == bobSharesInitialBalance);
-//         require(fyToken.balanceOf(address(charlie)) == fyTokenOut);
-//     }
-// }
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut + lpTokensIn);
+    }
+}
 
-// contract MatureBurn_WithLiquidityEulerDAI is WithLiquidityEulerDAI {
-//     function testUnit_Euler_matureBurn01() public {
-//         console.log("burns after maturity");
+contract MatureBurn_WithLiquidityEulerDAI is WithLiquidityEulerDAI {
+    function testUnit_Euler_matureBurn01() public {
+        console.log("burns after maturity");
 
-//         uint256 assetBalBefore = asset.balanceOf(alice);
-//         uint256 poolBalBefore = pool.balanceOf(alice);
-//         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
-//         uint256 lpTokensIn = poolBalBefore;
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 lpTokensIn = poolBalBefore;
 
-//         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
-//         uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
-//         uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
-//         // fyTokenOut = lpTokensIn * realFyTokenReserves / totalSupply
-//         uint256 expectedFyTokenOut = (lpTokensIn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
+        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
+        // fyTokenOut = lpTokensIn * realFyTokenReserves / totalSupply
+        uint256 expectedFyTokenOut = (lpTokensIn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
 
-//         vm.warp(pool.maturity());
-//         vm.startPrank(alice);
+        vm.warp(pool.maturity());
+        vm.startPrank(alice);
 
-//         pool.transfer(address(pool), lpTokensIn);
-//         pool.burn(alice, alice, 0, uint128(MAX));
+        pool.transfer(address(pool), lpTokensIn);
+        pool.burn(alice, alice, 0, uint128(MAX));
 
-//         // check user balances
-//         assertEq(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut);
-//         assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
+        // check user balances
+        assertEq(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut);
+        assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
 
-//         // check pool reserves
-//         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-//         assertEq(sharesReservesAfter, pool.getSharesBalance());
-//         assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
-//         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
-//         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut + lpTokensIn); // after burning, the reserves are updated to exclude the burned lp tokens
-//     }
-// }
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut + lpTokensIn); // after burning, the reserves are updated to exclude the burned lp tokens
+    }
+}
 
 contract Admin__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
     function testUnit_admin1_EulerDAI() public {
