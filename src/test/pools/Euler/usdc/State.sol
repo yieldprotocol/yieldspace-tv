@@ -50,7 +50,7 @@ abstract contract ZeroStateEulerUSDC is ZeroState {
     }
 }
 
-abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
+abstract contract WithLiquidityEulerUSDC is ZeroStateEulerUSDC {
     function setUp() public virtual override {
         super.setUp();
 
@@ -73,7 +73,7 @@ abstract contract WithLiquidityEuler is ZeroStateEulerUSDC {
     }
 }
 
-abstract contract WithExtraFYTokenEuler is WithLiquidityEuler {
+abstract contract WithExtraFYTokenEulerUSDC is WithLiquidityEulerUSDC {
     using Exp64x64 for uint128;
     using Math64x64 for int128;
     using Math64x64 for int256;
@@ -89,7 +89,7 @@ abstract contract WithExtraFYTokenEuler is WithLiquidityEuler {
     }
 }
 
-abstract contract OnceMature is WithExtraFYTokenEuler {
+abstract contract OnceMatureUSDC is WithExtraFYTokenEulerUSDC {
     using Exp64x64 for uint128;
     using Math64x64 for int128;
     using Math64x64 for int256;
