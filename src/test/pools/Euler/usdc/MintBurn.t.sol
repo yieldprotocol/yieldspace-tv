@@ -79,7 +79,7 @@ contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
     }
 }
 
-contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
+contract Mint__ZeroStateEulerUSDC is ZeroStateEulerUSDC {
     function testUnit_Euler_mint1() public {
         console.log("adds initial liquidity");
 
@@ -124,7 +124,7 @@ contract Mint__ZeroStateEuler is ZeroStateEulerUSDC {
     }
 }
 
-contract Mint__WithLiquidityEuler is WithLiquidityEuler {
+contract Mint__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     function testUnit_Euler_mint4() public {
         console.log("mints liquidity tokens, returning shares surplus converted to asset");
         uint256 bobAssetBefore = asset.balanceOf(bob);
@@ -155,7 +155,7 @@ contract Mint__WithLiquidityEuler is WithLiquidityEuler {
     }
 }
 
-contract Burn__WithLiquidityEuler is WithLiquidityEuler {
+contract Burn__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     function testUnit_Euler_burn1() public {
         console.log("burns liquidity tokens");
         uint256 bobAssetBefore = asset.balanceOf(address(bob));
@@ -200,7 +200,7 @@ contract Burn__WithLiquidityEuler is WithLiquidityEuler {
     }
 }
 
-contract MatureBurn_WithLiquidityEuler is WithLiquidityEuler {
+contract MatureBurn_WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     function testUnit_Euler_matureBurn01() public {
         console.log("burns after maturity");
 
@@ -234,7 +234,7 @@ contract MatureBurn_WithLiquidityEuler is WithLiquidityEuler {
     }
 }
 
-contract AdminUSDC__WithLiquidityEuler is WithLiquidityEuler {
+contract Admin__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     function testUnit_admin1_EulerUSDC() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
@@ -350,7 +350,7 @@ contract MintWithBase__ZeroStateEulerUSDC is ZeroStateEulerUSDC {
     }
 }
 
-contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
+contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     function testUnit_Euler_mintWithBaseUSDC02() public {
         console.log("does not mintWithBase when mature");
 
@@ -402,7 +402,7 @@ contract MintWithBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
     }
 }
 
-contract BurnForBase__WithLiquidityEulerUSDC is WithLiquidityEuler {
+contract BurnForBase__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
 

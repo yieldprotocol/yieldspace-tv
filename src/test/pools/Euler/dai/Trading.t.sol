@@ -36,7 +36,7 @@ import {SyncablePoolEuler} from "../../../mocks/SyncablePoolEuler.sol";
 import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
 import "./State.sol";
 
-contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
+contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -191,7 +191,7 @@ contract TradeDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
     }
 }
 
-contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
+contract Trade__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -342,7 +342,7 @@ contract TradeDAI__WithExtraFYTokenEuler is WithExtraFYTokenEulerDAI {
     }
 }
 
-contract TradeDAI__PreviewFuncs is WithExtraFYTokenEulerDAI {
+contract Trade__PreviewFuncsDAI is WithExtraFYTokenEulerDAI {
     function testUnit_Euler_tradeDAI11() public {
         console.log("buyBase matches buyBasePreview");
 
