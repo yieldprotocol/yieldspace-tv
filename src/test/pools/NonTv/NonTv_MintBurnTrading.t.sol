@@ -28,6 +28,8 @@ import "../../../Pool/PoolErrors.sol";
 import {Exp64x64} from "../../../Exp64x64.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
+import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {CastI128U128} from "@yield-protocol/utils-v2/contracts/cast/CastI128U128.sol";
 
 import "../../shared/Utils.sol";
 import "../../shared/Constants.sol";
@@ -828,5 +830,71 @@ contract MintWithBase__WithLiquidityNonTv is WithLiquidityNonTv {
         assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, lpTokensMinted);
+    }
+}
+
+contract BurnForBase__WithLiquidityNonTv is WithLiquidityNonTv {
+    using Math64x64 for uint256;
+    using CastU256U128 for uint256;
+    using CastI128U128 for int128;
+
+    function testUnit_NonTv_burnForBase01() public {
+        console.log("does not burnForBase when mature");
+
+        vm.warp(pool.maturity());
+        vm.expectRevert(AfterMaturity.selector);
+        vm.prank(alice);
+        pool.burnForBase(alice, 0, uint128(MAX));
+    }
+
+    function testUnit_NonTv_burnForBase02() public {
+        console.log("burns for only base (asset)");
+
+        // check if non-tv
+        assertEq(pool.getC(), pool.mu());
+
+        // using a value that we assume will be below maxSharesOut and maxFYTokenOut, and will allow for trading to base
+        uint256 lpTokensToBurn = 1000 * 10**asset.decimals(); // using the asset decimals, since they match the pool
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+        uint256 poolBalBefore = pool.balanceOf(alice);
+        (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
+
+        // estimate how many shares and fyToken we will get back from burn
+        uint256 sharesOut = (lpTokensToBurn * sharesReservesBefore) / pool.totalSupply();
+        // fyTokenOut = lpTokensBurned * realFyTokenReserves / totalSupply
+        uint256 fyTokenOut = (lpTokensToBurn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
+
+        // estimate how much shares (and base) we can trade fyToken for, using the new pool state
+        uint256 fyTokenOutToShares = YieldMath.sharesOutForFYTokenIn(
+            (sharesReservesBefore - sharesOut).u128(),
+            (fyTokenReservesBefore - fyTokenOut).u128(),
+            fyTokenOut.u128(),
+            maturity - uint32(block.timestamp),
+            k,
+            g2,
+            pool.getC(),
+            pool.mu()
+        );
+        uint256 totalSharesOut = sharesOut + fyTokenOutToShares;
+        uint256 expectedAssetsOut = pool.unwrapPreview(totalSharesOut);
+
+        // burnForBase
+        vm.startPrank(alice);
+        pool.transfer(address(pool), lpTokensToBurn);
+        pool.burnForBase(alice, 0, uint128(MAX));
+
+        // check user balances
+        assertEq(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut);
+        assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
+        assertEq(poolBalBefore - pool.balanceOf(alice), lpTokensToBurn);
+
+        // check pool reserves
+        (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertEq(sharesReservesBefore - sharesReservesAfter, totalSharesOut);
+        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, lpTokensToBurn);
     }
 }
