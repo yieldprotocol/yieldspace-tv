@@ -38,7 +38,7 @@ import {SyncablePoolEuler} from "../../../mocks/SyncablePoolEuler.sol";
 import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
 import "./State.sol";
 
-contract AdminDAI__WithLiquidityEuler is WithLiquidityEulerDAI {
+contract Admin__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
     function testUnit_admin1_EulerDAI() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);

@@ -33,7 +33,7 @@ import "../../../shared/Constants.sol";
 import {ETokenMock} from "../../../mocks/ETokenMock.sol";
 import "./State.sol";
 
-contract Trade__WithLiquidityEulerUSDC is WithLiquidityEuler {
+contract Trade__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -172,7 +172,7 @@ contract Trade__WithLiquidityEulerUSDC is WithLiquidityEuler {
     }
 }
 
-contract Trade__WithExtraFYTokenEulerUSDC is WithExtraFYTokenEuler {
+contract Trade__WithExtraFYTokenEulerUSDC is WithExtraFYTokenEulerUSDC {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -381,7 +381,7 @@ contract Trade__WithExtraFYTokenEulerUSDC is WithExtraFYTokenEuler {
     }
 }
 
-contract Trade__OnceMatureEulerUSDC is OnceMature {
+contract Trade__OnceMatureEulerUSDC is OnceMatureUSDC {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
