@@ -18,18 +18,13 @@ import {console} from "forge-std/console.sol";
 
 import "../../shared/Utils.sol";
 import "../../shared/Constants.sol";
-import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
 
 import "../../../Pool/PoolErrors.sol";
-import {Exp64x64} from "../../Exp64x64.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 import {CastI128U128} from "@yield-protocol/utils-v2/contracts/cast/CastI128U128.sol";
-
-abstract contract ZeroStateDai is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
-}
+import "./State.sol";
 
 contract SetFees is ZeroStateDai {
     using Math64x64 for uint256;
@@ -69,32 +64,6 @@ contract SetFees is ZeroStateDai {
 
         assertEq(pool.g1(), expectedG1);
         assertEq(pool.g2(), expectedG2);
-    }
-}
-
-abstract contract WithLiquidity is ZeroStateDai {
-    function setUp() public virtual override {
-        super.setUp();
-
-        // Send some shares to the pool.
-        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
-
-        // Alice calls init.
-        vm.prank(alice);
-        pool.init(alice);
-
-        // elapse some time after initialization
-        vm.warp(block.timestamp + 60);
-
-        // Update the price of shares to value of state variables: cNumerator/cDenominator
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
-
-        fyToken.mint(address(pool), additionalFYToken);
-        pool.sellFYToken(alice, 0);
-
-        // elapse some time after initialization
-        vm.warp(block.timestamp + 60);
     }
 }
 
@@ -183,7 +152,7 @@ contract Mint__ZeroState is ZeroStateDai {
     //     console.log("syncs balances after donations");
 }
 
-contract Mint__WithLiquidity is WithLiquidity {
+contract Mint__WithLiquidity is WithLiquidityDAI {
     function testUnit_mint4() public {
         console.log("mints liquidity tokens, returning surplus");
 
@@ -228,7 +197,7 @@ contract Mint__WithLiquidity is WithLiquidity {
     }
 }
 
-contract Burn__WithLiquidity is WithLiquidity {
+contract Burn__WithLiquidity is WithLiquidityDAI {
     function testUnit_burn1() public {
         console.log("burns liquidity tokens");
         uint256 bobAssetBefore = asset.balanceOf(address(bob));
@@ -279,7 +248,7 @@ contract Burn__WithLiquidity is WithLiquidity {
     }
 }
 
-contract MatureBurn_WithLiquidity is WithLiquidity {
+contract MatureBurn_WithLiquidity is WithLiquidityDAI {
     function testUnit_matureBurn01() public {
         console.log("burns after maturity");
 
@@ -323,7 +292,7 @@ contract MintWithBase__ZeroStateNonTv is ZeroStateDai {
     }
 }
 
-contract MintWithBase__WithLiquidity is WithLiquidity {
+contract MintWithBase__WithLiquidity is WithLiquidityDAI {
     function testUnit_mintWithBase02() public {
         console.log("does not mintWithBase when mature");
 
@@ -375,7 +344,7 @@ contract MintWithBase__WithLiquidity is WithLiquidity {
     }
 }
 
-contract BurnForBase__WithLiquidity is WithLiquidity {
+contract BurnForBase__WithLiquidity is WithLiquidityDAI {
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
     using CastI128U128 for int128;
