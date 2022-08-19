@@ -17,7 +17,6 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
 import "../../../Pool/PoolErrors.sol";
-import {Exp64x64} from "../../../Exp64x64.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
@@ -25,50 +24,10 @@ import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128
 import {almostEqual, setPrice} from "../../shared/Utils.sol";
 import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
 import "../../shared/Constants.sol";
-// import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
-import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
+import {FYTokenMock} from "../../mocks/FYTokenMock.sol";
+import "./State.sol";
 
-abstract contract ZeroStateUSDC is ZeroState {
-    constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "4626")) {}
-}
-
-abstract contract WithLiquidity is ZeroStateUSDC {
-    function setUp() public virtual override {
-        super.setUp();
-
-        // Send some shares to the pool.
-        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
-
-        // Alice calls init.
-        vm.prank(alice);
-        pool.init(alice);
-
-        // Update the price of shares to value of state variables: cNumerator/cDenominator
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
-
-        fyToken.mint(address(pool), additionalFYToken);
-        pool.sellFYToken(alice, 0);
-    }
-}
-
-abstract contract WithExtraFYTokenUSDC is WithLiquidity {
-    using Math64x64 for int128;
-    using Math64x64 for uint128;
-    using Math64x64 for int256;
-    using Math64x64 for uint256;
-    using Exp64x64 for uint128;
-
-    function setUp() public virtual override {
-        super.setUp();
-        uint256 additionalFYToken = 30 * 1e6;
-        fyToken.mint(address(pool), additionalFYToken);
-        vm.prank(alice);
-        pool.sellFYToken(alice, 0);
-    }
-}
-
-contract TradeUSDC__WithLiquidity is WithLiquidity {
+contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
     using Math64x64 for uint256;
     using Math64x64 for int128;
     using CastU256U128 for uint256;

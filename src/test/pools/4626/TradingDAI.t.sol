@@ -16,7 +16,6 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
 import "../../../Pool/PoolErrors.sol";
-import {Exp64x64} from "../../../Exp64x64.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
@@ -24,45 +23,10 @@ import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128
 import {almostEqual, setPrice} from "../../shared/Utils.sol";
 import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
 import "../../shared/Constants.sol";
-import {WithLiquidity} from "./MintBurn.t.sol";
 import {FYTokenMock} from "../../mocks/FYTokenMock.sol";
-import {YVTokenMock} from "../../mocks/YVTokenMock.sol";
+import "./State.sol";
 
-abstract contract WithExtraFYToken is WithLiquidity {
-    using Exp64x64 for uint128;
-    using Math64x64 for int128;
-    using Math64x64 for int256;
-    using Math64x64 for uint128;
-    using Math64x64 for uint256;
-
-    function setUp() public virtual override {
-        super.setUp();
-
-        // Donate an additional 30 WAD fyToken to pool.
-        uint256 additionalFYToken = 30 * WAD;
-        fyToken.mint(address(pool), additionalFYToken);
-
-        // Alice calls sellFYToken
-        vm.prank(alice);
-        pool.sellFYToken(address(this), 0);
-    }
-}
-
-abstract contract OnceMature is WithExtraFYToken {
-    using Exp64x64 for uint128;
-    using Math64x64 for int128;
-    using Math64x64 for int256;
-    using Math64x64 for uint128;
-    using Math64x64 for uint256;
-
-    function setUp() public override {
-        super.setUp();
-        // Fast forward block timestamp to maturity date.
-        vm.warp(pool.maturity());
-    }
-}
-
-contract TradeDAI__WithLiquidity is WithLiquidity {
+contract TradeDAI__WithLiquidity is WithLiquidityDAI {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -296,7 +260,7 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
     }
 }
 
-contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
+contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -441,7 +405,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
 }
 
 // These tests ensure none of the trading functions work once the pool is matured.
-contract TradeDAI__OnceMature is OnceMature {
+contract TradeDAI__OnceMature is OnceMatureDAI {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
@@ -478,7 +442,7 @@ contract TradeDAI__OnceMature is OnceMature {
     }
 }
 
-contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYToken {
+contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYTokenDAI {
     function testUnit_tradeDAI17() public {
         console.log("buyBase matches buyBasePreview");
 
