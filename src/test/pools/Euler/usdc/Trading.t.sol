@@ -385,7 +385,7 @@ contract Trade__OnceMatureEulerUSDC is OnceMature {
     using Math64x64 for int128;
     using Math64x64 for uint256;
 
-    function testUnit_Euler_tradeUSDC17() internal {
+    function testUnit_Euler_tradeUSDC17() public {
         console.log("doesn't allow sellBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellBasePreview(uint128(WAD));
@@ -393,7 +393,7 @@ contract Trade__OnceMatureEulerUSDC is OnceMature {
         pool.sellBase(alice, 0);
     }
 
-    function testUnit_Euler_tradeUSDC18() internal {
+    function testUnit_Euler_tradeUSDC18() public {
         console.log("doesn't allow buyBase");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyBasePreview(uint128(WAD));
@@ -401,7 +401,7 @@ contract Trade__OnceMatureEulerUSDC is OnceMature {
         pool.buyBase(alice, uint128(WAD), uint128(MAX));
     }
 
-    function testUnit_Euler_tradeUSDC19() internal {
+    function testUnit_Euler_tradeUSDC19() public {
         console.log("doesn't allow sellFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.sellFYTokenPreview(uint128(WAD));
@@ -409,7 +409,7 @@ contract Trade__OnceMatureEulerUSDC is OnceMature {
         pool.sellFYToken(alice, 0);
     }
 
-    function testUnit_Euler_tradeUSDC20() internal {
+    function testUnit_Euler_tradeUSDC20() public {
         console.log("doesn't allow buyFYToken");
         vm.expectRevert(bytes("Pool: Too late"));
         pool.buyFYTokenPreview(uint128(WAD));
