@@ -41,35 +41,35 @@ contract SetFeesEulerDAI is ZeroStateEulerDAI {
     function testUnit_Euler_setFeesDAI01() public {
         console.log("does not set invalid fee");
 
-        uint16 g1Fee = 10001;
+        uint16 g1Fee_ = 10001;
 
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(InvalidFee.selector, g1Fee));
-        pool.setFees(g1Fee);
+        vm.expectRevert(abi.encodeWithSelector(InvalidFee.selector, g1Fee_));
+        pool.setFees(g1Fee_);
     }
 
     function testUnit_Euler_setFeesDAI02() public {
         console.log("does not set fee without auth");
 
-        uint16 g1Fee = 9000;
+        uint16 g1Fee_ = 9000;
 
         vm.prank(alice);
         vm.expectRevert("Access denied");
-        pool.setFees(g1Fee);
+        pool.setFees(g1Fee_);
     }
 
     function testUnit_Euler_setFeesDAI03() public {
         console.log("sets valid fee");
 
-        uint16 g1Fee = 8000;
-        int128 expectedG1 = uint256(g1Fee).divu(10000);
-        int128 expectedG2 = uint256(10000).divu(g1Fee);
+        uint16 g1Fee_ = 8000;
+        int128 expectedG1 = uint256(g1Fee_).divu(10000);
+        int128 expectedG2 = uint256(10000).divu(g1Fee_);
 
         vm.prank(bob);
         vm.expectEmit(true, true, true, true);
-        emit FeesSet(g1Fee);
+        emit FeesSet(g1Fee_);
 
-        pool.setFees(g1Fee);
+        pool.setFees(g1Fee_);
 
         assertEq(pool.g1(), expectedG1);
         assertEq(pool.g2(), expectedG2);
