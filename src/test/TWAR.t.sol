@@ -18,17 +18,12 @@ import {console} from "forge-std/console.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
-import {WithLiquidity} from "./pools/4626/MintBurn.t.sol";
-import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
+import "./pools/4626/State.sol";
 
 import "../Pool/PoolErrors.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
-
-abstract contract ZeroStateDai is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
-}
 
 contract TWAR__ZeroState is ZeroStateDai {
     function testUnit_twar1() public {
@@ -62,26 +57,6 @@ contract TWAR__ZeroState is ZeroStateDai {
         (uint256 currCumRat2, uint256 btimestamp2) = pool.currentCumulativeRatio();
         assertEq(currCumRat2, expectedCurrCumRat);
         assertEq(btimestamp2, btimestamp1 + timewarp);
-    }
-}
-
-abstract contract PoolInitialized is ZeroStateDai {
-    function setUp() public virtual override {
-        super.setUp();
-
-        // Send some shares to the pool.
-        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
-
-        // Alice calls init.
-        vm.prank(alice);
-        pool.init(alice);
-
-        // elapse some time after initialization
-        vm.warp(block.timestamp + 60);
-
-        // Update the price of shares to value of state variables: cNumerator/cDenominator
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
     }
 }
 
