@@ -138,13 +138,13 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         pool.buyBase(alice, assetsOut, uint128(MAX));
 
         // check user balances before retrieving
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1); // NOTE one wei issue
         assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), surplusFyTokenIn);
 
         pool.retrieveFYToken(alice);
 
         // check user balances after retrieving
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1); // NOTE one wei issue
         assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFyTokenIn);
 
         // check pool reserves
