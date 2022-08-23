@@ -211,7 +211,7 @@ contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
         // estimate how many shares need to be sold using arbitrary fyTokenToBuy amount and estimate lp tokens minted,
         // to be able to calculate how much asset to send to the pool
         uint128 fyTokenToBuy = uint128(1000 * 10**fyToken.decimals());
-        uint128 assetsToSell = pool.buyFYTokenPreview(fyTokenToBuy);
+        uint128 assetsToSell = pool.buyFYTokenPreview(fyTokenToBuy) + 2; // NOTE we add two wei here to prevent reverts within buyFYToken (known one wei issue)
         uint256 sharesToSell = pool.wrapPreview(assetsToSell);
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint256 realFyTokenReserves = fyTokenReservesBefore - pool.totalSupply();
@@ -237,7 +237,7 @@ contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
         assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, sharesIn, 1); // NOTE one wei issue
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, lpTokensMinted);
     }
