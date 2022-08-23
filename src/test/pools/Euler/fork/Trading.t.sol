@@ -308,7 +308,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         console.log("buyFYToken matches buyFYTokenPreview");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
-        uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut);
+        uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut) + 1; // NOTE we add one wei here to prevent reverts within buyFYToken (known one wei issue)
 
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
