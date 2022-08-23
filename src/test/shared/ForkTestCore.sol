@@ -9,9 +9,10 @@ import {Exp64x64} from "../../Exp64x64.sol";
 import {Math64x64} from "../../Math64x64.sol";
 import {YieldMath} from "../../YieldMath.sol";
 
+import {Pool} from "../../Pool/Pool.sol";
 import {ERC20} from "../../Pool/PoolImports.sol";
 import {ISyncablePool} from "../mocks/ISyncablePool.sol";
-import {FYTokenMock} from "../mocks/FYTokenMock.sol";
+import {FYTokenMock as FYToken} from "../mocks/FYTokenMock.sol";
 
 import "./Utils.sol";
 import "./Constants.sol";
@@ -45,9 +46,9 @@ abstract contract ForkTestCore is Test {
     using Math64x64 for uint256;
     using Exp64x64 for uint128;
 
-    ISyncablePool public pool;
+    Pool public pool;
     ERC20 public asset;
-    FYTokenMock public fyToken;
+    FYToken public fyToken;
 
     address public alice;
     address public bob;
