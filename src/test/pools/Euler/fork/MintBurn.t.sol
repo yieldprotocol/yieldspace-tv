@@ -100,13 +100,13 @@ contract Mint__WithLiquidityEulerDAIFork is EulerDAIFork {
         pool.mint(alice, alice, 0, MAX);
 
         // check user balances
-        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 1); // alice sent too many assets, but still gets back surplus
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 2); // NOTE one wei issue; also, alice sent too many assets, but still gets back surplus
         assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn);
         assertEq(pool.balanceOf(alice) - poolBalBefore, expectedMint);
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertEq(sharesReservesAfter, pool.getSharesBalance());
         assertEq(sharesReservesAfter - sharesReservesBefore, expectedSharesIn);
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn + expectedMint);
