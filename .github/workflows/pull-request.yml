@@ -23,3 +23,4 @@ jobs:
         run: forge test -vvv
         env:
           FOUNDRY_PROFILE: deep
+          MAINNET_RPC: ${{ secrets.ALCHEMY_MAINNET_RPC }}
