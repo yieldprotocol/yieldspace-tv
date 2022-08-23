@@ -79,21 +79,6 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn);
     }
 
-    function testUnitFork_Euler_tradeDAI02() public {
-        console.log("does not sell fyToken beyond slippage");
-        uint256 fyTokenIn = 1 * 10**fyToken.decimals();
-        vm.prank(alice);
-        fyToken.transfer(address(pool), fyTokenIn);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SlippageDuringSellFYToken.selector,
-                999785051469477285,
-                340282366920938463463374607431768211455
-            )
-        );
-        pool.sellFYToken(bob, type(uint128).max);
-    }
-
     function testUnitFork_Euler_tradeDAI03() public {
         console.log("buys a certain amount base for fyToken");
 
@@ -215,21 +200,6 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
-    }
-
-    function testUnitFork_Euler_tradeExtraDAI02() public {
-        console.log("does not sell base beyond slippage");
-        uint128 assetsIn = uint128(1000 * 10**asset.decimals());
-        vm.startPrank(alice);
-        asset.transfer(address(pool), assetsIn);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SlippageDuringSellBase.selector,
-                1100212520384791756398,
-                340282366920938463463374607431768211455
-            )
-        );
-        pool.sellBase(bob, uint128(MAX));
     }
 
     function testUnitFork_Euler_tradeExtraDAI03() public {
