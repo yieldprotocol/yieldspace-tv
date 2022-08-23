@@ -37,7 +37,7 @@ import "./State.sol";
 contract SetFeesEulerDAIFork is EulerDAIFork {
     using Math64x64 for uint256;
 
-    function testUnitFork_Euler_setFeesDAI01() public {
+    function testForkUnit_Euler_setFeesDAI01() public {
         console.log("does not set invalid fee");
 
         uint16 g1Fee_ = 10001;
@@ -47,7 +47,7 @@ contract SetFeesEulerDAIFork is EulerDAIFork {
         pool.setFees(g1Fee_);
     }
 
-    function testUnitFork_Euler_setFeesDAI02() public {
+    function testForkUnit_Euler_setFeesDAI02() public {
         console.log("does not set fee without auth");
 
         uint16 g1Fee_ = 9000;
@@ -57,7 +57,7 @@ contract SetFeesEulerDAIFork is EulerDAIFork {
         pool.setFees(g1Fee_);
     }
 
-    function testUnitFork_Euler_setFeesDAI03() public {
+    function testForkUnit_Euler_setFeesDAI03() public {
         console.log("sets valid fee");
 
         uint16 g1Fee_ = 8000;
@@ -76,7 +76,7 @@ contract SetFeesEulerDAIFork is EulerDAIFork {
 }
 
 contract Mint__WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testUnitFork_Euler_mintDAI03() public {
+    function testForkUnit_Euler_mintDAI03() public {
         console.log("mints liquidity tokens, returning shares surplus converted to asset");
 
         uint256 fyTokenIn = 1000 * 10**fyToken.decimals();
@@ -114,7 +114,7 @@ contract Mint__WithLiquidityEulerDAIFork is EulerDAIFork {
 }
 
 contract Burn__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
-    function testUnitFork_Euler_burnDAI01() public {
+    function testForkUnit_Euler_burnDAI01() public {
         console.log("burns liquidity tokens");
 
         uint256 lpTokensIn = 1000 * 10**asset.decimals(); // using asset decimals here, since they match the pool
@@ -158,7 +158,7 @@ contract Burn__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
 }
 
 contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testUnitFork_Euler_matureBurn01() public {
+    function testForkUnit_Euler_matureBurn01() public {
         console.log("burns after maturity");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -192,7 +192,7 @@ contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
 }
 
 contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testUnitFork_Euler_mintWithBaseDAI02() public {
+    function testForkUnit_Euler_mintWithBaseDAI02() public {
         console.log("does not mintWithBase when mature");
 
         vm.warp(pool.maturity());
@@ -201,7 +201,7 @@ contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
         pool.mintWithBase(alice, alice, 0, 0, uint128(MAX));
     }
 
-    function testUnitFork_Euler_mintWithBaseDAI03() public {
+    function testForkUnit_Euler_mintWithBaseDAI03() public {
         console.log("mints with only base (asset)");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -247,7 +247,7 @@ contract BurnForBase__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
 
-    function testUnitFork_Euler_burnForBaseDAI01() public {
+    function testForkUnit_Euler_burnForBaseDAI01() public {
         console.log("does not burnForBase when mature");
 
         vm.warp(pool.maturity());
@@ -256,7 +256,7 @@ contract BurnForBase__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
         pool.burnForBase(alice, 0, uint128(MAX));
     }
 
-    function testUnitFork_Euler_burnForBaseDAI02() public {
+    function testForkUnit_Euler_burnForBaseDAI02() public {
         console.log("burns for only base (asset)");
 
         // using a value that we assume will be below maxSharesOut and maxFYTokenOut, and will allow for trading to base

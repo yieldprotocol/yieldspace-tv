@@ -38,7 +38,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
 
-    function testUnitFork_Euler_tradeDAI01() public {
+    function testForkUnit_Euler_tradeDAI01() public {
         console.log("sells a certain amount of fyToken for base");
 
         uint256 fyTokenIn = 10_000 * 10**fyToken.decimals();
@@ -79,7 +79,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn);
     }
 
-    function testUnitFork_Euler_tradeDAI03() public {
+    function testForkUnit_Euler_tradeDAI03() public {
         console.log("buys a certain amount base for fyToken");
 
         uint128 assetsOut = uint128(1000 * 10**asset.decimals());
@@ -120,7 +120,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn);
     }
 
-    function testUnitFork_Euler_tradeDAI04() public {
+    function testForkUnit_Euler_tradeDAI04() public {
         console.log("buys base and retrieves change");
 
         uint128 assetsOut = uint128(1000 * 10**asset.decimals());
@@ -161,7 +161,7 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
 
-    function testUnitFork_Euler_tradeExtraDAI01() public {
+    function testForkUnit_Euler_tradeExtraDAI01() public {
         console.log("sells base (asset) for a certain amount of FYTokens");
 
         uint128 assetsIn = uint128(1000 * 10**asset.decimals());
@@ -202,7 +202,7 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
     }
 
-    function testUnitFork_Euler_tradeExtraDAI03() public {
+    function testForkUnit_Euler_tradeExtraDAI03() public {
         console.log("donates fyToken and sells base");
 
         uint128 assetsIn = uint128(10_000 * 10**asset.decimals());
@@ -240,7 +240,7 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
     }
 
-    function testUnitFork_Euler_tradeExtraDAI04() public {
+    function testForkUnit_Euler_tradeExtraDAI04() public {
         console.log("buys a certain amount of fyTokens with base (asset)");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
@@ -284,7 +284,7 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
 }
 
 contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
-    function testUnitFork_Euler_tradePreviewsDAI01() public {
+    function testForkUnit_Euler_tradePreviewsDAI01() public {
         console.log("buyBase matches buyBasePreview");
 
         uint128 expectedAssetOut = uint128(1000 * 10**asset.decimals());
@@ -304,7 +304,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
-    function testUnitFork_Euler_tradePrevewsDAI02() public {
+    function testForkUnit_Euler_tradePrevewsDAI02() public {
         console.log("buyFYToken matches buyFYTokenPreview");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
@@ -324,7 +324,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenOut);
     }
 
-    function testUnitFork_Euler_tradeDAI03() public {
+    function testForkUnit_Euler_tradeDAI03() public {
         console.log("sellBase matches sellBasePreview");
 
         uint128 assetsIn = uint128(1000 * 10**asset.decimals());
@@ -344,7 +344,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         assertEq(fyTokenBalAfter - fyTokenBalBefore, expectedFyToken);
     }
 
-    function testUnitFork_Euler_tradeDAI04() public {
+    function testForkUnit_Euler_tradeDAI04() public {
         console.log("sellFYToken matches sellFYTokenPreview");
 
         uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
