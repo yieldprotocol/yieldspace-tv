@@ -21,16 +21,19 @@ pragma solidity >=0.8.15;
 
 import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
-import {console} from "forge-std/console.sol";
+åimport {console} from "forge-std/console.sol";
 
 import "../../../../Pool/PoolErrors.sol";
-import {ERC20, AccessControl} from "../../../../Pool/PoolImports.sol";
-import {ISyncablePool} from "../../../mocks/ISyncablePool.sol";
-import {FYTokenMock} from "../../../mocks/FYTokenMock.sol";
 import {Exp64x64} from "../../../../Exp64x64.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
+import {Pool} from "../../../../Pool/Pool.sol";
+import {ERC20, AccessControl} from "../../../../Pool/PoolImports.sol";
+// Using FYTokenMock.sol here for the interface so we don't need to add a new dependency
+// to this repo just to get an interface:
+import {FYTokenMock as FYToken} from "../../../mocks/FYTokenMock.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
@@ -46,9 +49,9 @@ abstract contract EulerDAIFork is ForkTestCore {
     }
 
     function setUp() public virtual {
-        pool = ISyncablePool(MAINNET_DAI_DECEMBER_2022_POOL);
+        pool = Pool(MAINNET_DAI_DECEMBER_2022_POOL);
         asset = ERC20(MAINNET_DAI);
-        fyToken = FYTokenMock(0xcDfBf28Db3B1B7fC8efE08f988D955270A5c4752);
+        fyToken = FYToken(0xcDfBf28Db3B1B7fC8efE08f988D955270A5c4752);
         alice = address(0xbabe);
         bob = address(0xb0b);
         whale = address(0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD);
