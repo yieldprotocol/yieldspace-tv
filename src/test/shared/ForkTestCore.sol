@@ -50,9 +50,8 @@ abstract contract ForkTestCore is Test {
     ERC20 public asset;
     FYToken public fyToken;
 
-    address public alice;
-    address public bob;
-    address public whale;
-    address public timelock;
+    address public alice = address(0xbabe);
+    address public bob = address(0xb0b);
+    address public timelock = 0x3b870db67a45611CF4723d44487EAF398fAc51E3;
     address public ladle = 0x6cB18fF2A33e981D1e38A663Ca056c0a5265066A;
 }

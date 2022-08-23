@@ -21,7 +21,7 @@ pragma solidity >=0.8.15;
 
 import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
-åimport {console} from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 import "../../../../Pool/PoolErrors.sol";
 import {Exp64x64} from "../../../../Exp64x64.sol";
@@ -34,12 +34,13 @@ import {ERC20, AccessControl} from "../../../../Pool/PoolImports.sol";
 import {FYTokenMock as FYToken} from "../../../mocks/FYTokenMock.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
-
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ForkTestCore} from "../../../shared/ForkTestCore.sol";
 
 abstract contract EulerDAIFork is ForkTestCore {
+    address public whale = address(0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD);
+
     function fundAddr(address addr) public {
         vm.prank(whale);
         asset.transfer(addr, WAD * 100_000);
@@ -50,13 +51,8 @@ abstract contract EulerDAIFork is ForkTestCore {
 
     function setUp() public virtual {
         pool = Pool(MAINNET_DAI_DECEMBER_2022_POOL);
-        asset = ERC20(MAINNET_DAI);
-        fyToken = FYToken(0xcDfBf28Db3B1B7fC8efE08f988D955270A5c4752);
-        alice = address(0xbabe);
-        bob = address(0xb0b);
-        whale = address(0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD);
-        timelock = address(0x3b870db67a45611CF4723d44487EAF398fAc51E3);
-        ladle = address(0x6cB18fF2A33e981D1e38A663Ca056c0a5265066A);
+        asset = ERC20(address(pool.baseToken()));
+        fyToken = FYToken(address(pool.fyToken()));
 
         fundAddr(alice);
     }
