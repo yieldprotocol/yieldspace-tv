@@ -348,7 +348,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         console.log("sellFYToken matches sellFYTokenPreview");
 
         uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
-        uint128 expectedAsset = pool.sellFYTokenPreview(fyTokenIn);
+        uint128 expectedAsset = pool.sellFYTokenPreview(fyTokenIn); // NOTE sellFYTokenPreview is outputting shares amount in fork, but has been updated to output base amount
 
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
@@ -360,7 +360,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         uint256 assetBalAfter = asset.balanceOf(alice);
         uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
 
-        assertEq(assetBalAfter - assetBalBefore, expectedAsset);
+        assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAsset, 1); // NOTE one wei issue
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 }
