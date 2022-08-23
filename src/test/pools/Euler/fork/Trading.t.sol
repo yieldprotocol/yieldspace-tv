@@ -30,7 +30,6 @@ import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
-import {ETokenMock} from "../../../mocks/ETokenMock.sol";
 import "./State.sol";
 
 contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
