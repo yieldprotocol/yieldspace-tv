@@ -231,7 +231,7 @@ contract Burn__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
 }
 
 contract MatureBurn_WithLiquidityEulerDAI is WithLiquidityEulerDAI {
-    function testUnit_Euler_matureBurn01() public {
+    function testUnit_Euler_matureBurnDAI01() public {
         console.log("burns after maturity");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -252,12 +252,12 @@ contract MatureBurn_WithLiquidityEulerDAI is WithLiquidityEulerDAI {
         pool.burn(alice, alice, 0, uint128(MAX));
 
         // check user balances
-        assertEq(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut, 1); // NOTE one wei issue
         assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
         assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut + lpTokensIn); // after burning, the reserves are updated to exclude the burned lp tokens
