@@ -1069,7 +1069,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     ) internal view beforeMaturity returns (uint128 sharesOut) {
         uint96 scaleFactor_ = scaleFactor;
 
-        sharesOut=
+        sharesOut =
             YieldMath.sharesOutForFYTokenIn(
                 sharesBalance * scaleFactor_,
                 fyTokenBalance * scaleFactor_,
