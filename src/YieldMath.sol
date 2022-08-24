@@ -611,7 +611,7 @@ library YieldMath {
     /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
     /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
     /// @param c price of shares in terms of their base, multiplied by 2^64
-    /// @param mu (μ) Normalization factor -- starts as c at initialization
+    /// @param mu (μ) Normalization factor -- c at initialization
     /// @return maxSharesIn_ Calculates the max amount of base a user could sell.
     function maxSharesIn(
         uint128 sharesReserves, // z
