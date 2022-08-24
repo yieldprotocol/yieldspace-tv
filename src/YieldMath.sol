@@ -515,7 +515,7 @@ library YieldMath {
     /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
     /// @param c price of shares in terms of their base, multiplied by 2^64
     /// @param mu (μ) Normalization factor -- starts as c at initialization
-    /// @return maxFYTokenOut_ the max amount of fyToken a user could get
+    /// @return result the max amount of fyToken a user could get
     function maxFYTokenOut(
         uint128 sharesReserves,
         uint128 fyTokenReserves,
@@ -524,13 +524,8 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 maxFYTokenOut_) {
-        unchecked {
-            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
-
-            /* 
+    ) public pure returns (uint128 result) {
+        /* 
                 y = maxFyTokenOut
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
@@ -540,27 +535,25 @@ library YieldMath {
                 y = Y - ( (   c/μ * (μZ)^a +    y^a   ) / (    c/μ + 1    ) )^(1/a)
             */
 
-            // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
-            int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
+        int128 a = int128(_computeA(timeTillMaturity, k, g));
 
-            // ya = (fyTokenReserves / 1e18) ** a
-            int128 ya = fyTokenReserves.divu(WAD).pow(a);
+        // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
+        int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
 
-            // numerator = za + ya
-            int128 numerator = za.add(ya);
+        // ya = (fyTokenReserves / 1e18) ** a
+        int128 ya = fyTokenReserves.divu(WAD).pow(a);
 
-            // denominator = c/u + 1
-            int128 denominator = c.div(mu).add(int128(ONE));
+        // numerator = za + ya
+        int128 numerator = za.add(ya);
 
-            // rightTerm = (numerator / denominator) ** (1/a)
-            int128 rightTerm = numerator.div(denominator).pow(int128(ONE).div(a));
+        // denominator = c/u + 1
+        int128 denominator = c.div(mu).add(int128(ONE));
 
-            // maxFYTokenOut_ = fyTokenReserves - (rightTerm * 1e18)
-            require(
-                (maxFYTokenOut_ = fyTokenReserves - uint128(rightTerm.mulu(WAD))) <= MAX,
-                "YieldMath: Underflow error"
-            );
-        }
+        // rightTerm = (numerator / denominator) ** (1/a)
+        int128 rightTerm = numerator.div(denominator).pow(int128(ONE).div(a));
+
+        // result = fyTokenReserves - (rightTerm * 1e18)
+        result = fyTokenReserves - uint128(rightTerm.mulu(WAD));
     }
 
     /// Calculates the max amount of base a user could sell.
