@@ -31,7 +31,7 @@ import "../../../shared/Constants.sol";
 import "./State.sol";
 
 contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testForkUnit_admin1_EulerDAI() public {
+    function testForkUnit_admin_EulerDAI01() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -46,7 +46,7 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
 
-    function testForkUnit_admin2_EulerDAI() public {
+    function testForkUnit_admin_EulerDAI02() public {
         console.log("retrieveBase returns exceess");
         uint256 additionalAmount = 69;
         vm.prank(alice);
@@ -65,7 +65,7 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
 
-    function testForkUnit_admin3_EulerDAI() public {
+    function testForkUnit_admin_EulerDAI03() public {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -80,7 +80,7 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
-    function testForkUnit_admin4_EulerDAI() public {
+    function testForkUnit_admin_EulerDAI04() public {
         console.log("retrieveShares returns exceess");
 
         (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
@@ -105,7 +105,7 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertApproxEqAbs(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount, 1);
     }
 
-    function testForkUnit_admin5_EulerDAI() public {
+    function testForkUnit_admin_EulerDAI05() public {
         console.log("retrieveFYToken returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -121,7 +121,7 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
-    function testForkUnit_admin6_EulerDAI() public {
+    function testForkUnit_admin6_EulerDAI06() public {
         console.log("retrieveFYToken returns exceess");
         uint256 additionalAmount = 69e18;
         vm.prank(alice);
