@@ -603,7 +603,7 @@ library YieldMath {
         // leftTerm = 1/μ * (numerator / denominator) ** (1/a)
         int128 leftTerm = int128(ONE).div(mu).mul(numerator.div(denominator).pow(int128(ONE).div(a)));
 
-        // maxSharesIn_ = (leftTerm * 1e18) - sharesReserves
+        // result = (leftTerm * 1e18) - sharesReserves
         result = uint128(leftTerm.mulu(WAD)) - sharesReserves;
     }
 
