@@ -473,12 +473,13 @@ library YieldMath {
     ) public pure returns (uint128 result) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
-                y = fyToken reserves
+                y = maxFyTokenIn
+                Y = fyTokenReserves (virtual)
                 z = shares reserves
 
-                     (                  sum        )^(   invA    ) - y
-                     (    Za          ) + (  Ya  ) )^(   invA    ) - y
-                Δy = ( c/μ * (μz)^(1-t) +  y^(1-t) )^(1 / (1 - t)) - y
+                     (                  sum        )^(   invA    ) - Y
+                     (    Za          ) + (  Ya  ) )^(   invA    ) - Y 
+                Δy = ( c/μ * (μz)^(1-t) +  Y^(1-t) )^(1 / (1 - t)) - Y 
 
             */
 
@@ -532,7 +533,7 @@ library YieldMath {
                 
                     Y - ( (       numerator           ) / (  denominator  ) )^invA
                     Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
-                y = Y - ( (   c/μ * (μZ)^a +    y^a   ) / (    c/μ + 1    ) )^(1/a)
+                y = Y - ( (   c/μ * (μZ)^a +    Y^a   ) / (    c/μ + 1    ) )^(1/a)
             */
 
         int128 a = int128(_computeA(timeTillMaturity, k, g));
@@ -576,7 +577,7 @@ library YieldMath {
         int128 mu
     ) public pure returns (uint128 result) {
         /* 
-                y = maxSharesIn_
+                y = maxSharesIn
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
                 
