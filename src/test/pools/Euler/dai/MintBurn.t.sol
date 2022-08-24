@@ -485,14 +485,14 @@ contract BurnForBase__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
         pool.burnForBase(alice, 0, uint128(MAX));
 
         // check user balances
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut, 1);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut, 1); // NOTE one wei issue
         assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
         assertEq(poolBalBefore - pool.balanceOf(alice), lpTokensToBurn);
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, totalSharesOut, 1);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, totalSharesOut, 1); // NOTE one wei issue
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, lpTokensToBurn);
     }
