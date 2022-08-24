@@ -476,13 +476,12 @@ library YieldMath {
     }
 
     /// Calculates the max amount of fyToken a user could sell.
-    /// @param sharesReserves shares reserves amount
+    /// @param sharesReserves yield bearing vault shares reserve amount
     /// @param fyTokenReserves fyToken reserves amount
-    /// @param timeTillMaturity time till maturity in seconds
-    /// @param k time till maturity coefficient, multiplied by 2^64
-    /// @param g fee coefficient, multiplied by 2^64
-    /// @param c price of shares in terms of Dai, multiplied by 2^64
-    /// @param mu (μ) Normalization factor -- starts as c at initialization
+    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
+    /// @param g fee coefficient, multiplied by 2^64 -- sb over 1.0 for buying shares from the pool
+    /// @param c price of shares in terms of their base, multiplied by 2^64
     /// @return fyTokenIn the max amount of fyToken a user could sell
     function maxFYTokenIn(
         uint128 sharesReserves,
