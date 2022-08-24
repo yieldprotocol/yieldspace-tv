@@ -192,7 +192,7 @@ contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
 }
 
 contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testForkUnit_Euler_mintWithBaseDAI02() public {
+    function testForkUnit_Euler_mintWithBaseDAI01() public {
         console.log("does not mintWithBase when mature");
 
         vm.warp(pool.maturity());
@@ -201,7 +201,7 @@ contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
         pool.mintWithBase(alice, alice, 0, 0, uint128(MAX));
     }
 
-    function testForkUnit_Euler_mintWithBaseDAI03() public {
+    function testForkUnit_Euler_mintWithBaseDAI02() public {
         console.log("mints with only base (asset)");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
