@@ -323,7 +323,7 @@ contract MintWithBase__WithLiquidity is WithLiquidityDAI {
             (realFyTokenReserves - fyTokenToBuy);
 
         uint256 sharesIn = sharesToSell + ((sharesReservesBefore + sharesToSell) * lpTokensMinted) / pool.totalSupply();
-        uint256 assetsIn = pool.unwrapPreview(sharesIn);
+        uint256 assetsIn = pool.unwrapPreview(sharesIn) + 2; // NOTE one wei issue: wrapping multiple times causes multiple one wei issue differences
 
         // mintWithBase
         vm.startPrank(alice);
@@ -338,7 +338,7 @@ contract MintWithBase__WithLiquidity is WithLiquidityDAI {
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
         assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, sharesIn, 1); // NOTE one wei issue
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, lpTokensMinted);
     }
