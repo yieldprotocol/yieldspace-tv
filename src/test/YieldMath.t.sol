@@ -1123,7 +1123,7 @@ contract YieldMathTest is Test {
             mu
         );
 
-        //https://www.desmos.com/calculator/msohzeucu5
+        // https://www.desmos.com/calculator/yfngmdxnsg
         assertApproxEqAbs(_maxFYTokenOut, 176616.991033e18, 1e12);
     }
 
