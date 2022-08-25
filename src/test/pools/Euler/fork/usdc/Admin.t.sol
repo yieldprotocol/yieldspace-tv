@@ -93,12 +93,12 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         pool.retrieveShares(alice); // NOTE retrieve all shares to make sure there are no shares in pool (currently there is a very small amount of shares in pool)
 
         pool.baseToken().approve(EULER_MAINNET, additionalAsset); // calling approve on the necessary Euler contract
-        eToken.deposit(0, additionalAsset); // NOTE call shares token deposit directly because pool wrap func returns an amount in incorrect decimals; `wrap` will need to be fixed in future pools
+        shares.deposit(0, additionalAsset); // NOTE call shares token deposit directly because pool wrap func returns an amount in incorrect decimals; `wrap` will need to be fixed in future pools
         uint256 sharesBalAfterWrap = pool.sharesToken().balanceOf(alice);
         uint256 additionalAmount = sharesBalAfterWrap - sharesBalBeforeWrap;
 
         // send shares to pool
-        eToken.transfer(address(pool), additionalAmount);
+        shares.transfer(address(pool), additionalAmount);
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);

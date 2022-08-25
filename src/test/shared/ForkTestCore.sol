@@ -13,6 +13,7 @@ import {Pool} from "../../Pool/Pool.sol";
 import {ERC20} from "../../Pool/PoolImports.sol";
 import {ISyncablePool} from "../mocks/ISyncablePool.sol";
 import {FYTokenMock as FYToken} from "../mocks/FYTokenMock.sol";
+import {IEToken} from "../../../src/interfaces/IEToken.sol";
 
 import "./Utils.sol";
 import "./Constants.sol";
@@ -49,6 +50,7 @@ abstract contract ForkTestCore is Test {
     Pool public pool;
     ERC20 public asset;
     FYToken public fyToken;
+    IEToken public shares;
 
     address public alice = address(0xbabe);
     address public bob = address(0xb0b);

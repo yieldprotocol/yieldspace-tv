@@ -373,21 +373,21 @@ contract Trade__CheckSharePrice is EulerUSDCFork {
     function testForkUnit_Euler_tradeSharePrice01() public {
         console.log("currentSharePrice matches external contract share price");
 
-        uint256 eTokenPrice = eToken.convertBalanceToUnderlying(WAD);
-        assertEq(pool.getCurrentSharePrice(), eTokenPrice);
+        uint256 sharesPrice = shares.convertBalanceToUnderlying(WAD);
+        assertEq(pool.getCurrentSharePrice(), sharesPrice);
     }
 
     function testForkUnit_Euler_tradeSharePrice02() public {
         console.log("currentSharePrice is not relative to the amount provided");
 
         uint256 currentSharePrice = pool.getCurrentSharePrice();
-        uint256 eTokenPrice = eToken.convertBalanceToUnderlying(WAD * 1_000) / 1000;
-        uint256 eTokenPriceGreater = eToken.convertBalanceToUnderlying(WAD * 1_000_000) / 1_000_000;
-        uint256 eTokenPriceGreatest = eToken.convertBalanceToUnderlying(WAD * 1_000_000_000) / 1_000_000_000;
+        uint256 sharesPrice = shares.convertBalanceToUnderlying(WAD * 1_000) / 1000;
+        uint256 sharesPriceGreater = shares.convertBalanceToUnderlying(WAD * 1_000_000) / 1_000_000;
+        uint256 sharesPriceGreatest = shares.convertBalanceToUnderlying(WAD * 1_000_000_000) / 1_000_000_000;
 
-        assertEq(currentSharePrice, eTokenPrice);
-        assertEq(currentSharePrice, eTokenPriceGreater);
-        assertEq(currentSharePrice, eTokenPriceGreatest);
+        assertEq(currentSharePrice, sharesPrice);
+        assertEq(currentSharePrice, sharesPriceGreater);
+        assertEq(currentSharePrice, sharesPriceGreatest);
     }
 
     function testForkUnit_Euler_tradeSharePrice03() public {
