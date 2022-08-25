@@ -43,7 +43,7 @@ abstract contract EulerUSDCFork is ForkTestCore {
     address public whale = address(0xbd50C26f7ed3dE3f642149D487f4308a42763bd6);
     IEToken eToken;
     uint8 decimals;
-    uint256 WAD; //scaled to asset decimals
+    uint256 WAD; // scaled to asset decimals
 
     function fundAddr(address addr) public {
         vm.prank(whale);
