@@ -78,7 +78,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn);
     }
 
-    function testForkUnit_Euler_tradeDAI03() public {
+    function testForkUnit_Euler_tradeDAI02() public {
         console.log("buys a certain amount base for fyToken");
 
         uint128 assetsOut = uint128(1000 * 10**asset.decimals());
@@ -119,7 +119,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn);
     }
 
-    function testForkUnit_Euler_tradeDAI04() public {
+    function testForkUnit_Euler_tradeDAI03() public {
         console.log("buys base and retrieves change");
 
         uint128 assetsOut = uint128(1000 * 10**asset.decimals());
@@ -201,7 +201,7 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
     }
 
-    function testForkUnit_Euler_tradeExtraDAI03() public {
+    function testForkUnit_Euler_tradeExtraDAI02() public {
         console.log("donates fyToken and sells base");
 
         uint128 assetsIn = uint128(10_000 * 10**asset.decimals());
@@ -239,7 +239,7 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
     }
 
-    function testForkUnit_Euler_tradeExtraDAI04() public {
+    function testForkUnit_Euler_tradeExtraDAI03() public {
         console.log("buys a certain amount of fyTokens with base (asset)");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
@@ -366,5 +366,36 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
 
         assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAsset, 1); // NOTE one wei issue
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
+    }
+}
+
+contract Trade__CheckSharePrice is EulerDAIFork {
+    function testForkUnit_Euler_tradeSharePrice01() public {
+        console.log("currentSharePrice matches external contract share price");
+
+        uint256 eTokenPrice = eToken.convertBalanceToUnderlying(WAD);
+        assertEq(pool.getCurrentSharePrice(), eTokenPrice);
+    }
+
+    function testForkUnit_Euler_tradeSharePrice02() public {
+        console.log("currentSharePrice is not relative to the amount provided");
+
+        uint256 currentSharePrice = pool.getCurrentSharePrice();
+        uint256 eTokenPrice = eToken.convertBalanceToUnderlying(WAD * 1_000) / 1000;
+        uint256 eTokenPriceGreater = eToken.convertBalanceToUnderlying(WAD * 1_000_000) / 1_000_000;
+        uint256 eTokenPriceGreatest = eToken.convertBalanceToUnderlying(WAD * 1_000_000_000) / 1_000_000_000;
+
+        assertEq(currentSharePrice, eTokenPrice);
+        assertEq(currentSharePrice, eTokenPriceGreater);
+        assertEq(currentSharePrice, eTokenPriceGreatest);
+    }
+
+    function testForkUnit_Euler_tradeSharePrice03() public {
+        console.log("currentSharePrice matches unwrapPreview");
+
+        uint256 currentSharePrice = pool.getCurrentSharePrice();
+        uint256 unwrapPreview = pool.unwrapPreview(WAD);
+
+        assertEq(currentSharePrice, unwrapPreview);
     }
 }
