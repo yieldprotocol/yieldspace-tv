@@ -494,8 +494,9 @@ library YieldMath {
     ) public pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
-                y = fyToken reserves
-                z = shares reserves
+                Y = fyToken reserves
+                Z = shares reserves
+                y = maxFYTokenIn
 
                      (                  sum        )^(   invA    ) - Y
                      (    Za          ) + (  Ya  ) )^(   invA    ) - Y
