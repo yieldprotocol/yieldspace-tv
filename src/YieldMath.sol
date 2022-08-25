@@ -497,9 +497,9 @@ library YieldMath {
                 y = fyToken reserves
                 z = shares reserves
 
-                     (                  sum        )^(   invA    ) - y
-                     (    Za          ) + (  Ya  ) )^(   invA    ) - y
-                Δy = ( c/μ * (μz)^(1-t) +  y^(1-t) )^(1 / (1 - t)) - y
+                     (                  sum        )^(   invA    ) - Y
+                     (    Za          ) + (  Ya  ) )^(   invA    ) - Y
+                Δy = ( c/μ * (μz)^(1-t) +  Y^(1-t) )^(1 / (1 - t)) - Y
 
             */
 
