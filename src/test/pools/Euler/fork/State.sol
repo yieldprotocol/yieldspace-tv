@@ -33,6 +33,7 @@ import {ERC20, AccessControl} from "../../../../Pool/PoolImports.sol";
 // to this repo just to get an interface:
 import {FYTokenMock as FYToken} from "../../../mocks/FYTokenMock.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {IEToken} from "../../../../interfaces/IEToken.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
@@ -40,6 +41,7 @@ import {ForkTestCore} from "../../../shared/ForkTestCore.sol";
 
 abstract contract EulerDAIFork is ForkTestCore {
     address public whale = address(0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD);
+    IEToken eToken;
 
     function fundAddr(address addr) public {
         vm.prank(whale);
@@ -53,6 +55,7 @@ abstract contract EulerDAIFork is ForkTestCore {
         pool = Pool(MAINNET_DAI_DECEMBER_2022_POOL);
         asset = ERC20(address(pool.baseToken()));
         fyToken = FYToken(address(pool.fyToken()));
+        eToken = IEToken(address(pool.sharesToken()));
 
         fundAddr(alice);
     }
