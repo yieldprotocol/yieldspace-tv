@@ -491,7 +491,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128) {
+    ) public pure returns (uint128 fyTokenIn) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 Y = fyToken reserves
