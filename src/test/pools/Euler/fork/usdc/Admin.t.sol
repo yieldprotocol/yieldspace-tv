@@ -74,8 +74,8 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         pool.retrieveShares(alice);
 
         // There is a 1 wei difference attributable to some deep nested rounding
-        assertApproxEqAbs(pool.baseToken().balanceOf(alice), startingBaseBalance, 1);
-        // assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
+        assertApproxEqAbs(pool.baseToken().balanceOf(alice), startingBaseBalance, 1); // NOTE one wei issue
+        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
@@ -85,11 +85,20 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
         (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
+        // send assets to be wrapped
         uint256 additionalAsset = 69 * 10**asset.decimals();
+        uint256 sharesBalBeforeWrap = pool.sharesToken().balanceOf(alice);
+
         vm.startPrank(alice);
-        asset.transfer(address(pool), additionalAsset);
-        uint256 additionalAmount = pool.wrap(alice);
-        pool.sharesToken().transfer(address(pool), additionalAmount);
+        pool.retrieveShares(alice); // NOTE retrieve all shares to make sure there are no shares in pool (currently there is a very small amount of shares in pool)
+
+        pool.baseToken().approve(EULER_MAINNET, additionalAsset); // calling approve on the necessary Euler contract
+        eToken.deposit(0, additionalAsset); // NOTE call shares token deposit directly because pool wrap func returns an amount in incorrect decimals; `wrap` will need to be fixed in future pools
+        uint256 sharesBalAfterWrap = pool.sharesToken().balanceOf(alice);
+        uint256 additionalAmount = sharesBalAfterWrap - sharesBalBeforeWrap;
+
+        // send shares to pool
+        eToken.transfer(address(pool), additionalAmount);
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -102,7 +111,7 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
 
         // There is a 1 wei difference attributable to some deep nested rounding
-        assertApproxEqAbs(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount, 1);
+        assertApproxEqAbs(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount, 1); // NOTE should return shares amount in shares decimals (currently returning in asset decimals (known issue))
     }
 
     function testForkUnit_admin_EulerUSDC05() public {
@@ -123,7 +132,7 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
     function testForkUnit_admin6_EulerUSDC06() public {
         console.log("retrieveFYToken returns exceess");
-        uint256 additionalAmount = 69 * 10**asset.decimals();
+        uint256 additionalAmount = 69 * 10**fyToken.decimals();
         vm.prank(alice);
         fyToken.transfer(address(pool), additionalAmount);
 
