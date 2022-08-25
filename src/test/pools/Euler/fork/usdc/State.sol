@@ -33,15 +33,14 @@ import {ERC20, AccessControl} from "../../../../../Pool/PoolImports.sol";
 // to this repo just to get an interface:
 import {FYTokenMock as FYToken} from "../../../../mocks/FYTokenMock.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
-import {IEToken} from "../../../../../interfaces/IEToken.sol";
 
 import "../../../../shared/Utils.sol";
 import "../../../../shared/Constants.sol";
 import {ForkTestCore} from "../../../../shared/ForkTestCore.sol";
+import {IEToken} from "../../../../../interfaces/IEToken.sol";
 
 abstract contract EulerUSDCFork is ForkTestCore {
     address public whale = address(0xbd50C26f7ed3dE3f642149D487f4308a42763bd6);
-    IEToken eToken;
     uint8 decimals;
     uint256 WAD; // scaled to asset decimals
 
@@ -57,7 +56,7 @@ abstract contract EulerUSDCFork is ForkTestCore {
         pool = Pool(MAINNET_USDC_DECEMBER_2022_POOL);
         asset = ERC20(address(pool.baseToken()));
         fyToken = FYToken(address(pool.fyToken()));
-        eToken = IEToken(address(pool.sharesToken()));
+        shares = IEToken(address(pool.sharesToken()));
         WAD = 1e18 / (10**(18 - asset.decimals()));
 
         fundAddr(alice);
