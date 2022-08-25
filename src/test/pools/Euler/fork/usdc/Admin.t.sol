@@ -48,7 +48,7 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
     function testForkUnit_admin_EulerUSDC02() public {
         console.log("retrieveBase returns exceess");
-        uint256 additionalAmount = 69;
+        uint256 additionalAmount = 69 * 10**asset.decimals();
         vm.prank(alice);
         asset.transfer(address(pool), additionalAmount);
 
@@ -85,7 +85,7 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
         (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
-        uint256 additionalAsset = 69e18;
+        uint256 additionalAsset = 69 * 10**asset.decimals();
         vm.startPrank(alice);
         asset.transfer(address(pool), additionalAsset);
         uint256 additionalAmount = pool.wrap(alice);
@@ -123,7 +123,7 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
     function testForkUnit_admin6_EulerUSDC06() public {
         console.log("retrieveFYToken returns exceess");
-        uint256 additionalAmount = 69e18;
+        uint256 additionalAmount = 69 * 10**asset.decimals();
         vm.prank(alice);
         fyToken.transfer(address(pool), additionalAmount);
 
