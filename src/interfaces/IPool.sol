@@ -45,8 +45,12 @@ interface IPool is IERC20, IERC2612 {
     function wrapPreview(uint256 assets) external view returns (uint256 shares);
     function unwrap(address receiver) external returns (uint256 assets);
     function unwrapPreview(uint256 shares) external view returns (uint256 assets);
+    /// Returns the max amount of FYTokens that can be sold to the pool
     function maxFYTokenIn() external view returns (uint128) ;
+    /// Returns the max amount of FYTokens that can be bought from the pool
     function maxFYTokenOut() external view returns (uint128) ;
+    /// Returns the max amount of Base that can be sold to the pool
     function maxBaseIn() external view returns (uint128) ;
+    /// Returns the max amount of Base that can be bought from the pool
     function maxBaseOut() external view returns (uint128);
 }

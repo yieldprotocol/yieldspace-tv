@@ -1085,10 +1085,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* LIQUIDITY FUNCTIONS
      ****************************************************************************************************************/
 
-    function maxFYTokenIn() public view override returns (uint128) {
+    /// @inheritdoc IPool
+    function maxFYTokenIn() public view override returns (uint128 fyTokenIn) {
         uint96 scaleFactor_ = scaleFactor;
         Cache memory cache = _getCache();
-        return
+        fyTokenIn =
             YieldMath.maxFYTokenIn(
                 cache.sharesCached * scaleFactor_,
                 cache.fyTokenCached * scaleFactor_,
@@ -1097,13 +1098,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 _computeG2(cache.g1Fee),
                 _getC(),
                 mu
-            ) / scaleFactor_;
+            ) /
+            scaleFactor_;
     }
 
-    function maxFYTokenOut() public view override returns (uint128) {
+    /// @inheritdoc IPool
+    function maxFYTokenOut() public view override returns (uint128 fyTokenOut) {
         uint96 scaleFactor_ = scaleFactor;
         Cache memory cache = _getCache();
-        return
+        fyTokenOut =
             YieldMath.maxFYTokenOut(
                 cache.sharesCached * scaleFactor_,
                 cache.fyTokenCached * scaleFactor_,
@@ -1112,13 +1115,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 _computeG1(cache.g1Fee),
                 _getC(),
                 mu
-            ) / scaleFactor_;
+            ) /
+            scaleFactor_;
     }
 
+    /// @inheritdoc IPool
     function maxBaseIn() public view override returns (uint128 baseIn) {
         uint96 scaleFactor_ = scaleFactor;
         Cache memory cache = _getCache();
-        uint128 sharesIn = YieldMath.maxSharesIn(
+        uint128 sharesIn = ((YieldMath.maxSharesIn(
             cache.sharesCached * scaleFactor_,
             cache.fyTokenCached * scaleFactor_,
             maturity - uint32(block.timestamp), // This can't be called after maturity
@@ -1126,11 +1131,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             _computeG1(cache.g1Fee),
             _getC(),
             mu
-        ) / scaleFactor_;
+        ) / 1e8) * 1e8) / scaleFactor_; // Shave 8 wei/decimals to deal with precision issues on the decimal functions
 
         baseIn = _unwrapPreview(sharesIn).u128();
     }
 
+    /// @inheritdoc IPool
     function maxBaseOut() public view override returns (uint128 baseOut) {
         uint128 sharesOut = _getCache().sharesCached;
         baseOut = _unwrapPreview(sharesOut).u128();
