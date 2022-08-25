@@ -542,7 +542,7 @@ library YieldMath {
                 "YieldMath: Rounding error"
             );
 
-            return uint128(result);
+            fyTokenIn = uint128(result);
         }
     }
 
