@@ -40,7 +40,7 @@ import "../../../../shared/Constants.sol";
 import {ForkTestCore} from "../../../../shared/ForkTestCore.sol";
 
 abstract contract EulerUSDCFork is ForkTestCore {
-    address public whale = address(0x72a53cdbbcc1b9efa39c834a540550e23463aacb);
+    address public whale = address(0x72A53cDBBcc1b9efa39c834A540550e23463AAcB);
     IEToken eToken;
 
     function fundAddr(address addr) public {
