@@ -23,14 +23,14 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../../../../Pool/PoolErrors.sol";
-import {IPool, IERC20Like as IERC20Metadata} from "../../../../Pool/PoolImports.sol";
-import {Math64x64} from "../../../../Math64x64.sol";
-import {YieldMath} from "../../../../YieldMath.sol";
+import "../../../../../Pool/PoolErrors.sol";
+import {IPool, IERC20Like as IERC20Metadata} from "../../../../../Pool/PoolImports.sol";
+import {Math64x64} from "../../../../../Math64x64.sol";
+import {YieldMath} from "../../../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
-import "../../../shared/Utils.sol";
-import "../../../shared/Constants.sol";
+import "../../../../shared/Utils.sol";
+import "../../../../shared/Constants.sol";
 import "./State.sol";
 
 contract SetFeesEulerDAIFork is EulerDAIFork {
