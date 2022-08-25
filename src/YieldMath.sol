@@ -577,7 +577,7 @@ library YieldMath {
                 
                     Y - ( (       numerator           ) / (  denominator  ) )^invA
                     Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
-                y = Y - ( (   c/μ * (μZ)^a +    y^a   ) / (    c/μ + 1    ) )^(1/a)
+                y = Y - ( (   c/μ * (μZ)^a +    Y^a   ) / (    c/μ + 1    ) )^(1/a)
             */
 
             // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
