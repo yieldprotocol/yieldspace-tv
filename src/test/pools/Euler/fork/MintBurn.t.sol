@@ -15,8 +15,7 @@ pragma solidity >=0.8.15;
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 //    NOTE:
-//    These tests are exactly copy and pasted from the MintBurn.t.sol test suites.
-//    These tests run in a mainnet fork environment.
+//    Mainnet fork tests using December 2022 DAI pool
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
