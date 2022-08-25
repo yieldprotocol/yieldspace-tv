@@ -1133,7 +1133,7 @@ contract YieldMathTest is Test {
     function test_maxSharesIn() public {
         uint128 _maxSharesIn = YieldMath.maxSharesIn(sharesReserves, fyTokenReserves, timeTillMaturity, k, g1, c, mu);
 
-        //https://www.desmos.com/calculator/q0vu2axmji
+        // https://www.desmos.com/calculator/oddzrif0y7
         assertApproxEqAbs(_maxSharesIn, 160364.770445e18, 1e12);
     }
 }
