@@ -35,6 +35,8 @@ abstract contract TestCore is Test {
 
     event Sync(uint112 sharesCached, uint112 fyTokenCached, uint256 cumulativeBalancesRatio);
 
+    event FeesSet(uint16);
+
     event Trade(uint32 maturity, address indexed from, address indexed to, int256 shares, int256 fyTokens);
 
     using Math64x64 for int128;
