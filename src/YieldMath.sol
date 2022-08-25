@@ -659,6 +659,22 @@ library YieldMath {
         }
     }
 
+
+/* 
+    This function is not needed as it's return value is driven directly by the shares liquidity of the pool
+
+    https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw?view#MaxSharesOut
+
+    function maxSharesOut(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 maxSharesOut_) {} */
+
     /* UTILITY FUNCTIONS
      ******************************************************************************************************************/
 
