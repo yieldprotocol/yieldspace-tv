@@ -1050,7 +1050,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
-    /// @dev Note: This external fn returns baseOut while the external fn takes sharesOut.
+    /// @dev Note: This external fn returns baseOut while the internal fn returns sharesOut.
     /// @param fyTokenIn Amount of fyToken hypothetically sold.
     /// @return baseOut Amount of base hypothetically bought.
     function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128 baseOut) {
