@@ -67,14 +67,16 @@ contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
     function testForkUnit_admin_EulerUSDC03() public {
         console.log("retrieveShares returns nothing if there is no excess");
-        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
-        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        pool.retrieveShares(alice); // initially retrieve excess
+
+        uint256 startingBaseBalance = asset.balanceOf(alice);
+        uint256 startingSharesBalance = shares.balanceOf(alice);
         (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         // There is a 1 wei difference attributable to some deep nested rounding
-        assertApproxEqAbs(pool.baseToken().balanceOf(alice), startingBaseBalance, 1); // NOTE one wei issue
+        assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
