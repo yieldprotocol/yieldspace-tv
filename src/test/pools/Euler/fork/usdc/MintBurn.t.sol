@@ -288,17 +288,18 @@ contract BurnForBase__WithLiquidityEulerUSDCFork is EulerUSDCForkWithLiquidity {
         // burnForBase
         vm.startPrank(alice);
         pool.transfer(address(pool), lpTokensToBurn);
+
         pool.burnForBase(alice, 0, uint128(MAX));
 
         // check user balances
-        assertEq(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedAssetsOut, 3); // NOTE one wei issue
         assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
         assertEq(poolBalBefore - pool.balanceOf(alice), lpTokensToBurn);
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesBefore - sharesReservesAfter, totalSharesOut);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, totalSharesOut, 4); // NOTE one wei issue
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, lpTokensToBurn);
     }
