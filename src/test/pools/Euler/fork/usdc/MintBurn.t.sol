@@ -203,6 +203,13 @@ contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCFork {
     function testForkUnit_Euler_mintWithBaseUSDC02() public {
         console.log("mints with only base (asset)");
 
+        // NOTE skew the pool toward more fyToken reserves by buying base
+        // currently, the reserves are the sameish, so minting with base will fail (fyToken reserves will fall below shares reserves during mintWithBase)
+        // sell all fyToken for base
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyToken.balanceOf(alice));
+        pool.sellFYToken(address(alice), 0);
+
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
         uint256 poolBalBefore = pool.balanceOf(alice);
@@ -224,12 +231,11 @@ contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         uint256 assetsIn = pool.unwrapPreview(sharesIn);
 
         // mintWithBase
-        vm.startPrank(alice);
         asset.transfer(address(pool), assetsIn);
         pool.mintWithBase(alice, alice, fyTokenToBuy, 0, uint128(MAX));
 
         // check user balances
-        assertEq(assetBalBefore - asset.balanceOf(alice), assetsIn);
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), assetsIn, 2); // NOTE one wei issue
         assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
         assertEq(pool.balanceOf(alice) - poolBalBefore, lpTokensMinted);
 
