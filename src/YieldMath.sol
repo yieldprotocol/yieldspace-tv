@@ -15,6 +15,7 @@ import {Math64x64} from "./Math64x64.sol";
 import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 import {CastU128I128} from  "@yield-protocol/utils-v2/contracts/cast/CastU128I128.sol";
 
+
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
 library YieldMath {
@@ -23,9 +24,11 @@ library YieldMath {
     using Math64x64 for int256;
     using Math64x64 for uint256;
     using Exp64x64 for uint128;
+    using Exp64x64 for int128;
     using CastU256U128 for uint256;
     using CastU128I128 for uint128;
 
+    uint128 public constant WAD = 1e18;
     uint128 public constant ONE = 0x10000000000000000; //   In 64.64
     uint256 public constant MAX = type(uint128).max; //     Used for overflow checks
 
@@ -471,6 +474,207 @@ library YieldMath {
         }
     }
 
+    /// Calculates the max amount of fyToken a user could sell.
+    /// @param sharesReserves yield bearing vault shares reserve amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
+    /// @param g fee coefficient, multiplied by 2^64 -- sb over 1.0 for buying shares from the pool
+    /// @param c price of shares in terms of their base, multiplied by 2^64
+    /// @return fyTokenIn the max amount of fyToken a user could sell
+    function maxFYTokenIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 fyTokenIn) {
+        /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+
+                Y = fyToken reserves
+                Z = shares reserves
+                y = maxFYTokenIn
+
+                     (                  sum        )^(   invA    ) - Y
+                     (    Za          ) + (  Ya  ) )^(   invA    ) - Y
+                Δy = ( c/μ * (μz)^(1-t) +  Y^(1-t) )^(1 / (1 - t)) - Y
+
+            */
+
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+
+            uint128 a = _computeA(timeTillMaturity, k, g);
+            uint256 sum;
+            {
+                // normalizedSharesReserves = μ * sharesReserves
+                uint256 normalizedSharesReserves;
+                require((normalizedSharesReserves = mu.mulu(sharesReserves)) <= MAX, "YieldMath: Rate overflow (nsr)");
+
+                // za = c/μ * (normalizedSharesReserves ** a)
+                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+                uint256 za;
+                require(
+                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
+                    "YieldMath: Rate overflow (za)"
+                );
+
+                // ya = fyTokenReserves ** a
+                // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+                // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+                uint256 ya = fyTokenReserves.pow(a, ONE);
+
+                // sum = za + ya
+                // z < MAX, y < MAX, a < 1. It can only underflow, not overflow.
+                require((sum = za + ya) <= MAX, "YieldMath: > fyToken reserves");
+            }
+
+            // result = (sum ** (1/a)) - fyTokenReserves
+            // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
+            // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
+            uint256 result;
+            require(
+                (result = uint256(uint128(sum).pow(ONE, a)) - uint256(fyTokenReserves)) <= MAX,
+                "YieldMath: Rounding error"
+            );
+
+            fyTokenIn = uint128(result);
+        }
+    }
+
+    /// Calculates the max amount of fyToken a user could get.
+    /// https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+    /// @param sharesReserves yield bearing vault shares reserve amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
+    /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
+    /// @param c price of shares in terms of their base, multiplied by 2^64
+    /// @param mu (μ) Normalization factor -- c at initialization
+    /// @return fyTokenOut the max amount of fyToken a user could get
+    function maxFYTokenOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 fyTokenOut) {
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+
+            int128 a = int128(_computeA(timeTillMaturity, k, g));
+
+            /*
+                y = maxFyTokenOut
+                Y = fyTokenReserves (virtual)
+                Z = sharesReserves
+
+                    Y - ( (       numerator           ) / (  denominator  ) )^invA
+                    Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
+                y = Y - ( (   c/μ * (μZ)^a +    Y^a   ) / (    c/μ + 1    ) )^(1/a)
+            */
+
+            // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
+            int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
+
+            // ya = (fyTokenReserves / 1e18) ** a
+            int128 ya = fyTokenReserves.divu(WAD).pow(a);
+
+            // numerator = za + ya
+            int128 numerator = za.add(ya);
+
+            // denominator = c/u + 1
+            int128 denominator = c.div(mu).add(int128(ONE));
+
+            // rightTerm = (numerator / denominator) ** (1/a)
+            int128 rightTerm = numerator.div(denominator).pow(int128(ONE).div(a));
+
+            // maxFYTokenOut_ = fyTokenReserves - (rightTerm * 1e18)
+            require(
+                (fyTokenOut = fyTokenReserves - uint128(rightTerm.mulu(WAD))) <= MAX,
+                "YieldMath: Underflow error"
+            );
+        }
+    }
+
+    /// Calculates the max amount of base a user could sell.
+    /// https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+    /// @param sharesReserves yield bearing vault shares reserve amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
+    /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
+    /// @param c price of shares in terms of their base, multiplied by 2^64
+    /// @param mu (μ) Normalization factor -- c at initialization
+    /// @return sharesIn Calculates the max amount of base a user could sell.
+    function maxSharesIn(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 sharesIn) {
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+
+            int128 a = int128(_computeA(timeTillMaturity, k, g));
+
+            /*
+                y = maxSharesIn_
+                Y = fyTokenReserves (virtual)
+                Z = sharesReserves
+
+                    1/μ ( (       numerator           ) / (  denominator  ) )^invA  - Z
+                    1/μ ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  - Z
+                y = 1/μ ( ( c/μ * (μZ)^a   +    Y^a   ) / (     c/u + 1   ) )^(1/a) - Z
+            */
+
+            // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
+            int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
+
+            // ya = (fyTokenReserves / 1e18) ** a
+            int128 ya = fyTokenReserves.divu(WAD).pow(a);
+
+            // numerator = za + ya
+            int128 numerator = za.add(ya);
+
+            // denominator = c/u + 1
+            int128 denominator = c.div(mu).add(int128(ONE));
+
+            // leftTerm = 1/μ * (numerator / denominator) ** (1/a)
+            int128 leftTerm = int128(ONE).div(mu).mul(numerator.div(denominator).pow(int128(ONE).div(a)));
+
+            // maxSharesIn_ = (leftTerm * 1e18) - sharesReserves
+            require(
+                (sharesIn = uint128(leftTerm.mulu(WAD)) - sharesReserves) <= MAX,
+                "YieldMath: Underflow error"
+            );
+        }
+    }
+
+
+/*
+    This function is not needed as it's return value is driven directly by the shares liquidity of the pool
+
+    https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw?view#MaxSharesOut
+
+    function maxSharesOut(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 maxSharesOut_) {} */
+
     /* UTILITY FUNCTIONS
      ******************************************************************************************************************/
 
@@ -489,36 +693,5 @@ library YieldMath {
         require(a <= int128(ONE), "YieldMath: g must be positive");
 
         return uint128(a);
-    }
-
-    /// Calculate a YieldSpace pool invariant according to the whitepaper
-    /// @dev Implemented using base reserves and uint128 to be backwards compatible with yieldspace-v2
-    /// @param baseReserves base reserve amount
-    /// @param fyTokenReserves fyToken reserves amount
-    /// @param totalSupply pool token total amount
-    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
-    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
-    /// @return result the invariant value
-    function invariant(uint128 baseReserves, uint128 fyTokenReserves, uint256 totalSupply, uint128 timeTillMaturity, int128 k)
-        public pure returns(uint128 result)
-    {
-        if (totalSupply == 0) return 0;
-
-        unchecked {
-            // a = (1 - k * timeTillMaturity)
-            int128 a = int128(ONE).sub(k.mul(timeTillMaturity.fromUInt()));
-            require (a > 0, "YieldMath: Too far from maturity");
-
-            uint256 sum =
-            uint256(baseReserves.pow(uint128 (a), ONE)) +
-            uint256(fyTokenReserves.pow(uint128 (a), ONE)) >> 1;
-            require(sum < MAX, "YieldMath: Sum overflow");
-
-            // We multiply the dividend by 1e18 to get a fixed point number with 18 decimals
-            uint256 result_ = uint256(uint128(sum).pow(ONE, uint128(a))) * 1e18 / totalSupply;
-            require (result_ < MAX, "YieldMath: Result overflow");
-
-            result = uint128(result_);
-        }
     }
 }

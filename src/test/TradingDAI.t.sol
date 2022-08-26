@@ -180,7 +180,6 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
         require(fyTokenBalAfter + fyTokenChange == pool.getFYTokenBalance());
     }
 
-
     // Removed
     // function testUnit_tradeDAI05() public {
 
@@ -188,6 +187,114 @@ contract TradeDAI__WithLiquidity is WithLiquidity {
     // and returned in some cases, extra base is wrapped in other cases, and donating no longer affects reserves.
     // function testUnit_tradeDAI06() public {
     //     console.log("when buying shares, donating fyToken and extra shares doesn't get absorbed and the shares is unwrapped and sent back");
+
+    function testUnit_tradeDAI13() public {
+        console.log("buys ALL base and retrieves change");
+        uint256 bobAssetBefore = asset.balanceOf(bob);
+        uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
+
+        uint128 maxBaseOut = pool.maxBaseOut();
+        assertEq(maxBaseOut, 1087790.901202388886334554e18);
+        uint128 requiredFYTokens = pool.buyBasePreview(maxBaseOut);
+
+        // I'll mint what's required + an extra tenner to test the retrieve method
+        fyToken.mint(address(pool), requiredFYTokens + 10e18);
+        uint128 fyTokenIn = pool.buyBase(bob, maxBaseOut, type(uint128).max);
+
+        // I should have paid the quoted amount
+        assertEq(fyTokenIn, requiredFYTokens);
+        // I should have got the max (rounding error allowed)
+        assertEq(asset.balanceOf(bob), bobAssetBefore + maxBaseOut - 1);
+
+        // I'll retrieve the extra 10 DAI I minted on purpose
+        pool.retrieveFYToken(bob);
+        assertEq(fyToken.balanceOf(bob), bobFYTokensBefore + 10e18);
+
+        // I can't buy more from the pool
+        assertEq(pool.maxBaseOut(), 1);
+        vm.expectRevert("YieldMath: Too many shares in");
+        pool.buyBasePreview(3);
+    }
+
+    function testUnit_tradeDAI14() public {
+        console.log("sells ALL fyToken");
+        uint256 bobAssetBefore = asset.balanceOf(bob);
+
+        uint128 maxFYTokenIn = pool.maxFYTokenIn();
+        assertEq(maxFYTokenIn, 1089539.945494126677240200e18);
+        uint128 expectedBaseOut = pool.sellFYTokenPreview(maxFYTokenIn);
+
+        // I'll mint what's required, can't mint extra as I'm dealing on the max
+        fyToken.mint(address(pool), maxFYTokenIn);
+        uint128 baseOut = pool.sellFYToken(bob, 0);
+
+        // I should have got the max
+        assertEq(baseOut, expectedBaseOut);
+        assertEq(asset.balanceOf(bob), bobAssetBefore + baseOut);
+
+        // I can't sell more to the pool
+        assertEq(pool.maxFYTokenIn(), 0);
+        vm.expectRevert("YieldMath: Rate overflow (yxa)");
+        pool.sellFYTokenPreview(10e8); // Super low value in DAI
+    }
+
+    function testUnit_tradeDAI15() public {
+        console.log("sells ALL base");
+        uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
+
+        uint128 maxBaseIn = pool.maxBaseIn();
+        assertEqDecimal(maxBaseIn, 122209.753490274010000000e18, 18);
+        uint128 expectedFYTokenOut = pool.sellBasePreview(maxBaseIn);
+
+        // I'll mint what's required, can't mint extra as I'm dealing on the max
+        asset.mint(address(pool), maxBaseIn);
+        uint128 fyTokenOut = pool.sellBase(bob, 0);
+
+        // I should have got the max (rounding error allowed)
+        assertEq(fyTokenOut, expectedFYTokenOut);
+        assertEq(fyToken.balanceOf(bob), bobFYTokensBefore + fyTokenOut);
+
+        // I can't sell more to the pool
+        assertEq(pool.maxBaseIn(), 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000.624923905628839852e18, 1155000.624943450946453460e18)
+        );
+        pool.sellBasePreview(10e12); // Super low value in DAI
+    }
+
+    function testUnit_tradeDAI16() public {
+        console.log("buys ALL fyTokens and retrieves change");
+        uint256 bobSharesBefore = shares.balanceOf(bob);
+        uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
+
+        uint128 maxFYTokenOut = pool.maxFYTokenOut();
+        assertEq(maxFYTokenOut, 122221.597288316649102088e18);
+        uint128 requiredBase = pool.buyFYTokenPreview(maxFYTokenOut);
+
+        // I'll mint what's required + an extra tenner to test the retrieve method
+        asset.mint(address(pool), requiredBase + 10e18);
+        uint128 baseIn = pool.buyFYToken(bob, maxFYTokenOut, type(uint128).max);
+
+        // I should have paid the quoted amount
+        assertEq(baseIn, requiredBase);
+        // I should have got the max
+        assertEq(fyToken.balanceOf(bob), bobFYTokensBefore + maxFYTokenOut);
+
+        // I'll retrieve the extra 10 DAI I minted on purpose (converted into shares)
+        pool.retrieveShares(bob);
+        assertEq(shares.balanceOf(bob), bobSharesBefore + 9.090909090909090908e18);
+
+        // I can't buy more from the pool
+        assertEq(pool.maxFYTokenOut(), 0.000000000010502757e18);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NegativeInterestRatesNotAllowed.selector,
+                1155000.624933875573072429e18,
+                1155000.624933934173771036e18
+            )
+        );
+        pool.buyFYTokenPreview(3e10); // Super low value in DAI
+    }
 }
 
 contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
@@ -324,7 +431,6 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYToken {
         require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
-
 
     // Removed
     // function testUnit_tradeDAI11() public {

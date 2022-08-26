@@ -948,7 +948,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /// Returns how much fyToken would be obtained by selling `baseIn`.
-    /// @dev Note: This internal fn takes baseIn while the external fn takes sharesIn.
+    /// @dev Note: This external fn takes baseIn while the internal fn takes sharesIn.
     /// @param baseIn Amount of base hypothetically sold.
     /// @return fyTokenOut Amount of fyToken hypothetically bought.
     function sellBasePreview(uint128 baseIn) external view virtual override returns (uint128 fyTokenOut) {
@@ -1050,23 +1050,26 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     }
 
     /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
+    /// @dev Note: This external fn returns baseOut while the internal fn returns sharesOut.
     /// @param fyTokenIn Amount of fyToken hypothetically sold.
-    /// @return Amount of base hypothetically bought.
-    function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128) {
+    /// @return baseOut Amount of base hypothetically bought.
+    function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128 baseOut) {
         Cache memory cache = _getCache();
-        return _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        uint128 sharesOut = _sellFYTokenPreview(fyTokenIn, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        baseOut = _unwrapPreview(sharesOut).u128();
     }
 
-    /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
+    /// Returns how much shares would be obtained by selling `fyTokenIn` fyToken.
+    /// @dev Note: This internal fn returns sharesOut while the external fn returns baseOut.
     function _sellFYTokenPreview(
         uint128 fyTokenIn,
         uint104 sharesBalance,
         uint104 fyTokenBalance,
         int128 g2_
-    ) internal view beforeMaturity returns (uint128) {
+    ) internal view beforeMaturity returns (uint128 sharesOut) {
         uint96 scaleFactor_ = scaleFactor;
 
-        return
+        sharesOut =
             YieldMath.sharesOutForFYTokenIn(
                 sharesBalance * scaleFactor_,
                 fyTokenBalance * scaleFactor_,
@@ -1077,6 +1080,66 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 _getC(),
                 mu
             ) / scaleFactor_;
+    }
+
+    /* LIQUIDITY FUNCTIONS
+     ****************************************************************************************************************/
+
+    /// @inheritdoc IPool
+    function maxFYTokenIn() public view override returns (uint128 fyTokenIn) {
+        uint96 scaleFactor_ = scaleFactor;
+        Cache memory cache = _getCache();
+        fyTokenIn =
+            YieldMath.maxFYTokenIn(
+                cache.sharesCached * scaleFactor_,
+                cache.fyTokenCached * scaleFactor_,
+                maturity - uint32(block.timestamp), // This can't be called after maturity
+                ts,
+                _computeG2(cache.g1Fee),
+                _getC(),
+                mu
+            ) /
+            scaleFactor_;
+    }
+
+    /// @inheritdoc IPool
+    function maxFYTokenOut() public view override returns (uint128 fyTokenOut) {
+        uint96 scaleFactor_ = scaleFactor;
+        Cache memory cache = _getCache();
+        fyTokenOut =
+            YieldMath.maxFYTokenOut(
+                cache.sharesCached * scaleFactor_,
+                cache.fyTokenCached * scaleFactor_,
+                maturity - uint32(block.timestamp), // This can't be called after maturity
+                ts,
+                _computeG1(cache.g1Fee),
+                _getC(),
+                mu
+            ) /
+            scaleFactor_;
+    }
+
+    /// @inheritdoc IPool
+    function maxBaseIn() public view override returns (uint128 baseIn) {
+        uint96 scaleFactor_ = scaleFactor;
+        Cache memory cache = _getCache();
+        uint128 sharesIn = ((YieldMath.maxSharesIn(
+            cache.sharesCached * scaleFactor_,
+            cache.fyTokenCached * scaleFactor_,
+            maturity - uint32(block.timestamp), // This can't be called after maturity
+            ts,
+            _computeG1(cache.g1Fee),
+            _getC(),
+            mu
+        ) / 1e8) * 1e8) / scaleFactor_; // Shave 8 wei/decimals to deal with precision issues on the decimal functions
+
+        baseIn = _unwrapPreview(sharesIn).u128();
+    }
+
+    /// @inheritdoc IPool
+    function maxBaseOut() public view override returns (uint128 baseOut) {
+        uint128 sharesOut = _getCache().sharesCached;
+        baseOut = _unwrapPreview(sharesOut).u128();
     }
 
     /* WRAPPING FUNCTIONS

@@ -175,6 +175,110 @@ contract TradeUSDC__WithLiquidity is WithLiquidity {
 
         require(fyToken.balanceOf(alice) > aliceFYTokenBefore);
     }
+
+    function testUnit_tradeUSDC13() public {
+        console.log("buys ALL base and retrieves change");
+        uint256 bobAssetBefore = asset.balanceOf(bob);
+        uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
+
+        uint128 maxBaseOut = pool.maxBaseOut();
+        assertEq(maxBaseOut, 1087790.901304e6);
+        uint128 requiredFYTokens = pool.buyBasePreview(maxBaseOut);
+
+        // I'll mint what's required + an extra tenner to test the retrieve method
+        fyToken.mint(address(pool), requiredFYTokens + 10e6);
+        uint128 fyTokenIn = pool.buyBase(bob, maxBaseOut, type(uint128).max);
+
+        // I should have paid the quoted amount
+        assertEq(fyTokenIn, requiredFYTokens);
+        // I should have got the max (rounding error allowed)
+        assertEq(asset.balanceOf(bob), bobAssetBefore + maxBaseOut - 1);
+
+        // I'll retrieve the extra 10 USDC I minted on purpose
+        pool.retrieveFYToken(bob);
+        assertEq(fyToken.balanceOf(bob), bobFYTokensBefore + 10e6);
+
+        // I can't buy more from the pool
+        assertEq(pool.maxBaseOut(), 1);
+        vm.expectRevert("YieldMath: Too many shares in");
+        pool.buyBasePreview(3);
+    }
+
+    function testUnit_tradeUSDC14() public {
+        console.log("sells ALL fyToken");
+        uint256 bobAssetBefore = asset.balanceOf(bob);
+
+        uint128 maxFYTokenIn = pool.maxFYTokenIn();
+        assertEq(maxFYTokenIn, 1089539.972626e6);
+        uint128 expectedBaseOut = pool.sellFYTokenPreview(maxFYTokenIn);
+
+        // I'll mint what's required, can't mint extra as I'm dealing on the max
+        fyToken.mint(address(pool), maxFYTokenIn);
+        uint128 baseOut = pool.sellFYToken(bob, 0);
+
+        // I should have got the max
+        assertEq(baseOut, expectedBaseOut);
+        assertEq(asset.balanceOf(bob), bobAssetBefore + baseOut);
+
+        // I can't sell more to the pool
+        assertEq(pool.maxFYTokenIn(), 1);
+        vm.expectRevert("YieldMath: Rate overflow (yxa)");
+        pool.sellFYTokenPreview(2);
+    }
+
+    function testUnit_tradeUSDC15() public {
+        console.log("sells ALL base");
+        uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
+
+        uint128 maxBaseIn = pool.maxBaseIn();
+        assertEq(maxBaseIn, 122209.753345e6);
+        uint128 expectedFYTokenOut = pool.sellBasePreview(maxBaseIn);
+
+        // I'll mint what's required, can't mint extra as I'm dealing on the max
+        asset.mint(address(pool), maxBaseIn);
+        uint128 fyTokenOut = pool.sellBase(bob, 0);
+
+        // I should have got the max (rounding error allowed)
+        assertEq(fyTokenOut, expectedFYTokenOut);
+        assertEq(fyToken.balanceOf(bob), bobFYTokensBefore + fyTokenOut);
+
+        // I can't sell more to the pool
+        assertEq(pool.maxBaseIn(), 1);
+        vm.expectRevert(
+            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000.624893e6, 1155000.624895e6)
+        );
+        pool.sellBasePreview(4);
+    }
+
+    function testUnit_tradeUSDC16() public {
+        console.log("buys ALL fyTokens and retrieves change");
+        uint256 bobSharesBefore = shares.balanceOf(bob);
+        uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
+
+        uint128 maxFYTokenOut = pool.maxFYTokenOut();
+        assertEq(maxFYTokenOut, 122221.597326e6);
+        uint128 requiredBase = pool.buyFYTokenPreview(maxFYTokenOut);
+
+        // I'll mint what's required + an extra tenner to test the retrieve method
+        asset.mint(address(pool), requiredBase + 10e6);
+        uint128 baseIn = pool.buyFYToken(bob, maxFYTokenOut, type(uint128).max);
+
+        // I should have paid the quoted amount
+        assertEq(baseIn, requiredBase);
+        // I should have got the max
+        assertEq(fyToken.balanceOf(bob), bobFYTokensBefore + maxFYTokenOut);
+
+        // I'll retrieve the extra 10 USDC I minted on purpose (converted into shares)
+        pool.retrieveShares(bob);
+        assertEq(shares.balanceOf(bob), bobSharesBefore + 9.090908e6);
+
+        // I can't buy more from the pool
+        assertEq(pool.maxFYTokenOut(), 1);
+        vm.expectRevert(
+            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000.624892e6, 1155000.624894e6)
+        );
+        pool.buyFYTokenPreview(3);
+    }
 }
 
 contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
