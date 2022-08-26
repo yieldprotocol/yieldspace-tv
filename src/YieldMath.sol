@@ -554,7 +554,7 @@ library YieldMath {
     /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
     /// @param c price of shares in terms of their base, multiplied by 2^64
     /// @param mu (μ) Normalization factor -- c at initialization
-    /// @return maxFYTokenOut_ the max amount of fyToken a user could get
+    /// @return fyTokenOut the max amount of fyToken a user could get
     function maxFYTokenOut(
         uint128 sharesReserves,
         uint128 fyTokenReserves,
@@ -569,11 +569,11 @@ library YieldMath {
 
             int128 a = int128(_computeA(timeTillMaturity, k, g));
 
-            /* 
+            /*
                 y = maxFyTokenOut
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
-                
+
                     Y - ( (       numerator           ) / (  denominator  ) )^invA
                     Y - ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA
                 y = Y - ( (   c/μ * (μZ)^a +    Y^a   ) / (    c/μ + 1    ) )^(1/a)
@@ -611,7 +611,7 @@ library YieldMath {
     /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
     /// @param c price of shares in terms of their base, multiplied by 2^64
     /// @param mu (μ) Normalization factor -- c at initialization
-    /// @return maxSharesIn_ Calculates the max amount of base a user could sell.
+    /// @return sharesIn Calculates the max amount of base a user could sell.
     function maxSharesIn(
         uint128 sharesReserves, // z
         uint128 fyTokenReserves, // x
@@ -626,11 +626,11 @@ library YieldMath {
 
             int128 a = int128(_computeA(timeTillMaturity, k, g));
 
-            /* 
+            /*
                 y = maxSharesIn_
                 Y = fyTokenReserves (virtual)
                 Z = sharesReserves
-                
+
                     1/μ ( (       numerator           ) / (  denominator  ) )^invA  - Z
                     1/μ ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  - Z
                 y = 1/μ ( ( c/μ * (μZ)^a   +    Y^a   ) / (     c/u + 1   ) )^(1/a) - Z
@@ -660,7 +660,7 @@ library YieldMath {
     }
 
 
-/* 
+/*
     This function is not needed as it's return value is driven directly by the shares liquidity of the pool
 
     https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw?view#MaxSharesOut
