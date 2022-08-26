@@ -356,14 +356,14 @@ contract Trade__PreviewFuncsUSDCFork is EulerUSDCForkSkewedReserves {
 }
 
 contract Trade__CheckSharePrice is EulerUSDCFork {
-    function testForkUnit_Euler_tradeSharePrice01() public {
+    function testForkUnit_Euler_tradeSharePriceUSDC01() public {
         console.log("currentSharePrice matches external contract share price");
 
         uint256 sharesPrice = shares.convertBalanceToUnderlying(WAD);
         assertEq(pool.getCurrentSharePrice(), sharesPrice);
     }
 
-    function testForkUnit_Euler_tradeSharePrice02() public {
+    function testForkUnit_Euler_tradeSharePriceUSDC02() public {
         console.log("currentSharePrice is not relative to the amount provided");
 
         uint256 currentSharePrice = pool.getCurrentSharePrice();
@@ -376,7 +376,7 @@ contract Trade__CheckSharePrice is EulerUSDCFork {
         assertEq(currentSharePrice, sharesPriceGreatest);
     }
 
-    function testForkUnit_Euler_tradeSharePrice03() public {
+    function testForkUnit_Euler_tradeSharePriceUSDC03() public {
         console.log("currentSharePrice matches unwrapPreview");
 
         uint256 currentSharePrice = pool.getCurrentSharePrice();
