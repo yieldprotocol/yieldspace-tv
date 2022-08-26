@@ -370,14 +370,14 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
 }
 
 contract Trade__CheckSharePrice is EulerDAIFork {
-    function testForkUnit_Euler_tradeSharePrice01() public {
+    function testForkUnit_Euler_tradeSharePriceDAI01() public {
         console.log("currentSharePrice matches external contract share price");
 
         uint256 eTokenPrice = eToken.convertBalanceToUnderlying(WAD);
         assertEq(pool.getCurrentSharePrice(), eTokenPrice);
     }
 
-    function testForkUnit_Euler_tradeSharePrice02() public {
+    function testForkUnit_Euler_tradeSharePriceDAI02() public {
         console.log("currentSharePrice is not relative to the amount provided");
 
         uint256 currentSharePrice = pool.getCurrentSharePrice();
@@ -390,7 +390,7 @@ contract Trade__CheckSharePrice is EulerDAIFork {
         assertEq(currentSharePrice, eTokenPriceGreatest);
     }
 
-    function testForkUnit_Euler_tradeSharePrice03() public {
+    function testForkUnit_Euler_tradeSharePriceDAI03() public {
         console.log("currentSharePrice matches unwrapPreview");
 
         uint256 currentSharePrice = pool.getCurrentSharePrice();
