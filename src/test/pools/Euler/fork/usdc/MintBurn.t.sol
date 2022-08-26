@@ -74,15 +74,9 @@ contract SetFeesEulerUSDCFork is EulerUSDCFork {
     }
 }
 
-contract Mint__WithLiquidityEulerUSDCFork is EulerUSDCFork {
+contract Mint__WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
     function testForkUnit_Euler_mintUSDC03() public {
         console.log("mints liquidity tokens, returning shares surplus converted to asset");
-
-        // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
-        // sell fyToken for base
-        vm.startPrank(alice);
-        fyToken.transfer(address(pool), 1000 * 10**fyToken.decimals());
-        pool.sellFYToken(address(alice), 0);
 
         uint256 fyTokenIn = 1 * 10**fyToken.decimals(); // NOTE had to change this to be less than 1000 because of the reserves ratio
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -99,21 +93,22 @@ contract Mint__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn);
 
         // pool mint
+        vm.startPrank(alice);
         asset.transfer(address(pool), expectedAssetsIn * 2); // alice sends too many assets
         fyToken.transfer(address(pool), fyTokenIn);
         pool.mint(alice, alice, 0, MAX);
 
         // check user balances
         assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 3); // NOTE one wei issue; also, alice sent too many assets, but still gets back surplus
-        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn);
-        assertEq(pool.balanceOf(alice) - poolBalBefore, expectedMint);
+        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn, 1);
+        assertApproxEqAbs(pool.balanceOf(alice) - poolBalBefore, expectedMint, 1);
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesAfter - sharesReservesBefore, expectedSharesIn);
-        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
-        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn + expectedMint);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, expectedSharesIn, 1);
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 1);
+        assertApproxEqAbs(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn + expectedMint, 1);
     }
 }
 
@@ -195,7 +190,7 @@ contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCFork {
     }
 }
 
-contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCFork {
+contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
     function testForkUnit_Euler_mintWithBaseUSDC01() public {
         console.log("does not mintWithBase when mature");
 
@@ -207,13 +202,6 @@ contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCFork {
 
     function testForkUnit_Euler_mintWithBaseUSDC02() public {
         console.log("mints with only base (asset)");
-
-        // NOTE skew the pool toward more fyToken reserves by buying base
-        // currently, the reserves are the sameish, so minting with base will fail (fyToken reserves will fall below shares reserves during mintWithBase)
-        // sell all fyToken for base
-        vm.startPrank(alice);
-        fyToken.transfer(address(pool), fyToken.balanceOf(alice));
-        pool.sellFYToken(address(alice), 0);
 
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
@@ -236,6 +224,7 @@ contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         uint256 assetsIn = pool.unwrapPreview(sharesIn);
 
         // mintWithBase
+        vm.startPrank(alice);
         asset.transfer(address(pool), assetsIn);
         pool.mintWithBase(alice, alice, fyTokenToBuy, 0, uint128(MAX));
 

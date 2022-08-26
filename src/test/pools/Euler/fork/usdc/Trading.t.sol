@@ -32,7 +32,7 @@ import "../../../../shared/Utils.sol";
 import "../../../../shared/Constants.sol";
 import "./State.sol";
 
-contract Trade__WithLiquidityEulerUSDCFork is EulerUSDCFork {
+contract Trade__WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -58,24 +58,21 @@ contract Trade__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         );
         uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
 
-        vm.expectEmit(true, true, false, true);
-        emit Trade(pool.maturity(), alice, alice, int256(expectedBaseOut), -int256(fyTokenIn));
-
         // trade
         vm.startPrank(alice);
         fyToken.transfer(address(pool), fyTokenIn);
         pool.sellFYToken(alice, 0);
 
         // check user balances
-        assertEq(asset.balanceOf(alice) - assetBalBefore, expectedBaseOut);
-        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, expectedBaseOut, 3); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn, 1); // NOTE one wei issue
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
-        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
-        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, expectedSharesOut, 3); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 1); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter - fyTokenReservesBefore, fyTokenIn, 1); // NOTE one wei issue
     }
 
     function testForkUnit_Euler_tradeUSDC02() public {
@@ -99,24 +96,21 @@ contract Trade__WithLiquidityEulerUSDCFork is EulerUSDCFork {
             pool.mu()
         );
 
-        vm.expectEmit(true, true, false, true);
-        emit Trade(pool.maturity(), alice, alice, int256(int128(assetsOut)), -int256(expectedFYTokenIn));
-
         // trade
         vm.startPrank(alice);
-        fyToken.transfer(address(pool), expectedFYTokenIn);
+        fyToken.transfer(address(pool), expectedFYTokenIn + 1); // NOTE one wei issue
         pool.buyBase(alice, uint128(assetsOut), type(uint128).max);
 
         // check user balances
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1); // NOTE one wei issue
-        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFYTokenIn);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFYTokenIn, 2); // NOTE one wei issue
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesBefore - sharesReservesAfter, sharesOut);
-        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
-        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 2); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, sharesOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn, 2); // NOTE one wei issue
     }
 
     function testForkUnit_Euler_tradeUSDC03() public {
@@ -137,25 +131,25 @@ contract Trade__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         pool.buyBase(alice, assetsOut, uint128(MAX));
 
         // check user balances before retrieving
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1); // NOTE one wei issue
-        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), surplusFyTokenIn);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), surplusFyTokenIn, 2); // NOTE one wei issue
 
         pool.retrieveFYToken(alice);
 
         // check user balances after retrieving
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 1); // NOTE one wei issue
-        assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFyTokenIn);
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFyTokenIn, 2); // NOTE one wei issue
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesBefore - sharesReservesAfter, sharesOut);
-        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
-        assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFyTokenIn);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 2); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, sharesOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter - fyTokenReservesBefore, expectedFyTokenIn, 2); // NOTE one wei issue
     }
 }
 
-contract Trade__WithExtraFYTokenEulerUSDCFork is EulerUSDCFork {
+contract Trade__WithExtraFYTokenEulerUSDCFork is EulerUSDCForkSkewedReserves {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
@@ -181,50 +175,33 @@ contract Trade__WithExtraFYTokenEulerUSDCFork is EulerUSDCFork {
             pool.mu()
         );
 
-        vm.expectEmit(true, true, false, true);
-        emit Trade(pool.maturity(), alice, alice, -int256(int128(assetsIn - 1)), int256(expectedFyTokenOut)); // NOTE one wei issue (assetsIn - 1)
-        console.log(
-            "~ file: Trading.t.sol ~ line 186 ~ testForkUnit_Euler_tradeExtraUSDC01 ~ assetsIn - 1",
-            assetsIn - 1
-        );
-
         // trade
         vm.startPrank(alice);
         asset.transfer(address(pool), assetsIn);
         pool.sellBase(alice, 0);
 
         // check user balances
-        console.log(
-            "~ file: Trading.t.sol ~ line 195 ~ testForkUnit_Euler_tradeExtraUSDC01 ~ assetBalBefore - asset.balanceOf(alice)",
-            assetBalBefore - asset.balanceOf(alice)
-        );
-        assertEq(assetBalBefore - asset.balanceOf(alice), assetsIn);
-        assertEq(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut);
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), assetsIn, 1); // NOTE one wei issue
+        assertApproxEqAbs(fyToken.balanceOf(alice) - fyTokenBalBefore, expectedFyTokenOut, 1);
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
-        assertEq(sharesReservesAfter - sharesReservesBefore, sharesIn);
-        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
-        assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut);
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, sharesIn, 1); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 1);
+        assertApproxEqAbs(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut, 1);
     }
 
     function testForkUnit_Euler_tradeExtraUSDC02() public {
         console.log("donates fyToken and sells base");
-
-        // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
-        // sell fyToken for base
-        vm.startPrank(alice);
-        fyToken.transfer(address(pool), 20000 * 10**fyToken.decimals());
-        pool.sellFYToken(address(alice), 0);
 
         uint128 assetsIn = uint128(10_000 * 10**asset.decimals());
         uint128 sharesIn = pool.wrapPreview(assetsIn).u128();
         uint128 fyTokenDonation = uint128(5_000 * 10**fyToken.decimals());
         uint128 expectedFyTokenOut = pool.sellBasePreview(assetsIn);
 
+        vm.startPrank(alice);
         asset.transfer(address(bob), assetsIn);
-
         // bob's balances
         uint256 assetBalBefore = asset.balanceOf(bob);
         uint256 fyTokenBalBefore = fyToken.balanceOf(bob);
@@ -241,25 +218,19 @@ contract Trade__WithExtraFYTokenEulerUSDCFork is EulerUSDCFork {
         pool.sellBase(bob, 0);
 
         // check bob's balances
-        assertApproxEqAbs(assetBalBefore - asset.balanceOf(bob), assetsIn, 1); // NOTE one wei issue
-        assertApproxEqAbs(fyToken.balanceOf(bob) - fyTokenBalBefore, expectedFyTokenOut, 1); // NOTE one wei issue
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(bob), assetsIn, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyToken.balanceOf(bob) - fyTokenBalBefore, expectedFyTokenOut, 2); // NOTE one wei issue
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
-        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, sharesIn, 1); // NOTE one wei issue
-        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance() - fyTokenDonation, 1); // NOTE one wei issue; the reserves should not take into consideration the donated fyToken
-        assertApproxEqAbs(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut, 1); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 2); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, sharesIn, 2); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance() - fyTokenDonation, 2); // NOTE one wei issue; the reserves should not take into consideration the donated fyToken
+        assertApproxEqAbs(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut, 2); // NOTE one wei issue
     }
 
     function testForkUnit_Euler_tradeExtraUSDC03() public {
         console.log("buys a certain amount of fyTokens with base (asset)");
-
-        // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
-        // sell fyToken for base
-        vm.startPrank(alice);
-        fyToken.transfer(address(pool), 5000 * 10**fyToken.decimals());
-        pool.sellFYToken(address(alice), 0);
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
 
@@ -278,25 +249,26 @@ contract Trade__WithExtraFYTokenEulerUSDCFork is EulerUSDCFork {
             pool.getC(),
             pool.mu()
         );
-        uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn) + 2; // NOTE one wei issue
+        uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn) + 5; // NOTE one wei issue
 
         // trade
+        vm.startPrank(alice);
         asset.transfer(address(pool), expectedAssetsIn);
         pool.buyFYToken(alice, fyTokenOut, uint128(MAX));
 
         // check user balances
-        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 2); // NOTE one wei issue
-        assertApproxEqAbs(fyToken.balanceOf(alice) - fyTokenBalBefore, fyTokenOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 5); // NOTE one wei issue
+        assertApproxEqAbs(fyToken.balanceOf(alice) - fyTokenBalBefore, fyTokenOut, 5); // NOTE one wei issue
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
-        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, expectedSharesIn, 2); // NOTE one wei issue
-        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 1); // NOTE one wei issue
-        assertApproxEqAbs(fyTokenReservesBefore - fyTokenReservesAfter, fyTokenOut, 2); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 5); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, expectedSharesIn, 5); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 5); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesBefore - fyTokenReservesAfter, fyTokenOut, 5); // NOTE one wei issue
     }
 }
 
-contract Trade__PreviewFuncsUSDCFork is EulerUSDCFork {
+contract Trade__PreviewFuncsUSDCFork is EulerUSDCForkSkewedReserves {
     function testForkUnit_Euler_tradePreviewsUSDC01() public {
         console.log("buyBase matches buyBasePreview");
 
@@ -320,18 +292,13 @@ contract Trade__PreviewFuncsUSDCFork is EulerUSDCFork {
     function testForkUnit_Euler_tradePreviewsUSDC02() public {
         console.log("buyFYToken matches buyFYTokenPreview");
 
-        // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
-        // sell fyToken for base
-        vm.startPrank(alice);
-        fyToken.transfer(address(pool), 5000 * 10**fyToken.decimals());
-        pool.sellFYToken(address(alice), 0);
-
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
         uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut) + 1; // NOTE we add one wei here to prevent reverts within buyFYToken (known one wei issue)
 
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
 
+        vm.startPrank(alice);
         asset.transfer(address(pool), expectedAssetsIn);
         pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
 
@@ -345,18 +312,13 @@ contract Trade__PreviewFuncsUSDCFork is EulerUSDCFork {
     function testForkUnit_Euler_tradePreviewsUSDC03() public {
         console.log("sellBase matches sellBasePreview");
 
-        // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
-        // sell fyToken for base
-        vm.startPrank(alice);
-        fyToken.transfer(address(pool), 5000 * 10**fyToken.decimals());
-        pool.sellFYToken(address(alice), 0);
-
         uint128 assetsIn = uint128(1000 * 10**asset.decimals());
         uint256 expectedFyToken = pool.sellBasePreview(assetsIn);
 
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
 
+        vm.startPrank(alice);
         asset.transfer(address(pool), assetsIn);
         pool.sellBase(alice, 0);
 
