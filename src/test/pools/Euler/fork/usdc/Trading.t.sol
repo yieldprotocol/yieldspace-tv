@@ -289,9 +289,9 @@ contract Trade__WithExtraFYTokenEulerUSDCFork is EulerUSDCFork {
         assertApproxEqAbs(fyToken.balanceOf(alice) - fyTokenBalBefore, fyTokenOut, 2); // NOTE one wei issue
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1); // NOTE one wei issue
         assertApproxEqAbs(sharesReservesAfter - sharesReservesBefore, expectedSharesIn, 2); // NOTE one wei issue
-        assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 1); // NOTE one wei issue
         assertApproxEqAbs(fyTokenReservesBefore - fyTokenReservesAfter, fyTokenOut, 2); // NOTE one wei issue
     }
 }
