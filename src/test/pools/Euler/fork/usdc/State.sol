@@ -73,6 +73,9 @@ abstract contract EulerUSDCForkWithLiquidity is EulerUSDCFork {
         asset.transfer(address(pool), (WAD * 5000)); // scale for usdc decimals
         fyToken.transfer(address(pool), (WAD * 5000) / 2); // scale for usdc decimals
         pool.mint(alice, alice, 0, MAX);
+        pool.retrieveBase(alice);
+        pool.retrieveFYToken(alice);
+        pool.retrieveShares(alice);
 
         vm.stopPrank();
     }
