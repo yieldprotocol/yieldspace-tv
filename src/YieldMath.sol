@@ -553,7 +553,7 @@ library YieldMath {
     /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
     /// @param g fee coefficient, multiplied by 2^64 -- sb under 1.0 for selling shares to pool
     /// @param c price of shares in terms of their base, multiplied by 2^64
-    /// @param mu (μ) Normalization factor -- starts as c at initialization
+    /// @param mu (μ) Normalization factor -- c at initialization
     /// @return maxFYTokenOut_ the max amount of fyToken a user could get
     function maxFYTokenOut(
         uint128 sharesReserves,
@@ -563,7 +563,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 maxFYTokenOut_) {
+    ) public pure returns (uint128 fyTokenOut) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -596,7 +596,7 @@ library YieldMath {
 
             // maxFYTokenOut_ = fyTokenReserves - (rightTerm * 1e18)
             require(
-                (maxFYTokenOut_ = fyTokenReserves - uint128(rightTerm.mulu(WAD))) <= MAX,
+                (fyTokenOut = fyTokenReserves - uint128(rightTerm.mulu(WAD))) <= MAX,
                 "YieldMath: Underflow error"
             );
         }
@@ -620,7 +620,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 maxSharesIn_) {
+    ) public pure returns (uint128 sharesIn) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -653,7 +653,7 @@ library YieldMath {
 
             // maxSharesIn_ = (leftTerm * 1e18) - sharesReserves
             require(
-                (maxSharesIn_ = uint128(leftTerm.mulu(WAD)) - sharesReserves) <= MAX,
+                (sharesIn = uint128(leftTerm.mulu(WAD)) - sharesReserves) <= MAX,
                 "YieldMath: Underflow error"
             );
         }
