@@ -80,3 +80,18 @@ abstract contract EulerUSDCForkWithLiquidity is EulerUSDCFork {
         vm.stopPrank();
     }
 }
+
+// skews the reserves to have more real fyToken
+abstract contract EulerUSDCForkSkewedReserves is EulerUSDCForkWithLiquidity {
+    function setUp() public virtual override {
+        super.setUp();
+
+        // skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
+        // sell fyToken for base
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), 20000 * 10**fyToken.decimals());
+        pool.sellFYToken(address(alice), 0);
+
+        vm.stopPrank();
+    }
+}
