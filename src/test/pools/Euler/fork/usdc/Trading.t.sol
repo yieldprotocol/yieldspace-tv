@@ -98,19 +98,19 @@ contract Trade__WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
 
         // trade
         vm.startPrank(alice);
-        fyToken.transfer(address(pool), expectedFYTokenIn + 1); // NOTE one wei issue
+        fyToken.transfer(address(pool), expectedFYTokenIn + 5); // NOTE one wei issue
         pool.buyBase(alice, uint128(assetsOut), type(uint128).max);
 
         // check user balances
-        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 2); // NOTE one wei issue
-        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFYTokenIn, 2); // NOTE one wei issue
+        assertApproxEqAbs(asset.balanceOf(alice) - assetBalBefore, assetsOut, 5); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenBalBefore - fyToken.balanceOf(alice), expectedFYTokenIn, 5); // NOTE one wei issue
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 2); // NOTE one wei issue
-        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, sharesOut, 2); // NOTE one wei issue
-        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 2); // NOTE one wei issue
-        assertApproxEqAbs(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn, 2); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 5); // NOTE one wei issue
+        assertApproxEqAbs(sharesReservesBefore - sharesReservesAfter, sharesOut, 5); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter, pool.getFYTokenBalance(), 5); // NOTE one wei issue
+        assertApproxEqAbs(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn, 5); // NOTE one wei issue
     }
 
     function testForkUnit_Euler_tradeUSDC03() public {
