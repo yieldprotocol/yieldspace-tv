@@ -81,10 +81,10 @@ contract Mint__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
         // sell all fyToken for base
         vm.startPrank(alice);
-        fyToken.transfer(address(pool), 4000 * 10**fyToken.decimals()); // minted 5000 fyToken in State, and sending 1000 below, so selling the difference
+        fyToken.transfer(address(pool), 1000 * 10**fyToken.decimals()); // minted 5000 fyToken in State, and sending 1000 below, so selling the difference
         pool.sellFYToken(address(alice), 0);
 
-        uint256 fyTokenIn = 1000 * 10**fyToken.decimals();
+        uint256 fyTokenIn = 1 * 10**fyToken.decimals(); // NOTE had to change this to be less than 1000 because of the reserves ratio
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
         uint256 poolBalBefore = pool.balanceOf(alice);
