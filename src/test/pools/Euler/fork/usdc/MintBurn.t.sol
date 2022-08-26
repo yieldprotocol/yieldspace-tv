@@ -79,9 +79,9 @@ contract Mint__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         console.log("mints liquidity tokens, returning shares surplus converted to asset");
 
         // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
-        // sell all fyToken for base
+        // sell fyToken for base
         vm.startPrank(alice);
-        fyToken.transfer(address(pool), 1000 * 10**fyToken.decimals()); // minted 5000 fyToken in State, and sending 1000 below, so selling the difference
+        fyToken.transfer(address(pool), 1000 * 10**fyToken.decimals());
         pool.sellFYToken(address(alice), 0);
 
         uint256 fyTokenIn = 1 * 10**fyToken.decimals(); // NOTE had to change this to be less than 1000 because of the reserves ratio
