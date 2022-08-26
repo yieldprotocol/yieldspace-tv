@@ -209,16 +209,14 @@ contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves
 
         // estimate how many shares need to be sold using arbitrary fyTokenToBuy amount and estimate lp tokens minted,
         // to be able to calculate how much asset to send to the pool
-        uint128 fyTokenToBuy = uint128(1000 * 10**fyToken.decimals());
+        uint128 fyTokenToBuy = uint128(100 * 10**fyToken.decimals());
         uint128 assetsToSell = pool.buyFYTokenPreview(fyTokenToBuy) + 2; // NOTE we add two wei here to prevent reverts within buyFYToken (known one wei issue)
         uint256 sharesToSell = pool.wrapPreview(assetsToSell);
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint256 realFyTokenReserves = fyTokenReservesBefore - pool.totalSupply();
 
-        uint256 fyTokenIn = fyToken.balanceOf(address(pool)) - realFyTokenReserves;
         // lpTokensMinted = totalSupply * (fyTokenToBuy + fyTokenIn) / realFyTokenReserves - fyTokenToBuy
-        uint256 lpTokensMinted = (pool.totalSupply() * (fyTokenToBuy + fyTokenIn)) /
-            (realFyTokenReserves - fyTokenToBuy);
+        uint256 lpTokensMinted = (pool.totalSupply() * (fyTokenToBuy + 0)) / (realFyTokenReserves - fyTokenToBuy);
 
         uint256 sharesIn = sharesToSell + ((sharesReservesBefore + sharesToSell) * lpTokensMinted) / pool.totalSupply();
         uint256 assetsIn = pool.unwrapPreview(sharesIn);
