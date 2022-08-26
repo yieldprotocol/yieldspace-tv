@@ -104,7 +104,7 @@ contract Mint__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         pool.mint(alice, alice, 0, MAX);
 
         // check user balances
-        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 2); // NOTE one wei issue; also, alice sent too many assets, but still gets back surplus
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn, 3); // NOTE one wei issue; also, alice sent too many assets, but still gets back surplus
         assertEq(fyTokenBalBefore - fyToken.balanceOf(alice), fyTokenIn);
         assertEq(pool.balanceOf(alice) - poolBalBefore, expectedMint);
 
@@ -240,7 +240,7 @@ contract MintWithBase__WithLiquidityEulerUSDCFork is EulerUSDCFork {
         pool.mintWithBase(alice, alice, fyTokenToBuy, 0, uint128(MAX));
 
         // check user balances
-        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), assetsIn, 2); // NOTE one wei issue
+        assertApproxEqAbs(assetBalBefore - asset.balanceOf(alice), assetsIn, 3); // NOTE one wei issue
         assertEq(fyTokenBalBefore, fyToken.balanceOf(alice));
         assertEq(pool.balanceOf(alice) - poolBalBefore, lpTokensMinted);
 
