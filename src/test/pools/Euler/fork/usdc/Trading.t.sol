@@ -303,8 +303,14 @@ contract Trade__PreviewFuncsUSDCFork is EulerUSDCFork {
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
-    function testForkUnit_Euler_tradePrevewsUSDC02() public {
+    function testForkUnit_Euler_tradePreviewsUSDC02() public {
         console.log("buyFYToken matches buyFYTokenPreview");
+
+        // NOTE skew the pool toward more fyToken reserves by buying base; currently there are 0 real fyToken reserves
+        // sell fyToken for base
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), 5000 * 10**fyToken.decimals());
+        pool.sellFYToken(address(alice), 0);
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
         uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut) + 1; // NOTE we add one wei here to prevent reverts within buyFYToken (known one wei issue)
@@ -312,7 +318,6 @@ contract Trade__PreviewFuncsUSDCFork is EulerUSDCFork {
         uint256 assetBalBefore = asset.balanceOf(alice);
         uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
 
-        vm.startPrank(alice);
         asset.transfer(address(pool), expectedAssetsIn);
         pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
 

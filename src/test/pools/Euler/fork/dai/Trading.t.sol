@@ -303,7 +303,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 
-    function testForkUnit_Euler_tradePrevewsDAI02() public {
+    function testForkUnit_Euler_tradePreviewsDAI02() public {
         console.log("buyFYToken matches buyFYTokenPreview");
 
         uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
