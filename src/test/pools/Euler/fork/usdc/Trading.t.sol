@@ -365,7 +365,6 @@ contract Trade__CheckSharePrice is EulerUSDCFork {
 
     function testForkUnit_Euler_tradeSharePriceUSDC02() public {
         console.log("currentSharePrice is not relative to the amount provided");
-
         uint256 currentSharePrice = pool.getCurrentSharePrice();
         uint256 sharesPrice = shares.convertBalanceToUnderlying(WAD * 1_000) / 1000;
         uint256 sharesPriceGreater = shares.convertBalanceToUnderlying(WAD * 1_000_000) / 1_000_000;
@@ -380,7 +379,7 @@ contract Trade__CheckSharePrice is EulerUSDCFork {
         console.log("currentSharePrice matches unwrapPreview");
 
         uint256 currentSharePrice = pool.getCurrentSharePrice();
-        uint256 unwrapPreview = pool.unwrapPreview(WAD);
+        uint256 unwrapPreview = pool.unwrapPreview(ONE_SCALED);
 
         assertEq(currentSharePrice, unwrapPreview);
     }
