@@ -16,59 +16,18 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../Pool/PoolErrors.sol";
-import {Exp64x64} from "../Exp64x64.sol";
-import {Math64x64} from "../Math64x64.sol";
-import {YieldMath} from "../YieldMath.sol";
+import "../../../Pool/PoolErrors.sol";
+import {Math64x64} from "../../../Math64x64.sol";
+import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
-import {almostEqual, setPrice} from "./shared/Utils.sol";
-import {IERC4626Mock} from "./mocks/ERC4626TokenMock.sol";
-import "./shared/Constants.sol";
-// import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
-import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
+import {almostEqual, setPrice} from "../../shared/Utils.sol";
+import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
+import "../../shared/Constants.sol";
+import {FYTokenMock} from "../../mocks/FYTokenMock.sol";
+import "./State.sol";
 
-abstract contract ZeroStateUSDC is ZeroState {
-    constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "4626")) {}
-}
-
-abstract contract WithLiquidity is ZeroStateUSDC {
-    function setUp() public virtual override {
-        super.setUp();
-
-        // Send some shares to the pool.
-        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
-
-        // Alice calls init.
-        vm.prank(alice);
-        pool.init(alice);
-
-        // Update the price of shares to value of state variables: cNumerator/cDenominator
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
-
-        fyToken.mint(address(pool), additionalFYToken);
-        pool.sellFYToken(alice, 0);
-    }
-}
-
-abstract contract WithExtraFYTokenUSDC is WithLiquidity {
-    using Math64x64 for int128;
-    using Math64x64 for uint128;
-    using Math64x64 for int256;
-    using Math64x64 for uint256;
-    using Exp64x64 for uint128;
-
-    function setUp() public virtual override {
-        super.setUp();
-        uint256 additionalFYToken = 30 * 1e6;
-        fyToken.mint(address(pool), additionalFYToken);
-        vm.prank(alice);
-        pool.sellFYToken(alice, 0);
-    }
-}
-
-contract TradeUSDC__WithLiquidity is WithLiquidity {
+contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
     using Math64x64 for uint256;
     using Math64x64 for int128;
     using CastU256U128 for uint256;
@@ -389,7 +348,6 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         require(fyTokenCachedCurrent == pool.getFYTokenBalance());
     }
 
-
     // Removed
     // function testUnit_tradeUSDC11() public {
 
@@ -411,5 +369,89 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
         require(sharesCachedCurrent == sharesBalances + sharesIn);
         require(fyTokenCachedCurrent == fyTokenBalances - fyTokenOut);
+    }
+}
+
+contract TradeUSDCPreviews__WithExtraFYToken is WithExtraFYTokenUSDC {
+    function testUnit_tradeUSDC13() public {
+        console.log("buyBase matches buyBasePreview");
+
+        uint128 expectedAssetOut = uint128(1000 * 10**asset.decimals());
+        uint128 fyTokenIn = pool.buyBasePreview(expectedAssetOut);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.buyBase(alice, expectedAssetOut, type(uint128).max);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAssetOut, 1);
+        assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
+    }
+
+    // getting one wei difference between expected fyToken out
+    // causing revert within trade func
+    function testUnit_tradeUSDC14() public {
+        console.log("buyFYToken matches buyFYTokenPreview");
+
+        uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
+        uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut) + 1; // NOTE one wei issue
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        asset.transfer(address(pool), expectedAssetsIn);
+        pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalBefore - assetBalAfter, expectedAssetsIn);
+        assertEq(fyTokenBalAfter - fyTokenBalBefore, fyTokenOut);
+    }
+
+    function testUnit_tradeUSDC15() public {
+        console.log("sellBase matches sellBasePreview");
+
+        uint128 assetsIn = uint128(1000 * 10**asset.decimals());
+        uint256 expectedFyToken = pool.sellBasePreview(assetsIn);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        asset.transfer(address(pool), assetsIn);
+        pool.sellBase(alice, 0);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertEq(assetBalBefore - assetBalAfter, assetsIn);
+        assertEq(fyTokenBalAfter - fyTokenBalBefore, expectedFyToken);
+    }
+
+    function testUnit_tradeUSDC16() public {
+        console.log("sellFYToken matches sellFYTokenPreview");
+
+        uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
+        uint128 expectedAsset = pool.sellFYTokenPreview(fyTokenIn);
+
+        uint256 assetBalBefore = asset.balanceOf(alice);
+        uint256 fyTokenBalBefore = fyToken.balanceOf(alice);
+
+        vm.startPrank(alice);
+        fyToken.transfer(address(pool), fyTokenIn);
+        pool.sellFYToken(alice, 0);
+
+        uint256 assetBalAfter = asset.balanceOf(alice);
+        uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
+
+        assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAsset, 1);
+        assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
     }
 }

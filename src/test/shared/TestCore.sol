@@ -14,7 +14,7 @@ import "./Constants.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {ISyncablePool} from "../mocks/ISyncablePool.sol";
-import {IERC20Like} from  "../../interfaces/IERC20Like.sol";
+import {IERC20Like} from "../../interfaces/IERC20Like.sol";
 
 // TestCore
 // - Initializes state variables.
@@ -23,6 +23,8 @@ import {IERC20Like} from  "../../interfaces/IERC20Like.sol";
 // - Declares constants.
 // No new contracts are created
 abstract contract TestCore is Test {
+    event FeesSet(uint16 g1Fee);
+
     event Liquidity(
         uint32 maturity,
         address indexed from,
@@ -87,7 +89,6 @@ abstract contract TestCore is Test {
 
     uint256 public initialShares;
     uint256 public initialFYTokens;
-
 
     constructor() {
         uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;
