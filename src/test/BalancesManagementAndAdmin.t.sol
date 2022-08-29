@@ -44,7 +44,7 @@ abstract contract WithLiquidity is ZeroState {
 }
 
 contract Admin__WithLiquidity is WithLiquidity {
-    function testUnit_admin1() public {
+    function testUnit_admin1Hoagies() public {
         console.log("balance management getters return correct values");
         require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
         require(pool.getBaseBalance() > pool.getSharesBalance());
@@ -56,7 +56,7 @@ contract Admin__WithLiquidity is WithLiquidity {
         require(g1fee_ == g1Fee);
         almostEqual(sharesCached, 1100000000000000000000000, 100000000);
         require(fyTokenCached == 1154999999999999999952295);
-        require(blockTimeStampLast == 1);
+        require(blockTimeStampLast == block.timestamp);
         uint256 expectedCurrentCumulativeRatio = pool.cumulativeRatioLast() +
             ((uint256(fyTokenCached) * 1e27) * (block.timestamp - blockTimeStampLast)) /
             sharesCached;
