@@ -40,16 +40,16 @@ import {ForkTestCore} from "../../../../shared/ForkTestCore.sol";
 import {IEToken} from "../../../../../interfaces/IEToken.sol";
 
 abstract contract EulerUSDCFork is ForkTestCore {
-    address public whale = address(0xbd50C26f7ed3dE3f642149D487f4308a42763bd6);
+    address public whale = address(0x72A53cDBBcc1b9efa39c834A540550e23463AAcB);
     uint8 decimals;
-    uint256 WAD; // scaled to asset decimals
+    uint256 ONE_SCALED; // scaled to asset decimals
 
     function fundAddr(address addr) public {
         vm.prank(whale);
-        asset.transfer(addr, (WAD * 100_000)); // scale for usdc decimals
+        asset.transfer(addr, (ONE_SCALED * 100_000)); // scale for usdc decimals
 
         vm.prank(ladle);
-        fyToken.mint(addr, (WAD * 100_000)); // scale for usdc decimals
+        fyToken.mint(addr, (ONE_SCALED * 100_000)); // scale for usdc decimals
     }
 
     function setUp() public virtual {
@@ -57,7 +57,7 @@ abstract contract EulerUSDCFork is ForkTestCore {
         asset = ERC20(address(pool.baseToken()));
         fyToken = FYToken(address(pool.fyToken()));
         shares = IEToken(address(pool.sharesToken()));
-        WAD = 1e18 / (10**(18 - asset.decimals()));
+        ONE_SCALED = 1 * 10**(asset.decimals());
 
         fundAddr(alice);
     }
@@ -70,8 +70,8 @@ abstract contract EulerUSDCForkWithLiquidity is EulerUSDCFork {
         vm.startPrank(alice);
 
         // try to mint pool tokens
-        asset.transfer(address(pool), (WAD * 5000)); // scale for usdc decimals
-        fyToken.transfer(address(pool), (WAD * 5000) / 2); // scale for usdc decimals
+        asset.transfer(address(pool), (ONE_SCALED * 5000)); // scale for usdc decimals
+        fyToken.transfer(address(pool), (ONE_SCALED * 5000) / 2); // scale for usdc decimals
         pool.mint(alice, alice, 0, MAX);
         pool.retrieveBase(alice);
         pool.retrieveFYToken(alice);
