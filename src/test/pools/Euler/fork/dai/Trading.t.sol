@@ -348,7 +348,7 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
      * this has now been updated to (correctly) output base amount in Pool.sol
      * the current dai/usdc december 2022 mainnet pools will continue to incorrectly output shares amounts, whereas future pools will reflect the update
      */
-    function testForkUnit_Euler_tradePreviewsDAI04() public {
+    function testFailForkUnit_Euler_tradePreviewsDAI04() public {
         console.log("sellFYToken matches sellFYTokenPreview");
 
         uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());

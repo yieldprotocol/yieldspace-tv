@@ -334,7 +334,7 @@ contract Trade__PreviewFuncsUSDCFork is EulerUSDCForkSkewedReserves {
      * this has now been updated to (correctly) output base amount in Pool.sol
      * the current USDC/usdc december 2022 mainnet pools will continue to incorrectly output shares amounts, whereas future pools will reflect the update
      */
-    function testForkUnit_Euler_tradePreviewsUSDC04() public {
+    function testFailForkUnit_Euler_tradePreviewsUSDC04() public {
         console.log("sellFYToken matches sellFYTokenPreview");
 
         uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
