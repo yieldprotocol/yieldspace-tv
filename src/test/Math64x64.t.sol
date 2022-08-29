@@ -1004,20 +1004,6 @@ contract Math64x64Test is Test {
         Math64x64.log_2(0x0);
     }
 
-    function testFuzz_log_2_Math64x64(int256 passedInX) public {
-        int128 x = coerceInt256To128(passedInX);
-        if (x == type(int128).min) x = type(int128).max;
-        if (x < 0) x = -x;
-        if (x == 0) x = 0x1;
-        int128 result = Math64x64.log_2(x);
-
-        // property tests:
-        require(result < x);
-
-        int128 ln = Math64x64.ln(x);
-        int128 expectedLn = int128(int256((uint256(uint128(result)) * 0xB17217F7D1CF79ABC9E3B39803F2F6AF) >> 128));
-        assertEq(ln, expectedLn);
-    }
 
     /* 23. function ln(int128 x) internal pure returns (int128)
      ***************************************************************/
