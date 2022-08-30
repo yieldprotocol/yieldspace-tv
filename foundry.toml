@@ -1,7 +1,6 @@
 [fuzz]
 runs = 1000
 
-
 [profile.default]
 contracts = 'src/contracts'
 gas_reports = ["*"]
