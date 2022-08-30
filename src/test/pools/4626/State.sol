@@ -21,7 +21,7 @@ import "../../shared/Constants.sol";
 import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
 
 import "../../../Pool/PoolErrors.sol";
-import {Exp64x64} from "../../Exp64x64.sol";
+import {Exp64x64} from "../../../Exp64x64.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
