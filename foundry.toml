@@ -6,9 +6,7 @@ contracts = 'src/contracts'
 gas_reports = ["*"]
 libs = ['lib']
 optimizer = true              # Enable or disable the solc optimizer
-optimizer_runs = 200          # The number of optimizer runs
+optimizer_runs = 100000       # The number of optimizer runs
 out = 'out'
 src = 'src'
 verbosity = 3                 # The verbosity of tests
-
-optimizer = false
