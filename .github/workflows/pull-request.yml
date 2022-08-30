@@ -20,6 +20,6 @@ jobs:
         run: forge build --sizes
 
       - name: Run tests
-        run: forge test -vvvvv
+        run: forge test -vvvvv --fork-url $MAINNET_RPC
         env:
           MAINNET_RPC: ${{ secrets.ALCHEMY_MAINNET_RPC }}
