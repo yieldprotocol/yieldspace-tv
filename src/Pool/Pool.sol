@@ -1142,6 +1142,24 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         baseOut = _unwrapPreview(sharesOut).u128();
     }
 
+    /// @inheritdoc IPool
+    function invariant() public view override returns (uint128 result) {
+        uint96 scaleFactor_ = scaleFactor;
+        Cache memory cache = _getCache();
+        result =
+            YieldMath.invariant(
+                cache.sharesCached * scaleFactor_,
+                cache.fyTokenCached * scaleFactor_,
+                _totalSupply * scaleFactor_,
+                maturity - uint32(block.timestamp),
+                ts,
+                _computeG2(cache.g1Fee),
+                _getC(),
+                mu
+            ) /
+            scaleFactor_;
+    }
+
     /* WRAPPING FUNCTIONS
      ****************************************************************************************************************/
 
