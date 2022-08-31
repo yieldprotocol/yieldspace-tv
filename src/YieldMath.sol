@@ -645,6 +645,81 @@ library YieldMath {
         int128 mu
     ) public pure returns (uint128 maxSharesOut_) {} */
 
+    /// Calculates the total supply invariant.
+    /// https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+    /// @param sharesReserves yield bearing vault shares reserve amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param totalSupply total supply
+    /// @param timeTillMaturity time till maturity in seconds e.g. 90 days in seconds
+    /// @param k time till maturity coefficient, multiplied by 2^64.  e.g. 25 years in seconds
+    /// @param g fee coefficient, multiplied by 2^64 -- use under 1.0 (g2)
+    /// @param c price of shares in terms of their base, multiplied by 2^64
+    /// @param mu (μ) Normalization factor -- c at initialization
+    /// @return result Calculates the total supply invariant.
+    function invariant(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint256 totalSupply, // s
+        uint128 timeTillMaturity,
+        int128 k,
+        int128 g,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 result) {
+        if (totalSupply == 0) return 0;
+        int128 a = int128(_computeA(timeTillMaturity, k, g));
+
+        result = _invariant(sharesReserves, fyTokenReserves, totalSupply, a, c, mu);
+    }
+
+    /// @param sharesReserves yield bearing vault shares reserve amount
+    /// @param fyTokenReserves fyToken reserves amount
+    /// @param totalSupply total supply
+    /// @param a 1 - g * t computed
+    /// @param c price of shares in terms of their base, multiplied by 2^64
+    /// @param mu (μ) Normalization factor -- c at initialization
+    /// @return result Calculates the total supply invariant.
+    function _invariant(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint256 totalSupply, // s
+        int128 a,
+        int128 c,
+        int128 mu
+    ) internal pure returns (uint128 result) {
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+
+            /*
+                y = invariant
+                Y = fyTokenReserves (virtual)
+                Z = sharesReserves
+                s = total supply
+
+                    c/μ ( (       numerator           ) / (  denominator  ) )^invA  / s 
+                    c/μ ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  / s 
+                y = c/μ ( ( c/μ * (μZ)^a   +    Y^a   ) / (     c/u + 1   ) )^(1/a) / s
+            */
+
+            // za = c/μ * ((μ * (sharesReserves / 1e18)) ** a)
+            int128 za = c.div(mu).mul(mu.mul(sharesReserves.divu(WAD)).pow(a));
+
+            // ya = (fyTokenReserves / 1e18) ** a
+            int128 ya = fyTokenReserves.divu(WAD).pow(a);
+
+            // numerator = za + ya
+            int128 numerator = za.add(ya);
+
+            // denominator = c/u + 1
+            int128 denominator = c.div(mu).add(int128(ONE));
+
+            // topTerm = c/μ * (numerator / denominator) ** (1/a)
+            int128 topTerm = c.div(mu).mul((numerator.div(denominator)).pow(int128(ONE).div(a)));
+
+            result = uint128(topTerm.mulu(WAD) / (totalSupply / WAD));
+        }
+    }
+
     /* UTILITY FUNCTIONS
      ******************************************************************************************************************/
 
