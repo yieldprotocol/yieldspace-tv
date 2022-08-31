@@ -74,7 +74,7 @@ contract YieldMathTest is Test {
 
     uint128 public constant fyTokenReserves = uint128(1500000 * 1e18); // Y
     uint128 public constant sharesReserves = uint128(1100000 * 1e18); // Z
-    uint256 public constant totalSupply = 1200000 * 1e18; // s
+    uint256 public constant totalSupply = 1_200_000e18; // s
 
     // The DESMOS uses 0.1 second increments, so we use them here in the tests for easy comparison.  In the deployed
     // contract we use seconds.
@@ -317,7 +317,7 @@ contract YieldMathTest is Test {
 
     function testFuzz_fyTokenOutForSharesIn__isCatMaturity(uint128 sharesAmount) public {
         // At maturity the fytoken price will be close to c
-    // TODO: replace with actual max once YieldExtensions are merged
+        // TODO: replace with actual max once YieldExtensions are merged
         // max per desmos = 1.367m -- anything higher will result in more han 1.5m fyTokens out
         sharesAmount = uint128(bound(sharesAmount, 500000000000000000000, 1_360_000 * 1e18));
         uint128 result = YieldMath.fyTokenOutForSharesIn(
@@ -493,12 +493,7 @@ contract YieldMathTest is Test {
             uint128(200_000 * 1e18),
             uint128(900_000 * 1e18)
         ];
-        uint128[4] memory expectedResults = [
-            uint128(45359),
-            uint128(90_749),
-            uint128(181_625),
-            uint128(821_505)
-        ];
+        uint128[4] memory expectedResults = [uint128(45359), uint128(90_749), uint128(181_625), uint128(821_505)];
         uint128 result;
         for (uint256 idx; idx < fyTokenAmounts.length; idx++) {
             result =
