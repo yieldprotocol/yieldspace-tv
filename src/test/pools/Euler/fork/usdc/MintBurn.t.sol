@@ -156,7 +156,7 @@ contract Burn__WithLiquidityEulerUSDCFork is EulerUSDCForkWithLiquidity {
     }
 }
 
-contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCForkWithLiquidity {
+contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
     function testForkUnit_Euler_matureBurnUSDC01() public {
         console.log("burns after maturity");
 
