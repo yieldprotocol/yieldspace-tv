@@ -74,6 +74,7 @@ contract YieldMathTest is Test {
 
     uint128 public constant fyTokenReserves = uint128(1500000 * 1e18); // Y
     uint128 public constant sharesReserves = uint128(1100000 * 1e18); // Z
+    uint256 public constant totalSupply = 1200000 * 1e18; // s
 
     // The DESMOS uses 0.1 second increments, so we use them here in the tests for easy comparison.  In the deployed
     // contract we use seconds.
@@ -482,7 +483,6 @@ contract YieldMathTest is Test {
         ) / 1e18;
 
         // NOTE: could not hit "YieldMath: Rate overflow (zyy)" <- possibly redundant
-
     }
 
     function testUnit_sharesInForFYTokenOut__baseCases() public {
@@ -1137,5 +1137,24 @@ contract YieldMathTest is Test {
 
         // https://www.desmos.com/calculator/oddzrif0y7
         assertApproxEqAbs(_maxSharesIn, 160364.770445e18, 1e12);
+    }
+
+    /* 8. function invariant
+     ***************************************************************/
+
+    function test_invariant() public {
+        uint128 result = YieldMath.invariant(
+            sharesReserves,
+            fyTokenReserves,
+            totalSupply,
+            timeTillMaturity,
+            k,
+            g2,
+            c,
+            mu
+        );
+
+        // https://www.desmos.com/calculator/tl0of4wrju
+        assertApproxEqAbs(result, 1.1553244e18, 1e12);
     }
 }
