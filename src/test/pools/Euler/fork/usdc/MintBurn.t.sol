@@ -156,8 +156,8 @@ contract Burn__WithLiquidityEulerUSDCFork is EulerUSDCForkWithLiquidity {
     }
 }
 
-contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCFork {
-    function testForkUnit_Euler_matureBurn01() public {
+contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCForkWithLiquidity {
+    function testForkUnit_Euler_matureBurnUSDC01() public {
         console.log("burns after maturity");
 
         uint256 assetBalBefore = asset.balanceOf(alice);

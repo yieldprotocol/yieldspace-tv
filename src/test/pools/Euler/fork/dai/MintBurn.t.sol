@@ -156,8 +156,8 @@ contract Burn__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
     }
 }
 
-contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testForkUnit_Euler_matureBurn01() public {
+contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
+    function testForkUnit_Euler_matureBurnDAI01() public {
         console.log("burns after maturity");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -190,7 +190,7 @@ contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
     }
 }
 
-contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
+contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
     function testForkUnit_Euler_mintWithBaseDAI01() public {
         console.log("does not mintWithBase when mature");
 
