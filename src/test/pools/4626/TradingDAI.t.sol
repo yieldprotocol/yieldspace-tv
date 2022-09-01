@@ -220,7 +220,11 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         // I can't sell more to the pool
         assertEq(pool.maxBaseIn(), 0);
         vm.expectRevert(
-            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000.624923905628839852e18, 1155000.624943450946453460e18)
+            abi.encodeWithSelector(
+                NegativeInterestRatesNotAllowed.selector,
+                1155000.624923905628839852e18,
+                1155000.624943450946453460e18
+            )
         );
         pool.sellBasePreview(10e12); // Super low value in DAI
     }
@@ -523,5 +527,79 @@ contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYTokenDAI {
 
         assertApproxEqAbs(assetBalAfter - assetBalBefore, expectedAsset, 1);
         assertEq(fyTokenBalBefore - fyTokenBalAfter, fyTokenIn);
+    }
+}
+
+contract Trade__InvariantDAI is WithExtraFYTokenDAI {
+    function testUnit_tradeInvariantDAI01() public {
+        console.log("buyBase, then check the invariant didn't go down");
+
+        uint128 invariantBefore = pool.invariant();
+
+        vm.startPrank(alice);
+
+        for (uint256 i; i < 1000; i++) {
+            uint128 expectedAssetOut = uint128(1000 * 10**asset.decimals());
+            uint128 fyTokenIn = pool.buyBasePreview(expectedAssetOut);
+            fyToken.transfer(address(pool), fyTokenIn);
+            pool.buyBase(alice, expectedAssetOut, type(uint128).max);
+        }
+
+        // NOTE because of precision loss/rounding, the invariant goes down slightly after each trade (near zero amount)
+        // so testing the invariant only goes up will fail for this specific func
+        // https://www.desmos.com/calculator/ceox4jmvlo
+        assertApproxEqAbs(pool.invariant(), invariantBefore, 1.04761904766e18);
+    }
+
+    function testUnit_tradeInvariantDAI02() public {
+        console.log("buyFYToken, then check the invariant didn't go down");
+
+        uint128 invariantBefore = pool.invariant();
+
+        vm.startPrank(alice);
+
+        for (uint256 i; i < 1000; i++) {
+            uint128 fyTokenOut = uint128(1000 * 10**fyToken.decimals());
+            uint256 expectedAssetsIn = pool.buyFYTokenPreview(fyTokenOut) + 1; // NOTE one wei issue
+            asset.transfer(address(pool), expectedAssetsIn);
+            pool.buyFYToken(alice, fyTokenOut, type(uint128).max);
+        }
+
+        assertGe(pool.invariant(), invariantBefore);
+    }
+
+    function testUnit_tradeInvariantDAI03() public {
+        console.log("sellBase, then check the invariant didn't go down");
+
+        uint128 invariantBefore = pool.invariant();
+
+        vm.startPrank(alice);
+
+        for (uint256 i; i < 1000; i++) {
+            uint128 assetsIn = uint128(1000 * 10**asset.decimals());
+            asset.transfer(address(pool), assetsIn);
+            pool.sellBase(alice, 0);
+        }
+
+        assertGe(pool.invariant(), invariantBefore);
+    }
+
+    function testUnit_tradeInvariantDAI04() public {
+        console.log("sellFYToken, then check the invariant didn't go down");
+
+        uint128 invariantBefore = pool.invariant();
+
+        vm.startPrank(alice);
+
+        for (uint256 i; i < 1000; i++) {
+            uint128 fyTokenIn = uint128(1000 * 10**fyToken.decimals());
+            fyToken.transfer(address(pool), fyTokenIn);
+            pool.sellFYToken(alice, 0);
+        }
+
+        // NOTE because of precision loss/rounding, the invariant goes down slightly after each trade (near zero amount)
+        // so testing the invariant only goes up will fail for this specific func
+        // https://www.desmos.com/calculator/1mnapugmko
+        assertApproxEqAbs(pool.invariant(), invariantBefore, 1.04761904766e18);
     }
 }
