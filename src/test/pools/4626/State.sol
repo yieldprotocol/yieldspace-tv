@@ -166,3 +166,35 @@ abstract contract OnceMatureUSDC is WithExtraFYTokenUSDC {
         vm.warp(pool.maturity());
     }
 }
+
+abstract contract WithMoreLiquidityUSDC is WithExtraFYTokenUSDC {
+    function setUp() public virtual override {
+        super.setUp();
+
+        vm.startPrank(alice);
+
+        uint256 fyTokenIn = 1_000_000 * 10**fyToken.decimals();
+        uint256 assetIn = 10_000_000 * 10**asset.decimals();
+        fyToken.transfer(address(pool), fyTokenIn);
+        asset.transfer(address(pool), assetIn);
+        pool.mint(alice, alice, 0, MAX);
+
+        vm.stopPrank();
+    }
+}
+
+abstract contract WithMoreLiquidityDAI is WithExtraFYTokenDAI {
+    function setUp() public virtual override {
+        super.setUp();
+
+        vm.startPrank(alice);
+
+        uint256 fyTokenIn = 1_000_000 * 10**fyToken.decimals();
+        uint256 assetIn = 10_000_000 * 10**asset.decimals();
+        fyToken.transfer(address(pool), fyTokenIn);
+        asset.transfer(address(pool), assetIn);
+        pool.mint(alice, alice, 0, MAX);
+
+        vm.stopPrank();
+    }
+}
