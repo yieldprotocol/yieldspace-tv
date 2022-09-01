@@ -530,7 +530,7 @@ contract TradeDAIPreviews__WithExtraFYToken is WithExtraFYTokenDAI {
     }
 }
 
-contract Trade__InvariantDAI is WithExtraFYTokenDAI {
+contract Trade__InvariantDAI is WithMoreLiquidityDAI {
     function testUnit_tradeInvariantDAI01() public {
         console.log("buyBase, then check the invariant didn't go down");
 
@@ -547,7 +547,7 @@ contract Trade__InvariantDAI is WithExtraFYTokenDAI {
 
         // NOTE because of precision loss/rounding, the invariant goes down slightly after each trade (near zero amount)
         // so testing the invariant only goes up will fail for this specific func
-        // https://www.desmos.com/calculator/ceox4jmvlo
+        // https://www.desmos.com/calculator/8m678hqdy0
         assertApproxEqAbs(pool.invariant(), invariantBefore, 1.04761904766e18);
     }
 
@@ -599,7 +599,7 @@ contract Trade__InvariantDAI is WithExtraFYTokenDAI {
 
         // NOTE because of precision loss/rounding, the invariant goes down slightly after each trade (near zero amount)
         // so testing the invariant only goes up will fail for this specific func
-        // https://www.desmos.com/calculator/1mnapugmko
+        // https://www.desmos.com/calculator/pjbd3s38zr
         assertApproxEqAbs(pool.invariant(), invariantBefore, 1.04761904766e18);
     }
 }

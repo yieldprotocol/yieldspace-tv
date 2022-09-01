@@ -456,7 +456,7 @@ contract TradeUSDCPreviews__WithExtraFYToken is WithExtraFYTokenUSDC {
     }
 }
 
-contract Trade__InvariantUSDC is WithExtraFYTokenUSDC {
+contract Trade__InvariantUSDC is WithMoreLiquidityUSDC {
     function testUnit_tradeInvariantUSDC01() public {
         console.log("buyBase, then check the invariant didn't go down");
 
