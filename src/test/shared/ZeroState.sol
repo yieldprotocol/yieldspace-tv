@@ -121,8 +121,8 @@ abstract contract ZeroState is TestCore {
         alice = address(0xbabe);
         vm.label(alice, "alice");
         shares.mint(alice, aliceSharesInitialBalance);
-        fyToken.mint(alice, 50_000 * 10**assetDecimals);
-        asset.mint(address(alice), 100_000 * 10**assetDecimals);
+        fyToken.mint(alice, 50_000_000 * 10**assetDecimals);
+        asset.mint(address(alice), 100_000_000 * 10**assetDecimals);
         bob = address(0xb0b);
         vm.label(bob, "bob");
         shares.mint(bob, bobSharesInitialBalance);
