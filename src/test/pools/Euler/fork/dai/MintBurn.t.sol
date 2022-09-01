@@ -156,8 +156,8 @@ contract Burn__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
     }
 }
 
-contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
-    function testForkUnit_Euler_matureBurn01() public {
+contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
+    function testForkUnit_Euler_matureBurnDAI01() public {
         console.log("burns after maturity");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -166,12 +166,15 @@ contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
         uint256 lpTokensIn = poolBalBefore;
 
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
-        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
-        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
+
+        // after maturity
+        vm.warp(pool.maturity());
+
         // fyTokenOut = lpTokensIn * realFyTokenReserves / totalSupply
         uint256 expectedFyTokenOut = (lpTokensIn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
+        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
+        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
 
-        vm.warp(pool.maturity());
         vm.startPrank(alice);
 
         pool.transfer(address(pool), lpTokensIn);
@@ -190,7 +193,7 @@ contract MatureBurn_WithLiquidityEulerDAIFork is EulerDAIFork {
     }
 }
 
-contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIFork {
+contract MintWithBase__WithLiquidityEulerDAIFork is EulerDAIForkWithLiquidity {
     function testForkUnit_Euler_mintWithBaseDAI01() public {
         console.log("does not mintWithBase when mature");
 

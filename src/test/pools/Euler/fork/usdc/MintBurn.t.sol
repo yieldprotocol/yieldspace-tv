@@ -156,8 +156,8 @@ contract Burn__WithLiquidityEulerUSDCFork is EulerUSDCForkWithLiquidity {
     }
 }
 
-contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCFork {
-    function testForkUnit_Euler_matureBurn01() public {
+contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
+    function testForkUnit_Euler_matureBurnUSDC01() public {
         console.log("burns after maturity");
 
         uint256 assetBalBefore = asset.balanceOf(alice);
@@ -166,12 +166,15 @@ contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCFork {
         uint256 lpTokensIn = poolBalBefore;
 
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
-        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
-        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
+
+        // after maturity
+        vm.warp(pool.maturity());
+
         // fyTokenOut = lpTokensIn * realFyTokenReserves / totalSupply
         uint256 expectedFyTokenOut = (lpTokensIn * (fyTokenReservesBefore - pool.totalSupply())) / pool.totalSupply();
+        uint256 expectedSharesOut = (lpTokensIn * sharesReservesBefore) / pool.totalSupply();
+        uint256 expectedAssetsOut = pool.unwrapPreview(expectedSharesOut);
 
-        vm.warp(pool.maturity());
         vm.startPrank(alice);
 
         pool.transfer(address(pool), lpTokensIn);
