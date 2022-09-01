@@ -716,7 +716,7 @@ library YieldMath {
             // topTerm = c/μ * (numerator / denominator) ** (1/a)
             int128 topTerm = c.div(mu).mul((numerator.div(denominator)).pow(int128(ONE).div(a)));
 
-            result = uint128(topTerm.mulu(WAD) / (totalSupply / WAD));
+            result = uint128((topTerm.mulu(WAD) * WAD) / totalSupply);
         }
     }
 
