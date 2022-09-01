@@ -186,7 +186,7 @@ contract MatureBurn_WithLiquidityEulerUSDCFork is EulerUSDCForkSkewedReserves {
 
         // check pool reserves
         (uint104 sharesReservesAfter, uint104 fyTokenReservesAfter, , ) = pool.getCache();
-        assertEq(sharesReservesAfter, pool.getSharesBalance());
+        assertApproxEqAbs(sharesReservesAfter, pool.getSharesBalance(), 1);
         assertEq(sharesReservesBefore - sharesReservesAfter, expectedSharesOut);
         assertEq(fyTokenReservesAfter, pool.getFYTokenBalance());
         assertEq(fyTokenReservesBefore - fyTokenReservesAfter, expectedFyTokenOut + lpTokensIn); // after burning, the reserves are updated to exclude the burned lp tokens
