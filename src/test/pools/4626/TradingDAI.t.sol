@@ -548,7 +548,7 @@ contract Trade__InvariantDAI is WithMoreLiquidityDAI {
         // NOTE because of precision loss/rounding, the invariant goes down slightly after each trade (near zero amount)
         // so testing the invariant only goes up will fail for this specific func
         // https://www.desmos.com/calculator/8m678hqdy0
-        assertApproxEqAbs(pool.invariant(), invariantBefore, 1.04761904766e18);
+        assertApproxEqAbs(pool.invariant(), invariantBefore, 1e10);
     }
 
     function testUnit_tradeInvariantDAI02() public {
@@ -600,6 +600,6 @@ contract Trade__InvariantDAI is WithMoreLiquidityDAI {
         // NOTE because of precision loss/rounding, the invariant goes down slightly after each trade (near zero amount)
         // so testing the invariant only goes up will fail for this specific func
         // https://www.desmos.com/calculator/pjbd3s38zr
-        assertApproxEqAbs(pool.invariant(), invariantBefore, 1.04761904766e18);
+        assertApproxEqAbs(pool.invariant(), invariantBefore, 1e10);
     }
 }
