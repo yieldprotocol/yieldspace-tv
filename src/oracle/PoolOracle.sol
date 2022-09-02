@@ -23,6 +23,9 @@ contract PoolOracle is IPoolOracle {
         uint256 ratioCumulative;
     }
 
+    uint128 public constant WAD = 1e18;
+    uint128 public constant RAY = 1e27;
+
     // the desired amount of time over which the moving average should be computed, e.g. 24 hours
     uint256 public immutable windowSize;
     // the number of observations stored for each pool, i.e. how many ratio observations are stored for the window.
@@ -53,7 +56,7 @@ contract PoolOracle is IPoolOracle {
         minTimeElapsed = minTimeElapsed_;
     }
 
-    /// @dev calculates the index of the observation corresponding to the given timestamp
+    /// @notice calculates the index of the observation corresponding to the given timestamp
     /// @param timestamp The timestamp to calculate the index for
     /// @return index The index corresponding to the `timestamp`
     function observationIndexOf(uint256 timestamp) public view returns (uint256 index) {
@@ -61,7 +64,7 @@ contract PoolOracle is IPoolOracle {
         return epochPeriod % granularity;
     }
 
-    /// @dev returns the observation from the oldest epoch (at the beginning of the window) relative to the current time
+    /// @notice returns the oldest observation available, starting at the oldest epoch (at the beginning of the window) relative to the current time
     /// @param pool Address of pool for which the observation is required
     /// @return o The oldest observation available for `pool`
     function getOldestObservationInWindow(address pool) public view returns (Observation memory o) {
@@ -72,13 +75,12 @@ contract PoolOracle is IPoolOracle {
 
         unchecked {
             uint256 observationIndex = observationIndexOf(block.timestamp);
-            uint256 i;
-            do {
+            for (uint256 i; i < length; ) {
                 // can't possible overflow
                 // compute the oldestObservation given `observationIndex`, basically `widowSize` in the past
                 uint256 oldestObservationIndex = (++observationIndex) % granularity;
 
-                // Read the oldet observation
+                // Read the oldest observation
                 o = poolObservations[pool][oldestObservationIndex];
 
                 // For an observation to be valid, it has to be newer than the `windowSize`
@@ -88,14 +90,14 @@ contract PoolOracle is IPoolOracle {
 
                 // If the observation was not newer than the `windowSize` then we loop and try with the next one
                 // We do this for 2 reasons
-                //  a) The current slot may have never been updated due to low volume at the time, but the next may be.
+                //  a) The current slot may have never been updated due to low volume at the time, but the next one may have been.
                 //     Finding a not-that-old observation (not strictly `windowTime` old) is better than aborting the whole tx
-                //  b) We're within the first `windowTime` (i.e. 24hs) of this pool being in use by the oracle,
+                //  b) We could be within the first `windowTime` (i.e. 24hs) of this pool being in use by the oracle,
                 //     hence we don't have enough history for every slot to be valid,
                 //     so we loop hoping for the newer slots to have valid data
 
                 ++i; // can't possible overflow
-            } while (i < length);
+            }
 
             revert MissingHistoricalObservation(pool);
         }
@@ -103,10 +105,12 @@ contract PoolOracle is IPoolOracle {
 
     // @inheritdoc IPoolOracle
     function update(address pool) public override {
-        // populate the array with empty observations (oldest call only)
-        // the first time ever that this method is called for a given `pool` we initialise its array of observations
-        for (uint256 i = poolObservations[pool].length; i < granularity; i++) {
-            poolObservations[pool].push();
+        // populate the array with empty observations (only on the first call ever for each pool)
+        unchecked {
+            for (uint256 i = poolObservations[pool].length; i < granularity; ) {
+                poolObservations[pool].push();
+                ++i;
+            }
         }
 
         // get the observation for the current period
@@ -137,7 +141,8 @@ contract PoolOracle is IPoolOracle {
 
         (uint256 currentCumulativeRatio_, ) = IPool(pool).currentCumulativeRatio();
         // cumulative ratio is in (ratio * seconds) units so for the average we simply get it after division by time elapsed
-        return ((currentCumulativeRatio_ - oldestObservation.ratioCumulative) * 1e18) / (timeElapsed * 1e27);
+        // cumulative ration has 27 decimals precision (RAY), the below equation returns a number on 18 decimals precision
+        return ((currentCumulativeRatio_ - oldestObservation.ratioCumulative) * WAD) / (timeElapsed * RAY);
     }
 
     /// @inheritdoc IPoolOracle
