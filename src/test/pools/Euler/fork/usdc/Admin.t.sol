@@ -12,78 +12,26 @@ pragma solidity >=0.8.15;
 
 */
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+//    NOTE:
+//    Mainnet fork tests using December 2022 USDC pool
+//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "./shared/Utils.sol";
-import "./shared/Constants.sol";
-import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
-import {ZeroState, ZeroStateParams} from "./shared/ZeroState.sol";
-import {IERC20Like} from "../interfaces/IERC20Like.sol";
+import "../../../../../Pool/PoolErrors.sol";
+import {IERC20Like as IERC20Metadata} from "../../../../../Pool/PoolImports.sol";
 
-import {Exp64x64} from "../Exp64x64.sol";
-import {Math64x64} from "../Math64x64.sol";
-import {YieldMath} from "../YieldMath.sol";
+import "../../../../shared/Utils.sol";
+import "../../../../shared/Constants.sol";
+import "./State.sol";
 
-abstract contract WithLiquidity is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
-
-    function setUp() public virtual override {
-        super.setUp();
-        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
-
-        vm.prank(alice);
-        pool.init(alice);
-
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_SHARES * 10**(shares.decimals())) / 9;
-
-        pool.sellFYToken(alice, 0);
-    }
-}
-
-contract Admin__WithLiquidity is WithLiquidity {
-    function testUnit_admin1() public {
-        console.log("balance management getters return correct values");
-        require(pool.getSharesBalance() == shares.balanceOf(address(pool)));
-        require(pool.getBaseBalance() > pool.getSharesBalance());
-        require(
-            pool.getCurrentSharePrice() == ERC4626TokenMock(address(shares)).convertToAssets(10**shares.decimals())
-        );
-        require(pool.getFYTokenBalance() == fyToken.balanceOf(address(pool)) + pool.totalSupply());
-        (uint104 sharesCached, uint104 fyTokenCached, uint32 blockTimeStampLast, uint16 g1fee_) = pool.getCache();
-        require(g1fee_ == g1Fee);
-        almostEqual(sharesCached, 1100000000000000000000000, 100000000);
-        require(fyTokenCached == 1154999999999999999952295);
-        require(blockTimeStampLast == block.timestamp);
-        uint256 expectedCurrentCumulativeRatio = pool.cumulativeRatioLast() +
-            ((uint256(fyTokenCached) * 1e27) * (block.timestamp - blockTimeStampLast)) /
-            sharesCached;
-        (uint256 actualCurrentCumulativeRatio, ) = pool.currentCumulativeRatio();
-        require(actualCurrentCumulativeRatio == expectedCurrentCumulativeRatio);
-        shares.mint(address(pool), 1e18);
-        pool.sync();
-        (uint104 sharesCachedNew, , , ) = pool.getCache();
-        almostEqual(sharesCachedNew, sharesCached + 1e18, 100000000);
-    }
-
-    function testUnit_admin2() public {
-        console.log("setFees cannot be set without auth");
-        (, , , uint fee) = pool.getCache();
-        assertEq(fee, 9500);
-        vm.expectRevert(bytes("Access denied"));
-        pool.setFees(9600);
-        (, , , fee) = pool.getCache();
-        assertEq(fee, 9500);
-
-        vm.prank(bob);
-        pool.setFees(9600);
-        (, , , fee) = pool.getCache();
-        assertEq(fee, 9600);
-    }
-
-    function testUnit_admin3() public {
+contract Admin__WithLiquidityEulerUSDCFork is EulerUSDCFork {
+    function testForkUnit_admin_EulerUSDC01() public {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -98,12 +46,11 @@ contract Admin__WithLiquidity is WithLiquidity {
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
 
-    function testUnit_admin4() public {
+    function testForkUnit_admin_EulerUSDC02() public {
         console.log("retrieveBase returns exceess");
-        uint256 additionalAmount = 69;
-        IERC20Like base = IERC20Like(address(pool.baseToken()));
+        uint256 additionalAmount = 69 * 10**asset.decimals();
         vm.prank(alice);
-        base.transfer(address(pool), additionalAmount);
+        asset.transfer(address(pool), additionalAmount);
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -118,39 +65,58 @@ contract Admin__WithLiquidity is WithLiquidity {
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
 
-    function testUnit_admin5() public {
+    function testForkUnit_admin_EulerUSDC03() public {
         console.log("retrieveShares returns nothing if there is no excess");
-        uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
-        uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
+        pool.retrieveShares(alice); // initially retrieve excess
+
+        uint256 startingBaseBalance = asset.balanceOf(alice);
+        uint256 startingSharesBalance = shares.balanceOf(alice);
         (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
+        // There is a 1 wei difference attributable to some deep nested rounding
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
-    function testUnit_admin6() public {
+    function testForkUnit_admin_EulerUSDC04() public {
         console.log("retrieveShares returns exceess");
-        uint256 additionalAmount = 69e18;
-        shares.mint(address(pool), additionalAmount);
+
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+
+        // send assets to be wrapped
+        uint256 additionalAsset = 69 * 10**asset.decimals();
+        uint256 sharesBalBeforeWrap = pool.sharesToken().balanceOf(alice);
+
+        vm.startPrank(alice);
+        pool.retrieveShares(alice); // NOTE retrieve all shares to make sure there are no shares in pool (currently there is a very small amount of shares in pool)
+
+        pool.baseToken().approve(EULER_MAINNET, additionalAsset); // calling approve on the necessary Euler contract
+        shares.deposit(0, additionalAsset); // NOTE call shares token deposit directly because pool wrap func returns an amount in incorrect decimals; `wrap` will need to be fixed in future pools
+        uint256 sharesBalAfterWrap = pool.sharesToken().balanceOf(alice);
+        uint256 additionalAmount = sharesBalAfterWrap - sharesBalBeforeWrap;
+
+        // send shares to pool
+        shares.transfer(address(pool), additionalAmount);
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
         assertEq(currentFyTokenCached, startingFyTokenCached);
         assertEq(currentSharesCached, startingSharesCached);
-        assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
+
+        // There is a 1 wei difference attributable to some deep nested rounding
+        assertApproxEqAbs(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount, 1); // NOTE should return shares amount in shares decimals (currently returning in asset decimals (known issue))
     }
 
-    function testUnit_admin7() public {
+    function testForkUnit_admin_EulerUSDC05() public {
         console.log("retrieveFYToken returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -166,10 +132,11 @@ contract Admin__WithLiquidity is WithLiquidity {
         assertEq(currentFyTokenCached, startingFyTokenCached);
     }
 
-    function testUnit_admin8() public {
+    function testForkUnit_admin6_EulerUSDC06() public {
         console.log("retrieveFYToken returns exceess");
-        uint256 additionalAmount = 69e18;
-        fyToken.mint(address(pool), additionalAmount);
+        uint256 additionalAmount = 69 * 10**fyToken.decimals();
+        vm.prank(alice);
+        fyToken.transfer(address(pool), additionalAmount);
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
@@ -185,5 +152,4 @@ contract Admin__WithLiquidity is WithLiquidity {
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
     }
-
 }

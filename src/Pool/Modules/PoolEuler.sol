@@ -80,9 +80,9 @@ contract PoolEuler is Pool {
         if (baseOut == 0) return 0;
 
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
-        uint256 sharesReceived = _getSharesBalance() - sharesCached;  // this includes any shares in pool previously
+        shares = _getSharesBalance() - sharesCached; // this includes any shares in pool previously
         if (receiver != address(this)) {
-            sharesToken.safeTransfer(receiver, sharesReceived);
+            sharesToken.safeTransfer(receiver, shares);
         }
     }
 
@@ -128,7 +128,7 @@ contract PoolEuler is Pool {
     function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
         // sharesCached is stored by Yield with the same decimals as the underlying base, but actually the Euler
         // eTokens are always fp18.  So we scale up the sharesCached and subtract from real eToken balance.
-        retrieved =(sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
+        retrieved = (sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
         sharesToken.safeTransfer(to, retrieved);
         // Now the current balances match the cache, so no need to update the TWAR
     }

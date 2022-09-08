@@ -53,4 +53,6 @@ interface IPool is IERC20, IERC2612 {
     function maxBaseIn() external view returns (uint128) ;
     /// Returns the max amount of Base that can be bought from the pool
     function maxBaseOut() external view returns (uint128);
+    /// Returns the result of the total supply invariant function
+    function invariant() external view returns (uint128);
 }
