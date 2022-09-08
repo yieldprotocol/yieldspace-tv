@@ -1497,7 +1497,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Now the balances match the cache, so no need to update the TWAR
     }
 
-    /// Sets g1 numerator and denominator.
+    /// Sets g1 as an fp4, g1 <= 1.0
     /// @dev These numbers are converted to 64.64 and used to calculate g1 by dividing them, or g2 from 1/g1
     function setFees(uint16 g1Fee_) public auth {
         if (g1Fee_ > 10000) {
