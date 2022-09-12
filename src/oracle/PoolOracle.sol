@@ -61,7 +61,7 @@ contract PoolOracle is IPoolOracle {
     /// @return index The index corresponding to the `timestamp`
     function observationIndexOf(uint256 timestamp) public view returns (uint256 index) {
         uint256 epochPeriod = timestamp / periodSize;
-        return epochPeriod % granularity;
+        index = epochPeriod % granularity;
     }
 
     /// @notice returns the oldest observation available, starting at the oldest epoch (at the beginning of the window) relative to the current time
@@ -141,8 +141,8 @@ contract PoolOracle is IPoolOracle {
 
         (uint256 currentCumulativeRatio_, ) = IPool(pool).currentCumulativeRatio();
         // cumulative ratio is in (ratio * seconds) units so for the average we simply get it after division by time elapsed
-        // cumulative ration has 27 decimals precision (RAY), the below equation returns a number on 18 decimals precision
-        return ((currentCumulativeRatio_ - oldestObservation.ratioCumulative) * WAD) / (timeElapsed * RAY);
+        // cumulative ratio has 27 decimals precision (RAY), the below equation returns a number on 18 decimals precision
+        twar= ((currentCumulativeRatio_ - oldestObservation.ratioCumulative) * WAD) / (timeElapsed * RAY);
     }
 
     /// @inheritdoc IPoolOracle
