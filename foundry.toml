@@ -10,3 +10,10 @@ src = 'src'
 verbosity = 3                 # The verbosity of tests
 optimizer_runs = 100000       # The number of optimizer runs
 rpc_endpoints = { mainnet = "${MAINNET_RPC}" }
+
+[profile.dev]
+ignored_error_codes = [
+    5667, # unused args warning
+    5574  # code size warning
+] 
+optimizer = false

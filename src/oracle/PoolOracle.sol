@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
 
-import {IPool} from "../interfaces/IPool.sol";
-import {IPoolOracle} from "../interfaces/IPoolOracle.sol";
+import "../interfaces/IPoolOracle.sol";
+import {Exp64x64} from "../Exp64x64.sol";
+import {Math64x64} from "../Math64x64.sol";
 
 /**
  * @title PoolOracle
@@ -12,11 +13,14 @@ import {IPoolOracle} from "../interfaces/IPoolOracle.sol";
  */
 //solhint-disable not-rely-on-time
 contract PoolOracle is IPoolOracle {
-    event ObservationRecorded(address indexed pool, uint256 index, Observation observation);
+    using Math64x64 for *;
+    using Exp64x64 for *;
 
-    error NoObservationsForPool(address pool);
-    error MissingHistoricalObservation(address pool);
-    error InsufficientElapsedTime(address pool, uint256 elapsedTime);
+    event ObservationRecorded(IPool indexed pool, uint256 index, Observation observation);
+
+    error NoObservationsForPool(IPool pool);
+    error MissingHistoricalObservation(IPool pool);
+    error InsufficientElapsedTime(IPool pool, uint256 elapsedTime);
 
     struct Observation {
         uint256 timestamp;
@@ -42,7 +46,7 @@ contract PoolOracle is IPoolOracle {
     uint256 public immutable minTimeElapsed;
 
     // mapping from pool address to a list of ratio observations of that pool
-    mapping(address => Observation[]) public poolObservations;
+    mapping(IPool => Observation[]) public poolObservations;
 
     constructor(
         uint256 windowSize_,
@@ -67,7 +71,7 @@ contract PoolOracle is IPoolOracle {
     /// @notice returns the oldest observation available, starting at the oldest epoch (at the beginning of the window) relative to the current time
     /// @param pool Address of pool for which the observation is required
     /// @return o The oldest observation available for `pool`
-    function getOldestObservationInWindow(address pool) public view returns (Observation memory o) {
+    function getOldestObservationInWindow(IPool pool) public view returns (Observation memory o) {
         uint256 length = poolObservations[pool].length;
         if (length == 0) {
             revert NoObservationsForPool(pool);
@@ -104,7 +108,7 @@ contract PoolOracle is IPoolOracle {
     }
 
     // @inheritdoc IPoolOracle
-    function update(address pool) public override {
+    function update(IPool pool) public override {
         // populate the array with empty observations (only on the first call ever for each pool)
         unchecked {
             for (uint256 i = poolObservations[pool].length; i < granularity; ) {
@@ -126,7 +130,7 @@ contract PoolOracle is IPoolOracle {
     }
 
     /// @inheritdoc IPoolOracle
-    function peek(address pool) public view override returns (uint256 twar) {
+    function peek(IPool pool) public view override returns (uint256 twar) {
         Observation memory oldestObservation = getOldestObservationInWindow(pool);
 
         uint256 timeElapsed = block.timestamp - oldestObservation.timestamp;
@@ -146,8 +150,66 @@ contract PoolOracle is IPoolOracle {
     }
 
     /// @inheritdoc IPoolOracle
-    function get(address pool) external override returns (uint256 twar) {
+    function get(IPool pool) public override returns (uint256 twar) {
         update(pool);
         return peek(pool);
+    }
+
+    function sellFYTokenPreview(IPool pool, uint256 fyTokenIn) external returns (uint256 baseOut, uint256 updateTime) {
+        updateTime = block.timestamp;
+
+        int128 p = _p(pool, pool.g2(), updateTime);
+
+        baseOut = fyTokenIn.divu(WAD).div(p).mulu(WAD); // baseOut = fyTokenIn / p
+    }
+
+    function sellBasePreview(IPool pool, uint256 baseIn) external returns (uint256 fyTokenOut, uint256 updateTime) {
+        updateTime = block.timestamp;
+
+        int128 p = _p(pool, pool.g1(), updateTime);
+
+        fyTokenOut = p.mulu(baseIn); // fyTokenOut = baseIn * p
+    }
+
+    function buyFYTokenPreview(IPool pool, uint256 fyTokenOut) external returns (uint256 baseIn, uint256 updateTime) {
+        updateTime = block.timestamp;
+
+        int128 p = _p(pool, pool.g1(), updateTime);
+
+        baseIn = fyTokenOut.divu(WAD).div(p).mulu(WAD); // baseIn = fyTokenOut / p
+    }
+
+    function buyBasePreview(IPool pool, uint256 baseOut) external returns (uint256 fyTokenIn, uint256 updateTime) {
+        updateTime = block.timestamp;
+
+        int128 p = _p(pool, pool.g2(), updateTime);
+
+        fyTokenIn = p.mulu(baseOut); // fyTokenIn = baseOut * p
+    }
+
+    function _p(
+        IPool pool,
+        int128 g,
+        uint256 updateTime
+    ) internal returns (int128 p) {
+        /*
+            https://hackmd.io/VlQkYJ6cTzWIaIyxuR1g2w
+            https://www.desmos.com/calculator/39jpmawgpu
+            
+            p = (c/μ * twar)^t
+            p = (c/μ * twar)^(ts*g*ttm)
+        */
+
+        // ttm
+        int128 timeTillMaturity = (pool.maturity() - updateTime).fromUInt();
+
+        // t = ts * g * ttm
+        int128 t = pool.ts().mul(g).mul(timeTillMaturity);
+
+        // make twar a binary 64.64 fraction
+        int128 twar64 = get(pool).divu(WAD);
+
+        // p = (c/μ * twar)^t
+        p = pool.getC().div(pool.mu()).mul(twar64).pow(t);
     }
 }
