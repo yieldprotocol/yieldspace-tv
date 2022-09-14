@@ -156,52 +156,67 @@ contract PoolOracle is IPoolOracle {
     }
 
     function sellFYTokenPreview(IPool pool, uint256 fyTokenIn) external returns (uint256 baseOut, uint256 updateTime) {
-        updateTime = block.timestamp;
-
-        int128 p = _p(pool, pool.g2(), updateTime);
-
-        baseOut = fyTokenIn.divu(WAD).div(p).mulu(WAD); // baseOut = fyTokenIn / p
+        (baseOut, updateTime) = _amountOverPrice(pool, fyTokenIn, pool.g2());
     }
 
     function sellBasePreview(IPool pool, uint256 baseIn) external returns (uint256 fyTokenOut, uint256 updateTime) {
-        updateTime = block.timestamp;
-
-        int128 p = _p(pool, pool.g1(), updateTime);
-
-        fyTokenOut = p.mulu(baseIn); // fyTokenOut = baseIn * p
+        (fyTokenOut, updateTime) = _amountTimesPrice(pool, baseIn, pool.g1());
     }
 
     function buyFYTokenPreview(IPool pool, uint256 fyTokenOut) external returns (uint256 baseIn, uint256 updateTime) {
-        updateTime = block.timestamp;
-
-        int128 p = _p(pool, pool.g1(), updateTime);
-
-        baseIn = fyTokenOut.divu(WAD).div(p).mulu(WAD); // baseIn = fyTokenOut / p
+        (baseIn, updateTime) = _amountOverPrice(pool, fyTokenOut, pool.g1());
     }
 
     function buyBasePreview(IPool pool, uint256 baseOut) external returns (uint256 fyTokenIn, uint256 updateTime) {
-        updateTime = block.timestamp;
-
-        int128 p = _p(pool, pool.g2(), updateTime);
-
-        fyTokenIn = p.mulu(baseOut); // fyTokenIn = baseOut * p
+        (fyTokenIn, updateTime) = _amountTimesPrice(pool, baseOut, pool.g2());
     }
 
-    function _p(
+    function _amountOverPrice(
+        IPool pool,
+        uint256 amount,
+        int128 g
+    ) internal returns (uint256 result, uint256 updateTime) {
+        updateTime = block.timestamp;
+        uint256 maturity = pool.maturity();
+        if (updateTime >= maturity) {
+            result = amount;
+        } else {
+            int128 price = _price(pool, g, maturity, updateTime);
+            result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
+        }
+    }
+
+    function _amountTimesPrice(
+        IPool pool,
+        uint256 amount,
+        int128 g
+    ) internal returns (uint256 result, uint256 updateTime) {
+        updateTime = block.timestamp;
+        uint256 maturity = pool.maturity();
+        if (updateTime >= maturity) {
+            result = amount;
+        } else {
+            int128 price = _price(pool, g, maturity, updateTime);
+            result = price.mulu(amount); // result = amount * price
+        }
+    }
+
+    function _price(
         IPool pool,
         int128 g,
+        uint256 maturity,
         uint256 updateTime
-    ) internal returns (int128 p) {
+    ) internal returns (int128 price) {
         /*
             https://hackmd.io/VlQkYJ6cTzWIaIyxuR1g2w
             https://www.desmos.com/calculator/39jpmawgpu
             
-            p = (c/μ * twar)^t
-            p = (c/μ * twar)^(ts*g*ttm)
+            price = (c/μ * twar)^t
+            price = (c/μ * twar)^(ts*g*ttm)
         */
 
         // ttm
-        int128 timeTillMaturity = (pool.maturity() - updateTime).fromUInt();
+        int128 timeTillMaturity = (maturity - updateTime).fromUInt();
 
         // t = ts * g * ttm
         int128 t = pool.ts().mul(g).mul(timeTillMaturity);
@@ -209,7 +224,7 @@ contract PoolOracle is IPoolOracle {
         // make twar a binary 64.64 fraction
         int128 twar64 = get(pool).divu(WAD);
 
-        // p = (c/μ * twar)^t
-        p = pool.getC().div(pool.mu()).mul(twar64).pow(t);
+        // price = (c/μ * twar)^t
+        price = pool.getC().div(pool.mu()).mul(twar64).pow(t);
     }
 }

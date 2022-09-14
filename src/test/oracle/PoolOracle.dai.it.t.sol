@@ -61,4 +61,48 @@ contract PoolOracleDAIIntegrationTest is Test {
         assertEqDecimal(oracleValue, 1032.028917478030299490e18, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
+
+    function testSellFYTokenPreviewExpired() public {
+        uint128 amount = 1000e18;
+
+        vm.warp(pool.maturity());
+
+        (uint256 oracleValue, uint256 updateTime) = oracle.sellFYTokenPreview(pool, amount);
+
+        assertEqDecimal(oracleValue, amount, 18, "oracleValue");
+        assertEq(updateTime, block.timestamp, "timestamp");
+    }
+
+    function testSellBasePreviewExpired() public {
+        uint128 amount = 1000e18;
+
+        vm.warp(pool.maturity());
+
+        (uint256 oracleValue, uint256 updateTime) = oracle.sellBasePreview(pool, amount);
+
+        assertEqDecimal(oracleValue, amount, 18, "oracleValue");
+        assertEq(updateTime, block.timestamp, "timestamp");
+    }
+
+    function testBuyFYTokenPreviewExpired() public {
+        uint128 amount = 1000e18;
+
+        vm.warp(pool.maturity());
+
+        (uint256 oracleValue, uint256 updateTime) = oracle.buyFYTokenPreview(pool, amount);
+
+        assertEqDecimal(oracleValue, amount, 18, "oracleValue");
+        assertEq(updateTime, block.timestamp, "timestamp");
+    }
+
+    function testBuyBasePreviewExpired() public {
+        uint128 amount = 1000e18;
+
+        vm.warp(pool.maturity());
+
+        (uint256 oracleValue, uint256 updateTime) = oracle.buyBasePreview(pool, amount);
+
+        assertEqDecimal(oracleValue, amount, 18, "oracleValue");
+        assertEq(updateTime, block.timestamp, "timestamp");
+    }
 }
