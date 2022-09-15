@@ -13,7 +13,7 @@ interface IPoolOracle {
     /// @return twar The most up to date TWAR for `pool`
     function get(address pool) external returns (uint256 twar);
 
-    /// @notice updates the cumulative ratio for the observation at the current timestamp. each observation is updated at most
+    /// @notice updates the cumulative ratio for the observation at the current timestamp. Each observation is updated at most
     /// once per epoch period.
     /// @param pool Address of pool for which the observation should be recorded
     function update(address pool) external;
