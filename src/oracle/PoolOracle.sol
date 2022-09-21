@@ -155,19 +155,39 @@ contract PoolOracle is IPoolOracle {
         return peek(pool);
     }
 
-    function sellFYTokenPreview(IPool pool, uint256 fyTokenIn) external returns (uint256 baseOut, uint256 updateTime) {
+    /// @inheritdoc IPoolOracle
+    function sellFYTokenPreview(IPool pool, uint256 fyTokenIn)
+        external
+        override
+        returns (uint256 baseOut, uint256 updateTime)
+    {
         (baseOut, updateTime) = _amountOverPrice(pool, fyTokenIn, pool.g2());
     }
 
-    function sellBasePreview(IPool pool, uint256 baseIn) external returns (uint256 fyTokenOut, uint256 updateTime) {
+    /// @inheritdoc IPoolOracle
+    function sellBasePreview(IPool pool, uint256 baseIn)
+        external
+        override
+        returns (uint256 fyTokenOut, uint256 updateTime)
+    {
         (fyTokenOut, updateTime) = _amountTimesPrice(pool, baseIn, pool.g1());
     }
 
-    function buyFYTokenPreview(IPool pool, uint256 fyTokenOut) external returns (uint256 baseIn, uint256 updateTime) {
+    /// @inheritdoc IPoolOracle
+    function buyFYTokenPreview(IPool pool, uint256 fyTokenOut)
+        external
+        override
+        returns (uint256 baseIn, uint256 updateTime)
+    {
         (baseIn, updateTime) = _amountOverPrice(pool, fyTokenOut, pool.g1());
     }
 
-    function buyBasePreview(IPool pool, uint256 baseOut) external returns (uint256 fyTokenIn, uint256 updateTime) {
+    /// @inheritdoc IPoolOracle
+    function buyBasePreview(IPool pool, uint256 baseOut)
+        external
+        override
+        returns (uint256 fyTokenIn, uint256 updateTime)
+    {
         (fyTokenIn, updateTime) = _amountTimesPrice(pool, baseOut, pool.g2());
     }
 
