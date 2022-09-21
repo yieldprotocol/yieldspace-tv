@@ -156,57 +156,112 @@ contract PoolOracle is IPoolOracle {
     }
 
     /// @inheritdoc IPoolOracle
-    function sellFYTokenPreview(IPool pool, uint256 fyTokenIn)
+    function getSellFYTokenPreview(IPool pool, uint256 fyTokenIn)
         external
         override
         returns (uint256 baseOut, uint256 updateTime)
     {
-        (baseOut, updateTime) = _amountOverPrice(pool, fyTokenIn, pool.g2());
+        (baseOut, updateTime) = _getAmountOverPrice(pool, fyTokenIn, pool.g2());
     }
 
     /// @inheritdoc IPoolOracle
-    function sellBasePreview(IPool pool, uint256 baseIn)
+    function getSellBasePreview(IPool pool, uint256 baseIn)
         external
         override
         returns (uint256 fyTokenOut, uint256 updateTime)
     {
-        (fyTokenOut, updateTime) = _amountTimesPrice(pool, baseIn, pool.g1());
+        (fyTokenOut, updateTime) = _getAmountTimesPrice(pool, baseIn, pool.g1());
     }
 
     /// @inheritdoc IPoolOracle
-    function buyFYTokenPreview(IPool pool, uint256 fyTokenOut)
+    function getBuyFYTokenPreview(IPool pool, uint256 fyTokenOut)
         external
         override
         returns (uint256 baseIn, uint256 updateTime)
     {
-        (baseIn, updateTime) = _amountOverPrice(pool, fyTokenOut, pool.g1());
+        (baseIn, updateTime) = _getAmountOverPrice(pool, fyTokenOut, pool.g1());
     }
 
     /// @inheritdoc IPoolOracle
-    function buyBasePreview(IPool pool, uint256 baseOut)
+    function getBuyBasePreview(IPool pool, uint256 baseOut)
         external
         override
         returns (uint256 fyTokenIn, uint256 updateTime)
     {
-        (fyTokenIn, updateTime) = _amountTimesPrice(pool, baseOut, pool.g2());
+        (fyTokenIn, updateTime) = _getAmountTimesPrice(pool, baseOut, pool.g2());
     }
 
-    function _amountOverPrice(
+    /// @inheritdoc IPoolOracle
+    function peekSellFYTokenPreview(IPool pool, uint256 fyTokenIn)
+        external
+        view
+        override
+        returns (uint256 baseOut, uint256 updateTime)
+    {
+        (baseOut, updateTime) = _peekAmountOverPrice(pool, fyTokenIn, pool.g2());
+    }
+
+    /// @inheritdoc IPoolOracle
+    function peekSellBasePreview(IPool pool, uint256 baseIn)
+        external
+        view
+        override
+        returns (uint256 fyTokenOut, uint256 updateTime)
+    {
+        (fyTokenOut, updateTime) = _peekAmountTimesPrice(pool, baseIn, pool.g1());
+    }
+
+    /// @inheritdoc IPoolOracle
+    function peekBuyFYTokenPreview(IPool pool, uint256 fyTokenOut)
+        external
+        view
+        override
+        returns (uint256 baseIn, uint256 updateTime)
+    {
+        (baseIn, updateTime) = _peekAmountOverPrice(pool, fyTokenOut, pool.g1());
+    }
+
+    /// @inheritdoc IPoolOracle
+    function peekBuyBasePreview(IPool pool, uint256 baseOut)
+        external
+        view
+        override
+        returns (uint256 fyTokenIn, uint256 updateTime)
+    {
+        (fyTokenIn, updateTime) = _peekAmountTimesPrice(pool, baseOut, pool.g2());
+    }
+
+    function _peekAmountOverPrice(
         IPool pool,
         uint256 amount,
         int128 g
-    ) internal returns (uint256 result, uint256 updateTime) {
+    ) internal view returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
         if (updateTime >= maturity) {
             result = amount;
         } else {
-            int128 price = _price(pool, g, maturity, updateTime);
+            int128 price = _price(pool, peek(pool), g, maturity, updateTime);
             result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
         }
     }
 
-    function _amountTimesPrice(
+    function _peekAmountTimesPrice(
+        IPool pool,
+        uint256 amount,
+        int128 g
+    ) internal view returns (uint256 result, uint256 updateTime) {
+        updateTime = block.timestamp;
+        uint256 maturity = pool.maturity();
+        if (updateTime >= maturity) {
+            result = amount;
+        } else {
+            int128 price = _price(pool, peek(pool), g, maturity, updateTime);
+            result = price.mulu(amount); // result = amount * price
+        }
+    }
+
+    function _getAmountOverPrice(
         IPool pool,
         uint256 amount,
         int128 g
@@ -216,17 +271,33 @@ contract PoolOracle is IPoolOracle {
         if (updateTime >= maturity) {
             result = amount;
         } else {
-            int128 price = _price(pool, g, maturity, updateTime);
+            int128 price = _price(pool, get(pool), g, maturity, updateTime);
+            result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
+        }
+    }
+
+    function _getAmountTimesPrice(
+        IPool pool,
+        uint256 amount,
+        int128 g
+    ) internal returns (uint256 result, uint256 updateTime) {
+        updateTime = block.timestamp;
+        uint256 maturity = pool.maturity();
+        if (updateTime >= maturity) {
+            result = amount;
+        } else {
+            int128 price = _price(pool, get(pool), g, maturity, updateTime);
             result = price.mulu(amount); // result = amount * price
         }
     }
 
     function _price(
         IPool pool,
+        uint256 twar,
         int128 g,
         uint256 maturity,
         uint256 updateTime
-    ) internal returns (int128 price) {
+    ) internal view returns (int128 price) {
         /*
             https://hackmd.io/VlQkYJ6cTzWIaIyxuR1g2w
             https://www.desmos.com/calculator/39jpmawgpu
@@ -242,7 +313,7 @@ contract PoolOracle is IPoolOracle {
         int128 t = pool.ts().mul(g).mul(timeTillMaturity);
 
         // make twar a binary 64.64 fraction
-        int128 twar64 = get(pool).divu(WAD);
+        int128 twar64 = twar.divu(WAD);
 
         // price = (c/μ * twar)^t
         price = pool.getC().div(pool.mu()).mul(twar64).pow(t);
