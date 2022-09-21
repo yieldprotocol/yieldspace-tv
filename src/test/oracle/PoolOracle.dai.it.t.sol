@@ -22,7 +22,7 @@ contract PoolOracleDAIIntegrationTest is Test {
         uint128 amount = 1000e18;
         uint256 spotValue = pool.unwrapPreview(pool.sellFYTokenPreview(amount));
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.sellFYTokenPreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getSellFYTokenPreview(pool, amount);
 
         assertEqDecimal(spotValue, 968.791448811035957254e18, 18, "spotValue");
         assertEqDecimal(oracleValue, 968.965096873157987825e18, 18, "oracleValue");
@@ -33,7 +33,7 @@ contract PoolOracleDAIIntegrationTest is Test {
         uint128 amount = 1000e18;
         uint256 spotValue = pool.sellBasePreview(amount);
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.sellBasePreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getSellBasePreview(pool, amount);
 
         assertEqDecimal(spotValue, 1025.713037174416877184e18, 18, "spotValue");
         assertEqDecimal(oracleValue, 1025.865469553717080957e18, 18, "oracleValue");
@@ -44,7 +44,7 @@ contract PoolOracleDAIIntegrationTest is Test {
         uint128 amount = 1000e18;
         uint256 spotValue = pool.buyFYTokenPreview(amount);
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.buyFYTokenPreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getBuyFYTokenPreview(pool, amount);
 
         assertEqDecimal(spotValue, 974.927984428652130438e18, 18, "spotValue");
         assertEqDecimal(oracleValue, 974.786684685888342732e18, 18, "oracleValue");
@@ -55,7 +55,7 @@ contract PoolOracleDAIIntegrationTest is Test {
         uint128 amount = 1000e18;
         uint256 spotValue = pool.buyBasePreview(amount);
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.buyBasePreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getBuyBasePreview(pool, amount);
 
         assertEqDecimal(spotValue, 1032.219978677199507417e18, 18, "spotValue");
         assertEqDecimal(oracleValue, 1032.028917478030299490e18, 18, "oracleValue");
@@ -67,7 +67,7 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         vm.warp(pool.maturity());
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.sellFYTokenPreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getSellFYTokenPreview(pool, amount);
 
         assertEqDecimal(oracleValue, amount, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
@@ -78,7 +78,7 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         vm.warp(pool.maturity());
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.sellBasePreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getSellBasePreview(pool, amount);
 
         assertEqDecimal(oracleValue, amount, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
@@ -89,7 +89,7 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         vm.warp(pool.maturity());
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.buyFYTokenPreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getBuyFYTokenPreview(pool, amount);
 
         assertEqDecimal(oracleValue, amount, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
@@ -100,7 +100,7 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         vm.warp(pool.maturity());
 
-        (uint256 oracleValue, uint256 updateTime) = oracle.buyBasePreview(pool, amount);
+        (uint256 oracleValue, uint256 updateTime) = oracle.getBuyBasePreview(pool, amount);
 
         assertEqDecimal(oracleValue, amount, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
