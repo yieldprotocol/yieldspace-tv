@@ -60,7 +60,7 @@ interface IPoolOracle {
     /// @param baseOut Amount of base hypothetically desired.
     /// @return fyTokenIn Amount of fyToken hypothetically required.
     /// @return updateTime Timestamp for when this price was calculated.
-    function peekBuyBasePreview(IPool pool, uint256 baseOut) external returns (uint256 fyTokenIn, uint256 updateTime);
+    function peekBuyBasePreview(IPool pool, uint256 baseOut) external view returns (uint256 fyTokenIn, uint256 updateTime);
 
     /// Returns how much base would be required to buy `fyTokenOut`.
     /// @notice This function is view and hence it will not try to update the oracle
@@ -69,7 +69,7 @@ interface IPoolOracle {
     /// @return baseIn Amount of base hypothetically required.
     /// @return updateTime Timestamp for when this price was calculated.
     function peekBuyFYTokenPreview(IPool pool, uint256 fyTokenOut)
-        external
+        external view
         returns (uint256 baseIn, uint256 updateTime);
 
     /// Returns how much fyToken would be obtained by selling `baseIn`.
@@ -78,7 +78,7 @@ interface IPoolOracle {
     /// @param baseIn Amount of base hypothetically sold.
     /// @return fyTokenOut Amount of fyToken hypothetically bought.
     /// @return updateTime Timestamp for when this price was calculated.
-    function peekSellBasePreview(IPool pool, uint256 baseIn) external returns (uint256 fyTokenOut, uint256 updateTime);
+    function peekSellBasePreview(IPool pool, uint256 baseIn) external view returns (uint256 fyTokenOut, uint256 updateTime);
 
     /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
     /// @notice This function is view and hence it will not try to update the oracle
@@ -87,6 +87,6 @@ interface IPoolOracle {
     /// @return baseOut Amount of base hypothetically bought.
     /// @return updateTime Timestamp for when this price was calculated.
     function peekSellFYTokenPreview(IPool pool, uint256 fyTokenIn)
-        external
+        external view
         returns (uint256 baseOut, uint256 updateTime);
 }
