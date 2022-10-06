@@ -9,6 +9,7 @@
     "!lib"
   ],
   "scripts": {
+    "size": "forge build --sizes"
   },
   "repository": {
     "type": "git",
