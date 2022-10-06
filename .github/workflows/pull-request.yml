@@ -24,3 +24,4 @@ jobs:
         env:
           MAINNET_RPC: ${{ secrets.ALCHEMY_MAINNET_RPC }}
           MAINNET_BLOCK_NUMBER: 15447457
+          ARBITRUM_RPC: ${{ secrets.ALCHEMY_ARBITRUM_RPC }}
