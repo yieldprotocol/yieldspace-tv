@@ -108,7 +108,7 @@ contract PoolOracle is IPoolOracle {
     }
 
     // @inheritdoc IPoolOracle
-    function update(IPool pool) public override {
+    function update(IPool pool) public override returns(bool updated) {
         // populate the array with empty observations (only on the first call ever for each pool)
         unchecked {
             for (uint256 i = poolObservations[pool].length; i < granularity; ) {
@@ -126,6 +126,15 @@ contract PoolOracle is IPoolOracle {
         if (timeElapsed > periodSize) {
             (observation.ratioCumulative, observation.timestamp) = IPool(pool).currentCumulativeRatio();
             emit ObservationRecorded(pool, index, observation);
+            updated = true;
+        }
+    }
+
+    // @inheritdoc IPoolOracle
+    function update(IPool[] calldata pools) public override {
+        uint length = pools.length;
+        for(uint i = 0; i < length;i ++) {
+            update(pools[i]);
         }
     }
 
