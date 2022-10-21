@@ -65,8 +65,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     using CastU256U104 for uint256;
     using CastU256U128 for uint256;
     using CastU256I256 for uint256;
-    using MinimalTransferHelper for IMaturingToken;
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IMaturingToken;
+    using TransferHelper for IERC20Like;
 
     /* MODIFIERS
      *****************************************************************************************************************/

@@ -24,7 +24,7 @@ import "../Pool.sol";/*
 /// @dev Deploy pool with base token and associated fyToken.
 /// @author @devtooligan
 contract PoolNonTv is Pool {
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IERC20Like;
     using CastU256U128 for uint256;
 
     constructor(
