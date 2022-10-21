@@ -22,4 +22,4 @@ import {IMaturingToken} from "../interfaces/IMaturingToken.sol";
 import {ERC20Permit} from  "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
 import {AccessControl} from  "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
 import {ERC20, IERC20Metadata as IERC20Like, IERC20} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
-import {MinimalTransferHelper} from  "@yield-protocol/utils-v2/contracts/token/MinimalTransferHelper.sol";
+import {TransferHelper} from  "@yield-protocol/utils-v2/contracts/token/TransferHelper.sol";
