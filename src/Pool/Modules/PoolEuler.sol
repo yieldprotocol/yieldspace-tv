@@ -43,7 +43,7 @@ contract PoolEuler is Pool {
         uint16 g1Fee_
     ) Pool(eToken_, fyToken_, ts_, g1Fee_) {
         // Approve the main Euler contract to take base from the Pool, used on `deposit`.
-        _getBaseAsset(eToken_).approve(euler_, type(uint256).max);
+        _getBaseAsset(eToken_).safeApprove(euler_, type(uint256).max);
     }
 
     /// **This function is intentionally empty to overwrite the Pool._approveSharesToken fn.**

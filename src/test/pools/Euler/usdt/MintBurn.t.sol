@@ -25,48 +25,61 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
 import "../../../../Pool/PoolErrors.sol";
-import {Exp64x64} from "../../../../Exp64x64.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
-import {ZeroState, ZeroStateParams} from "../../../shared/ZeroState.sol";
+import {ETokenMock} from "../../../mocks/ETokenMock.sol";
+import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
+import "./State.sol";
 
-abstract contract ZeroStateEulerDAI is ZeroState {
-    using CastU256U128 for uint256;
+contract SetFeesEulerUSDT is ZeroStateEulerUSDT {
+    using Math64x64 for uint256;
 
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "EulerVault", false)) {}
-}
+    function testUnit_Euler_setFeesUSDT01() public {
+        console.log("does not set invalid fee");
 
-abstract contract WithLiquidityEulerDAI is ZeroStateEulerDAI {
-    function setUp() public virtual override {
-        super.setUp();
+        uint16 g1Fee_ = 10001;
 
-        shares.mint(address(pool), INITIAL_SHARES * 10**(shares.decimals()));
+        vm.prank(bob);
+        vm.expectRevert(abi.encodeWithSelector(InvalidFee.selector, g1Fee_));
+        pool.setFees(g1Fee_);
+    }
+
+    function testUnit_Euler_setFeesUSDT02() public {
+        console.log("does not set fee without auth");
+
+        uint16 g1Fee_ = 9000;
+
         vm.prank(alice);
-        pool.init(alice);
-        setPrice(address(shares), (cNumerator * (10**shares.decimals())) / cDenominator);
-        uint256 additionalFYToken = (INITIAL_SHARES * 10**(asset.decimals())) / 9;
+        vm.expectRevert("Access denied");
+        pool.setFees(g1Fee_);
+    }
 
-        fyToken.mint(address(pool), additionalFYToken);
-        pool.sellFYToken(alice, 0);
+    function testUnit_Euler_setFeesUSDT03() public {
+        console.log("sets valid fee");
+
+        uint16 g1Fee_ = 8000;
+        int128 expectedG1 = uint256(g1Fee_).divu(10000);
+        int128 expectedG2 = uint256(10000).divu(g1Fee_);
+
+        vm.prank(bob);
+        vm.expectEmit(true, true, true, true);
+        emit FeesSet(g1Fee_);
+
+        pool.setFees(g1Fee_);
+
+        assertEq(pool.g1(), expectedG1);
+        assertEq(pool.g2(), expectedG2);
     }
 }
 
-abstract contract WithExtraFYTokenEulerDAI is WithLiquidityEulerDAI {
-    using Exp64x64 for uint128;
-    using Math64x64 for int128;
-    using Math64x64 for int256;
-    using Math64x64 for uint128;
-    using Math64x64 for uint256;
+contract Mint_ZeroStateEulerUSDT is ZeroStateEulerUSDT {
+    function testUint_Euler_mintUSDT01() public {
+        console.log("adds initial liquidity");
 
-    function setUp() public virtual override {
-        super.setUp();
-        uint256 additionalFYToken = 30 * 10**fyToken.decimals();
-        fyToken.mint(address(pool), additionalFYToken);
-        vm.prank(alice);
-        pool.sellFYToken(address(alice), 0);
+        
     }
 }

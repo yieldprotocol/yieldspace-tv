@@ -34,20 +34,13 @@ import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ZeroState, ZeroStateParams} from "../../../shared/ZeroState.sol";
 
-abstract contract ZeroStateEulerUSDC is ZeroState {
+abstract contract ZeroStateEulerUSDT is ZeroState {
     using CastU256U128 for uint256;
 
-    constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "EulerVault", false)) {}
-
-    //TODO: not sure where to put this fn
-    // Euler eTokens always use 18 decimals so using this fn changes decimals to that of the base token,
-    // for example eUSDC is converted from fp18 to fp6.
-    function getSharesBalanceWithDecimalsAdjusted(address who) public returns (uint128) {
-        return (shares.balanceOf(who) / pool.scaleFactor()).u128();
-    }
+    constructor() ZeroState(ZeroStateParams("USDT", "USDT", 6, "EulerVault", true)) {}
 }
 
-abstract contract WithLiquidityEulerUSDC is ZeroStateEulerUSDC {
+abstract contract WithLiquidityEulerUSDT is ZeroStateEulerUSDT {
     function setUp() public virtual override {
         super.setUp();
 
@@ -59,42 +52,15 @@ abstract contract WithLiquidityEulerUSDC is ZeroStateEulerUSDC {
 
         fyToken.mint(address(pool), additionalFYToken);
         pool.sellFYToken(alice, 0);
-
-        // There is a fractional amount of excess eUSDC shares in the pool.
-        // as a result of the decimals mismatch between eUSDC (18) and actual USDC (6).
-        // The amount is less than 2/10 of a wei of USDC: 0.000000181818181819 USDC
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
-        uint256 fractionalExcess = pool.sharesToken().balanceOf(address(pool)) - startingSharesCached * 1e12;
-        assertEq(fractionalExcess, 181818181819);
-        pool.retrieveShares(address(0x0)); // clear that fractional excess out for cleaner tests below
     }
 }
 
-abstract contract WithExtraFYTokenEulerUSDC is WithLiquidityEulerUSDC {
-    using Exp64x64 for uint128;
-    using Math64x64 for int128;
-    using Math64x64 for int256;
-    using Math64x64 for uint128;
-    using Math64x64 for uint256;
-
+abstract contract WithExtraFYTokenEulerUSDT is WithLiquidityEulerUSDT {
     function setUp() public virtual override {
         super.setUp();
-        uint256 additionalFYToken = 30 * 1e6;
+        uint256 additionalFYToken = 30 * 10**fyToken.decimals();
         fyToken.mint(address(pool), additionalFYToken);
         vm.prank(alice);
         pool.sellFYToken(address(alice), 0);
-    }
-}
-
-abstract contract OnceMatureUSDC is WithExtraFYTokenEulerUSDC {
-    using Exp64x64 for uint128;
-    using Math64x64 for int128;
-    using Math64x64 for int256;
-    using Math64x64 for uint128;
-    using Math64x64 for uint256;
-
-    function setUp() public override {
-        super.setUp();
-        vm.warp(pool.maturity());
     }
 }

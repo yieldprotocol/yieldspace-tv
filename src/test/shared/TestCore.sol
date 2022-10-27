@@ -58,6 +58,7 @@ abstract contract TestCore is PoolEvents, Test {
     string public assetName;
     string public assetSymbol;
     uint8 public assetDecimals;
+    bool public nonCompliant;
     ERC20Mock public asset;
 
     string public fyName;
