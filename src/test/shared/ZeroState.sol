@@ -142,11 +142,8 @@ abstract contract ZeroState is TestCore {
             pool = new SyncablePoolYearnVault(address(shares), address(fyToken), ts, g1Fee);
         }
         if (sharesType == TYPE_EULER) {
-            console.log("here");
             EulerMock euler = ETokenMock(address(shares)).euler(); // Will work as long as there is only one ETokenMock contract
-            console.log("and here");
             pool = new SyncablePoolEuler(address(euler), address(shares), address(fyToken), ts, g1Fee);
-            console.log("here too");
         }
         if (sharesType == TYPE_NONTV) {
             pool = new SyncablePoolNonTv(address(shares), address(fyToken), ts, g1Fee);
