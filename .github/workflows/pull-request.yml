@@ -16,9 +16,6 @@ jobs:
         with:
           version: nightly
 
-      - name: Check contract sizes
-        run: forge build --sizes
-
       - name: Run tests
         run: forge test -vvvvv --fork-url $MAINNET_RPC --fork-block-number $MAINNET_BLOCK_NUMBER
         env:
