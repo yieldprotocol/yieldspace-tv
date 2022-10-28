@@ -1,14 +1,15 @@
 {
   "name": "@yield-protocol/yieldspace-tv",
-  "version": "0.1.6rc1",
+  "version": "0.1.9-rc.0",
   "description": "Yieldspace for tokenized vaults",
   "files": [
     "src/*.sol",
-    "src/interfaces/*.sol",
-    "src/Pool/*.sol",
-    "src/Pool/Modules/*.sol"
+    "src/**/*.sol",
+    "!src/test/**/*.sol",
+    "!lib"
   ],
   "scripts": {
+    "size": "forge build --sizes"
   },
   "repository": {
     "type": "git",

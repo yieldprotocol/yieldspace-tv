@@ -16,11 +16,9 @@ jobs:
         with:
           version: nightly
 
-      - name: Check contract sizes
-        run: forge build --sizes
-
       - name: Run tests
         run: forge test -vvvvv --fork-url $MAINNET_RPC --fork-block-number $MAINNET_BLOCK_NUMBER
         env:
           MAINNET_RPC: ${{ secrets.ALCHEMY_MAINNET_RPC }}
           MAINNET_BLOCK_NUMBER: 15447457
+          ARBITRUM_RPC: ${{ secrets.ALCHEMY_ARBITRUM_RPC }}
