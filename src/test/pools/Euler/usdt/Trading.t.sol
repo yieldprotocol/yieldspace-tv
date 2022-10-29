@@ -151,9 +151,6 @@ contract Trade__WithLiquidityEulerUSDT is WithLiquidityEulerUSDT {
         assertEq(fyTokenReservesAfter - fyTokenReservesBefore, expectedFYTokenIn);
     }
 
-    // Removed
-    // function testUnit_Euler_tradeUSDT05() public {
-
     function testUnit_Euler_tradeUSDT06() public {
         console.log("buys base and retrieves change");
 
@@ -195,6 +192,7 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
     using Math64x64 for int128;
     using Math64x64 for uint256;
     using CastU256U128 for uint256;
+    using TransferHelper for IERC20Like;
 
     function testUnit_Euler_tradeUSDT07() public {
         console.log("sells base (asset) for a certain amount of FYTokens");
@@ -227,7 +225,7 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
 
         // trade
         vm.startPrank(alice);
-        asset.transfer(address(pool), assetsIn);
+        IERC20Like(address(asset)).safeTransfer(address(pool), assetsIn);
         pool.sellBase(alice, 0);
 
         // check user balances
@@ -279,7 +277,7 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
 
         // bob trades
         vm.startPrank(bob);
-        asset.transfer(address(pool), assetsIn);
+        IERC20Like(address(asset)).safeTransfer(address(pool), assetsIn);
         pool.sellBase(bob, 0);
 
         // check bob's balances
@@ -326,7 +324,7 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
 
         // trade
         vm.startPrank(alice);
-        asset.transfer(address(pool), expectedAssetsIn);
+        IERC20Like(address(asset)).safeTransfer(address(pool), expectedAssetsIn);
         pool.buyFYToken(alice, fyTokenOut, uint128(MAX));
 
         // check user balances
