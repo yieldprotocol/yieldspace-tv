@@ -15,7 +15,7 @@ pragma solidity >=0.8.15;
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 //    NOTE:
-//    These tests are exactly copy and pasted from the MintBurn.t.sol and TradingUSDC.t.sol test suites.
+//    These tests are exactly copy and pasted from the MintBurn.t.sol and TradingUSDT.t.sol test suites.
 //    The only difference is they are setup on the PoolEuler contract instead of the Pool contract
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,6 +38,10 @@ abstract contract ZeroStateEulerUSDT is ZeroState {
     using CastU256U128 for uint256;
 
     constructor() ZeroState(ZeroStateParams("USDT", "USDT", 6, "EulerVault", true)) {}
+
+    function getSharesBalanceWithDecimalsAdjusted(address who) public returns (uint128) {
+        return (shares.balanceOf(who) / pool.scaleFactor()).u128();
+    }
 }
 
 abstract contract WithLiquidityEulerUSDT is ZeroStateEulerUSDT {
@@ -52,6 +56,14 @@ abstract contract WithLiquidityEulerUSDT is ZeroStateEulerUSDT {
 
         fyToken.mint(address(pool), additionalFYToken);
         pool.sellFYToken(alice, 0);
+
+        // There is a fractional amount of excess eUSDT shares in the pool.
+        // as a result of the decimals mismatch between eUSDT (18) and actual USDT (6).
+        // The amount is less than 2/10 of a wei of USDT: 0.000000181818181819 USDT
+        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        uint256 fractionalExcess = pool.sharesToken().balanceOf(address(pool)) - startingSharesCached * 1e12;
+        assertEq(fractionalExcess, 181818181819);
+        pool.retrieveShares(address(0x0)); // clear that fractional excess out for cleaner tests below
     }
 }
 
