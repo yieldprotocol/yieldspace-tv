@@ -29,7 +29,7 @@ import {CastI128U128} from "@yield-protocol/utils-v2/contracts/cast/CastI128U128
 
 // DAI states
 abstract contract ZeroStateDai is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626", false)) {}
 }
 
 abstract contract PoolInitialized is ZeroStateDai {
@@ -114,7 +114,7 @@ abstract contract OnceMatureDAI is WithExtraFYTokenDAI {
 
 // USDC states
 abstract contract ZeroStateUSDC is ZeroState {
-    constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "4626")) {}
+    constructor() ZeroState(ZeroStateParams("USDC", "USDC", 6, "4626", false)) {}
 }
 
 abstract contract WithLiquidityUSDC is ZeroStateUSDC {

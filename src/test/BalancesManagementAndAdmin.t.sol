@@ -27,7 +27,7 @@ import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
 
 abstract contract WithLiquidity is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626")) {}
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "4626", false)) {}
 
     function setUp() public virtual override {
         super.setUp();

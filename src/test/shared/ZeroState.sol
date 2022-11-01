@@ -32,6 +32,7 @@ struct ZeroStateParams {
     string assetSymbol;
     uint8 assetDecimals;
     string sharesType;
+    bool nonCompliant;
 }
 
 // ZeroState is the initial state of the protocol without any testable actions or state changes having taken place.
@@ -60,8 +61,13 @@ abstract contract ZeroState is TestCore {
         assetName = params.assetName;
         assetSymbol = params.assetSymbol;
         assetDecimals = params.assetDecimals;
+        nonCompliant = params.nonCompliant;
         // Create and set asset token.
-        asset = new ERC20Mock(assetName, assetSymbol, assetDecimals);
+        if(!nonCompliant) {
+            asset = new ERC20Mock(assetName, assetSymbol, assetDecimals);
+        } else {
+            asset = ERC20Mock(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+        }
 
         // Set shares token related variables.
         if (keccak256(abi.encodePacked(params.sharesType)) == TYPE_NONTV) {
@@ -111,7 +117,7 @@ abstract contract ZeroState is TestCore {
                 shares = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, address(euler), address(asset))));
             }
             setPrice(address(shares), (muNumerator * (10**sharesDecimals)) / muDenominator);
-            asset.mint(address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
+            deal(address(asset), address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
 
         // Create fyToken (e.g. "fyDAI").
@@ -122,7 +128,7 @@ abstract contract ZeroState is TestCore {
         vm.label(alice, "alice");
         shares.mint(alice, aliceSharesInitialBalance);
         fyToken.mint(alice, 50_000_000 * 10**assetDecimals);
-        asset.mint(address(alice), 100_000_000 * 10**assetDecimals);
+        deal(address(asset), address(alice), 100_000_000 * 10**assetDecimals);
         bob = address(0xb0b);
         vm.label(bob, "bob");
         shares.mint(bob, bobSharesInitialBalance);

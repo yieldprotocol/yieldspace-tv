@@ -65,8 +65,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     using CastU256U104 for uint256;
     using CastU256U128 for uint256;
     using CastU256I256 for uint256;
-    using MinimalTransferHelper for IMaturingToken;
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IMaturingToken;
+    using TransferHelper for IERC20Like;
 
     /* MODIFIERS
      *****************************************************************************************************************/
@@ -201,11 +201,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// This is used by the constructor to give max approval to sharesToken.
     /// @dev This should be overridden by modules if needed.
+    /// @dev safeAprove will revert approve is unsuccessful
     function _approveSharesToken(IERC20Like baseToken_, address sharesToken_) internal virtual {
-        bool success = baseToken_.approve(sharesToken_, type(uint256).max);
-        if (!success) {
-            revert ApproveFailed();
-        }
+        baseToken_.safeApprove(sharesToken_, type(uint256).max);
     }
 
     /// This is used by the constructor to set the base token as immutable.

@@ -33,11 +33,11 @@ import {ERC20, AccessControl} from "../../../../../Pool/PoolImports.sol";
 // to this repo just to get an interface:
 import {FYTokenMock as FYToken} from "../../../../mocks/FYTokenMock.sol";
 import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {IEToken} from "../../../../../interfaces/IEToken.sol";
 
 import "../../../../shared/Utils.sol";
 import "../../../../shared/Constants.sol";
 import {ForkTestCore} from "../../../../shared/ForkTestCore.sol";
-import {IEToken} from "../../../../../interfaces/IEToken.sol";
 
 abstract contract EulerUSDCFork is ForkTestCore {
     address public whale = address(0x72A53cDBBcc1b9efa39c834A540550e23463AAcB);

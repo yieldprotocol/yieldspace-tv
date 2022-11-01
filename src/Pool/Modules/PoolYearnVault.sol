@@ -32,7 +32,7 @@ import "../../interfaces/IYVToken.sol";
 /// @dev Deploy pool with Yearn Vault token and associated fyToken.
 /// @author @devtooligan
 contract PoolYearnVault is Pool {
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IERC20Like;
 
     constructor(
         address sharesToken_,

@@ -31,7 +31,7 @@ import "../../interfaces/IEToken.sol";
 /// @dev Deploy pool with Euler Pool contract and associated fyToken.
 /// @author @devtooligan
 contract PoolEuler is Pool {
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IERC20Like;
     using CastU256U104 for uint256;
     using CastU256U128 for uint256;
 
@@ -43,7 +43,7 @@ contract PoolEuler is Pool {
         uint16 g1Fee_
     ) Pool(eToken_, fyToken_, ts_, g1Fee_) {
         // Approve the main Euler contract to take base from the Pool, used on `deposit`.
-        _getBaseAsset(eToken_).approve(euler_, type(uint256).max);
+        _getBaseAsset(eToken_).safeApprove(euler_, type(uint256).max);
     }
 
     /// **This function is intentionally empty to overwrite the Pool._approveSharesToken fn.**

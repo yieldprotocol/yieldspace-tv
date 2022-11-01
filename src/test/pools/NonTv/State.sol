@@ -35,7 +35,7 @@ import "../../shared/Constants.sol";
 import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
 
 abstract contract ZeroStateNonTv is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "NonTv")) {}
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "NonTv", false)) {}
 }
 
 abstract contract WithLiquidityNonTv is ZeroStateNonTv {

@@ -37,7 +37,7 @@ import {ZeroState, ZeroStateParams} from "../../../shared/ZeroState.sol";
 abstract contract ZeroStateEulerDAI is ZeroState {
     using CastU256U128 for uint256;
 
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "EulerVault")) {}
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "EulerVault", false)) {}
 }
 
 abstract contract WithLiquidityEulerDAI is ZeroStateEulerDAI {

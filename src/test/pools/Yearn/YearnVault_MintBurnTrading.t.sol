@@ -37,7 +37,7 @@ import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
 import {IERC20Like} from "../../../interfaces/IERC20Like.sol";
 
 abstract contract ZeroStateYearnDai is ZeroState {
-    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "YearnVault")) {}
+    constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "YearnVault", false)) {}
 }
 
 abstract contract WithLiquidityYearnVault is ZeroStateYearnDai {
