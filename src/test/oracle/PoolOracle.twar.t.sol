@@ -44,7 +44,7 @@ contract PoolOracleTWARTest is Test {
         uint256 currentCumulativeRatio = 1000;
 
         pool.currentCumulativeRatio.mock(currentCumulativeRatio, timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         for (uint256 i = 0; i < 23; i++) {
             (uint256 ts, uint256 ratio) = oracle.poolObservations(pool, i);
@@ -70,7 +70,7 @@ contract PoolOracleTWARTest is Test {
         uint256 currentCumulativeRatio = 1000;
         pool.currentCumulativeRatio.mock(currentCumulativeRatio, block.timestamp);
 
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         (uint256 ts, uint256 ratio) = oracle.poolObservations(pool, 0);
         (, bytes32[] memory writes) = vm.accesses(address(oracle));
@@ -82,7 +82,7 @@ contract PoolOracleTWARTest is Test {
         for (uint256 i = 1; i < 24; i++) {
             // Does not update before periodSize
             skip(59 minutes + 59 seconds);
-            assertFalse(oracle.update(pool));
+            assertFalse(oracle.updatePool(pool));
             (, writes) = vm.accesses(address(oracle));
             assertEq(writes.length, 0);
 
@@ -95,7 +95,7 @@ contract PoolOracleTWARTest is Test {
             vm.expectEmit(true, true, true, true);
             emit ObservationRecorded(pool, i, PoolOracle.Observation(block.timestamp, currentCumulativeRatio));
 
-            assertTrue(oracle.update(pool));
+            assertTrue(oracle.updatePool(pool));
             (ts, ratio) = oracle.poolObservations(pool, i);
             (, writes) = vm.accesses(address(oracle));
             assertEq(ts, block.timestamp);
@@ -104,7 +104,7 @@ contract PoolOracleTWARTest is Test {
 
             // Does not update again within the same periodSize
             skip(1 seconds);
-            assertFalse(oracle.update(pool));
+            assertFalse(oracle.updatePool(pool));
             (, writes) = vm.accesses(address(oracle));
             assertEq(writes.length, 0);
 
@@ -117,7 +117,7 @@ contract PoolOracleTWARTest is Test {
 
         pool.currentCumulativeRatio.mock(currentCumulativeRatio, block.timestamp);
 
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
         (ts, ratio) = oracle.poolObservations(pool, 0);
         (, writes) = vm.accesses(address(oracle));
         assertEq(ts, block.timestamp);
@@ -141,7 +141,7 @@ contract PoolOracleTWARTest is Test {
         pools[0] = pool;
         pools[1] = pool2;
 
-        oracle.update(pools);
+        oracle.updatePools(pools);
 
         (uint256 ts, uint256 ratio) = oracle.poolObservations(pool, 11);
         assertEq(ts, timestamp);
@@ -157,7 +157,7 @@ contract PoolOracleTWARTest is Test {
         uint256 timestamp = 1645870528;
         vm.warp(timestamp);
         pool.currentCumulativeRatio.mock(6093535209085784059383367772965035, timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         vm.record();
 
@@ -181,7 +181,7 @@ contract PoolOracleTWARTest is Test {
         uint256 initialObservationTS = 1645870528;
         vm.warp(initialObservationTS);
         pool.currentCumulativeRatio.mock(6093535209085784059383367772965035, initialObservationTS);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         vm.record();
 
@@ -217,7 +217,7 @@ contract PoolOracleTWARTest is Test {
         uint256 timestamp = 1645860768;
         vm.warp(timestamp);
         pool.currentCumulativeRatio.mock(currentCumulativeRatio, timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // Under normal circumstances it fetches the slot 24 hours before
         skip(23 hours);
@@ -242,7 +242,7 @@ contract PoolOracleTWARTest is Test {
         // Saturday, 26 February 2022 07:32:48
         vm.warp(1645860768);
         pool.currentCumulativeRatio.mock(42, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // 46 hours will result in the same index as 23 hours, but it'll be invalid data as it's older than the timeWindow
         skip(46 hours);
@@ -263,7 +263,7 @@ contract PoolOracleTWARTest is Test {
 
         // Oracle has only one value
         pool.currentCumulativeRatio.mock(42, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         uint256 timeElapsed = 4 minutes + 59 seconds;
         skip(timeElapsed);
@@ -277,7 +277,7 @@ contract PoolOracleTWARTest is Test {
 
         // Oracle has only one value
         pool.currentCumulativeRatio.mock(6093535209085784059383367772965035, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // at 5 minutes or more we can safely (?) use the available observation,
         // Saturday, 26 February 2022 10:20:28
@@ -292,12 +292,12 @@ contract PoolOracleTWARTest is Test {
 
         vm.warp(initialTs);
         pool.currentCumulativeRatio.mock(1e30, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // miss 1 slot
         vm.warp(initialTs + 2 hours);
         pool.currentCumulativeRatio.mock(2e30, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // 2 observations were recorded
         (uint256 ts, uint256 ratio) = oracle.poolObservations(pool, 7);
@@ -332,7 +332,7 @@ contract PoolOracleTWARTest is Test {
         for (uint256 i = initTs; i < initTs + 24 hours; i += 1 hours) {
             vm.warp(i);
             pool.currentCumulativeRatio.mock(1, block.timestamp);
-            assertTrue(oracle.update(pool));
+            assertTrue(oracle.updatePool(pool));
         }
 
         // Saturday, 26 February 2022 07:32:48
@@ -340,12 +340,12 @@ contract PoolOracleTWARTest is Test {
 
         vm.warp(initialTs);
         pool.currentCumulativeRatio.mock(1e30, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // miss 1 slot
         vm.warp(initialTs + 2 hours);
         pool.currentCumulativeRatio.mock(2e30, block.timestamp);
-        assertTrue(oracle.update(pool));
+        assertTrue(oracle.updatePool(pool));
 
         // 2 observations were recorded
         (uint256 ts, uint256 ratio) = oracle.poolObservations(pool, 7);

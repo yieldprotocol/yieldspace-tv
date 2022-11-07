@@ -19,12 +19,12 @@ interface IPoolOracle {
     /// once per epoch period.
     /// @param pool Address of pool for which the observation should be recorded
     /// @return updated Flag to indicate if the observation at the current timestamp was actually updated
-    function update(IPool pool) external returns(bool updated);
+    function updatePool(IPool pool) external returns(bool updated);
 
     /// @notice updates the cumulative ratio for the observation at the current timestamp. Each observation is updated at most
     /// once per epoch period.
     /// @param pools Addresses of pool for which the observation should be recorded
-    function update(IPool[] calldata pools) external;
+    function updatePools(IPool[] calldata pools) external;
 
     /// Returns how much fyToken would be required to buy `baseOut` base.
     /// @notice This function will also record a new snapshot on the oracle if necessary,

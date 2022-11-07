@@ -15,7 +15,7 @@ contract PoolOracleUSDCIntegrationTest is Test {
         oracle = new PoolOracle(24 hours, 24, 5 minutes);
 
         _provideLendingLiquidity();
-        oracle.update(pool);
+        oracle.updatePool(pool);
         skip(10 minutes);
     }
 
