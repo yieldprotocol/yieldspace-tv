@@ -14,7 +14,7 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         oracle = new PoolOracle(24 hours, 24, 5 minutes);
 
-        oracle.update(pool);
+        oracle.updatePool(pool);
         skip(10 minutes);
     }
 
