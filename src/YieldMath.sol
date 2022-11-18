@@ -448,7 +448,7 @@ library YieldMath {
             );
 
             uint128 sharesOut = uint128(subtotal) - sharesReserves;
-            require(sharesOut < uint128(subtotal), "YieldMath: Underflow error");
+            require(sharesOut <= uint128(subtotal), "YieldMath: Underflow error");
             return sharesOut;
         }
     }
@@ -575,7 +575,7 @@ library YieldMath {
 
             // maxFYTokenOut_ = fyTokenReserves - (rightTerm * 1e18)
             require((fyTokenOut = fyTokenReserves - uint128(rightTerm.mulu(WAD))) <= MAX, "YieldMath: Underflow error");
-            require(fyTokenOut < fyTokenReserves, "YieldMath: Underflow error");
+            require(fyTokenOut <= fyTokenReserves, "YieldMath: Underflow error");
         }
     }
 
@@ -630,7 +630,7 @@ library YieldMath {
 
             // maxSharesIn_ = (leftTerm * 1e18) - sharesReserves
             require((sharesIn = uint128(leftTerm.mulu(WAD)) - sharesReserves) <= MAX, "YieldMath: Underflow error");
-            require(sharesIn < uint128(leftTerm.mulu(WAD)), "YieldMath: Underflow error");
+            require(sharesIn <= uint128(leftTerm.mulu(WAD)), "YieldMath: Underflow error");
         }
     }
 
