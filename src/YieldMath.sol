@@ -447,6 +447,7 @@ library YieldMath {
                 (uint128(zaYaYxa.divu(uint128(c.div(mu)))).pow(uint128(ONE), uint128(a))).i128()
             );
 
+            // subtotal is calculated as a positive fraction multiplied by a uint so it cannot underflow when casting to uint and its ok to use a raw casting
             uint128 sharesOut = uint128(subtotal) - sharesReserves;
             require(sharesOut <= uint128(subtotal), "YieldMath: Underflow error");
             return sharesOut;
