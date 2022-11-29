@@ -52,6 +52,8 @@ Compile and test the smart contracts with Forge:
 forge test
 ```
 
+If using forking capability, be sure to add `MAINNET_RPC` to your `.env`.
+
 ## Math
 
 In developing this YieldSpace we have used two different libraries for fixed point arithmetic.
