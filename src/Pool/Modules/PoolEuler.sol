@@ -31,7 +31,7 @@ import "../../interfaces/IEToken.sol";
 /// @dev Deploy pool with Euler Pool contract and associated fyToken.
 /// @author @devtooligan
 contract PoolEuler is Pool {
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IERC20Like;
     using CastU256U104 for uint256;
     using CastU256U128 for uint256;
 
@@ -43,7 +43,7 @@ contract PoolEuler is Pool {
         uint16 g1Fee_
     ) Pool(eToken_, fyToken_, ts_, g1Fee_) {
         // Approve the main Euler contract to take base from the Pool, used on `deposit`.
-        _getBaseAsset(eToken_).approve(euler_, type(uint256).max);
+        _getBaseAsset(eToken_).safeApprove(euler_, type(uint256).max);
     }
 
     /// **This function is intentionally empty to overwrite the Pool._approveSharesToken fn.**
@@ -80,9 +80,9 @@ contract PoolEuler is Pool {
         if (baseOut == 0) return 0;
 
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
-        uint256 sharesReceived = _getSharesBalance() - sharesCached;  // this includes any shares in pool previously
+        shares = _getSharesBalance() - sharesCached; // this includes any shares in pool previously
         if (receiver != address(this)) {
-            sharesToken.safeTransfer(receiver, sharesReceived);
+            sharesToken.safeTransfer(receiver, shares);
         }
     }
 
@@ -128,7 +128,7 @@ contract PoolEuler is Pool {
     function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
         // sharesCached is stored by Yield with the same decimals as the underlying base, but actually the Euler
         // eTokens are always fp18.  So we scale up the sharesCached and subtract from real eToken balance.
-        retrieved =(sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
+        retrieved = (sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
         sharesToken.safeTransfer(to, retrieved);
         // Now the current balances match the cache, so no need to update the TWAR
     }

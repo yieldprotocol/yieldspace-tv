@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
-
-import "../Pool.sol";
-import "../../interfaces/IYVToken.sol";
-
-/*
+import "../Pool.sol";/*
 
   __     ___      _     _
   \ \   / (_)    | |   | |
@@ -28,7 +24,7 @@ import "../../interfaces/IYVToken.sol";
 /// @dev Deploy pool with base token and associated fyToken.
 /// @author @devtooligan
 contract PoolNonTv is Pool {
-    using MinimalTransferHelper for IERC20Like;
+    using TransferHelper for IERC20Like;
     using CastU256U128 for uint256;
 
     constructor(

@@ -28,7 +28,7 @@ interface IPool is IERC20, IERC2612 {
     function init(address to) external returns (uint256, uint256, uint256);
     function maturity() external view returns(uint32);
     function mint(address to, address remainder, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
-    function mu() external returns (int128);
+    function mu() external view returns (int128);
     function mintWithBase(address to, address remainder, uint256 fyTokenToBuy, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
     function retrieveBase(address to) external returns(uint128 retrieved);
     function retrieveFYToken(address to) external returns(uint128 retrieved);
@@ -45,4 +45,14 @@ interface IPool is IERC20, IERC2612 {
     function wrapPreview(uint256 assets) external view returns (uint256 shares);
     function unwrap(address receiver) external returns (uint256 assets);
     function unwrapPreview(uint256 shares) external view returns (uint256 assets);
+    /// Returns the max amount of FYTokens that can be sold to the pool
+    function maxFYTokenIn() external view returns (uint128) ;
+    /// Returns the max amount of FYTokens that can be bought from the pool
+    function maxFYTokenOut() external view returns (uint128) ;
+    /// Returns the max amount of Base that can be sold to the pool
+    function maxBaseIn() external view returns (uint128) ;
+    /// Returns the max amount of Base that can be bought from the pool
+    function maxBaseOut() external view returns (uint128);
+    /// Returns the result of the total supply invariant function
+    function invariant() external view returns (uint128);
 }

@@ -12,6 +12,42 @@ pragma solidity >=0.8.15; /*
 import "./Math64x64.sol";
 
 library Exp64x64 {
+    using Math64x64 for int128;
+
+    /// @dev Raises a 64.64 number to the power of another 64.64 number
+    /// x^y = 2^(y*log_2(x))
+    /// https://ethereum.stackexchange.com/questions/79903/exponential-function-with-fractional-numbers
+    function pow(int128 x, int128 y) internal pure returns (int128) {
+        return y.mul(x.log_2()).exp_2();
+    }
+
+
+    /* Mikhail Vladimirov, [Jul 6, 2022 at 12:26:12 PM (Jul 6, 2022 at 12:28:29 PM)]:
+        In simple words, when have an n-bits wide number x and raise it to a power α, then the result would be α*n bits wide.  This, if α<1, the result will loose precision, and if α>1, the result could exceed range.
+
+        So, the pow function multiplies the result by 2^(n * (1 - α)).  We have:
+
+        x ∈ [0; 2^n)
+        x^α ∈ [0; 2^(α*n))
+        x^α * 2^(n * (1 - α)) ∈ [0; 2^(α*n) * 2^(n * (1 - α))) = [0; 2^(α*n + n * (1 - α))) = [0; 2^(n * (α +  (1 - α)))) =  [0; 2^n)
+
+        So the normalization returns the result back into the proper range.
+
+        Now note, that:
+
+        pow (pow (x, α), 1/α) =
+        pow (x^α * 2^(n * (1 -α)) , 1/α) =
+        (x^α * 2^(n * (1 -α)))^(1/α) * 2^(n * (1 -1/α)) =
+        x^(α * (1/α)) * 2^(n * (1 -α) * (1/α)) * 2^(n * (1 -1/α)) =
+        x * 2^(n * (1/α -1)) * 2^(n * (1 -1/α)) =
+        x * 2^(n * (1/α -1) + n * (1 -1/α)) =
+        x
+
+        So, for formulas that look like:
+
+        (a x^α + b y^α + ...)^(1/α)
+
+        The pow function could be used instead of normal power. */
     /// @dev Raise given number x into power specified as a simple fraction y/z and then
     /// multiply the result by the normalization factor 2^(128 /// (1 - y/z)).
     /// Revert if z is zero, or if both x and y are zeros.

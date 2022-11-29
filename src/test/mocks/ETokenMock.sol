@@ -2,6 +2,7 @@
 pragma solidity >=0.8.15;
 import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
 import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
+import {TransferHelper} from "@yield-protocol/utils-v2/contracts/token/TransferHelper.sol";
 import {EulerMock} from "./EulerMock.sol";
 import "forge-std/console.sol";
 abstract contract Mintable is ERC20 {
@@ -12,6 +13,8 @@ abstract contract Mintable is ERC20 {
 }
 
 contract ETokenMock is Mintable {
+    using TransferHelper for IERC20Metadata;
+
     IERC20Metadata internal _underlyingAsset;
     uint8 internal _underlyingAssetDecimals;
     uint256 internal scaleFactor;
@@ -68,6 +71,6 @@ contract ETokenMock is Mintable {
     function withdraw(uint256, uint256 amount) external {
         uint256 burned = convertUnderlyingToBalance(amount);
         _burn(msg.sender, burned);
-        _underlyingAsset.transfer(msg.sender, amount);
+        _underlyingAsset.safeTransfer(msg.sender, amount);
     }
 }
