@@ -35,13 +35,13 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentSharesCached, startingSharesCached);
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentsharesReserves, startingsharesReserves);
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
@@ -54,13 +54,13 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentSharesCached, startingSharesCached);
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentsharesReserves, startingsharesReserves);
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
@@ -69,21 +69,21 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         // There is a 1 wei difference attributable to some deep nested rounding
         assertApproxEqAbs(pool.baseToken().balanceOf(alice), startingBaseBalance, 1);
         // assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
     }
 
     function testForkUnit_admin_EulerDAI04() public {
         console.log("retrieveShares returns exceess");
 
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         uint256 additionalAsset = 69e18;
         vm.startPrank(alice);
@@ -96,9 +96,9 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
 
         pool.retrieveShares(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
-        assertEq(currentSharesCached, startingSharesCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
+        assertEq(currentsharesReserves, startingsharesReserves);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
 
         // There is a 1 wei difference attributable to some deep nested rounding
@@ -110,15 +110,15 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
     }
 
     function testForkUnit_admin6_EulerDAI06() public {
@@ -130,13 +130,13 @@ contract Admin__WithLiquidityEulerDAIFork is EulerDAIFork {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
-        assertEq(currentSharesCached, startingSharesCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
+        assertEq(currentsharesReserves, startingsharesReserves);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);

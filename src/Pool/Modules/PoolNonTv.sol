@@ -65,9 +65,9 @@ contract PoolNonTv is Pool {
     /// @return retrieved The amount of shares/base tokens sent.
     function _retrieveBase(address to) internal virtual returns (uint128 retrieved) {
         // For PoolNonTv, sharesToken == baseToken. This allows for the use of the core Pool.sol contract logic with
-        // non-yield-bearing tokens. As such the sharesCached state var actually represents baseTokens, since they
+        // non-yield-bearing tokens. As such the sharesReserves state var actually represents baseTokens, since they
         // are the same.
-        retrieved = (sharesToken.balanceOf(address(this)) - sharesCached).u128();
+        retrieved = (sharesToken.balanceOf(address(this)) - sharesReserves).u128();
         sharesToken.safeTransfer(to, retrieved);
     }
 
@@ -92,7 +92,7 @@ contract PoolNonTv is Pool {
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return shares The amount of wrapped tokens that are sent to the receiver.
     function _wrap(address receiver) internal virtual override returns (uint256 shares) {
-        shares = _getSharesBalance() - sharesCached;
+        shares = _getSharesBalance() - sharesReserves;
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, shares);
         }
@@ -109,7 +109,7 @@ contract PoolNonTv is Pool {
     /// Since there is nothing to unwrap, we return the surplus balance.
     /// @return assets The amount of base assets sent to the receiver.
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
-        assets = _getSharesBalance() - sharesCached;
+        assets = _getSharesBalance() - sharesReserves;
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, assets);
         }

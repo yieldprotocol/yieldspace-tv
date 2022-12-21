@@ -26,7 +26,7 @@ abstract contract PoolEvents {
     );
 
     /// The _update fn has run and cached balances updated.
-    event Sync(uint112 baseCached, uint112 fyTokenCached, uint256 cumulativeBalancesRatio);
+    event Sync(uint112 baseCached, uint112 fyTokenReserves, uint256 cumulativeBalancesRatio);
 
     /// One of the four trading functions has been called:
     /// - buyBase

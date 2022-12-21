@@ -64,6 +64,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         // trade
         vm.startPrank(alice);
         fyToken.transfer(address(pool), fyTokenIn);
+
         pool.sellFYToken(alice, 0);
 
         // check user balances

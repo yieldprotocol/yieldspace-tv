@@ -37,7 +37,7 @@ abstract contract ForkTestCore is Test {
         int256 poolTokens
     );
 
-    event Sync(uint112 sharesCached, uint112 fyTokenCached, uint256 cumulativeBalancesRatio);
+    event Sync(uint112 sharesReserves, uint112 fyTokenReserves, uint256 cumulativeBalancesRatio);
 
     event Trade(uint32 maturity, address indexed from, address indexed to, int256 shares, int256 fyTokens);
 

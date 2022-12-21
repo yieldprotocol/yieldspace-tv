@@ -16,11 +16,11 @@ contract SyncablePoolEuler is PoolEuler, ISyncablePool {
 
     /// Updates the cache to match the actual balances.  Useful for testing.  Risky for prod.
     function sync() public {
-        _update(_getSharesBalance(), _getFYTokenBalance(), sharesCached, fyTokenCached);
+        _update(_getSharesBalance(), _getFYTokenBalance(), sharesReserves, fyTokenReserves);
     }
 
     function getSharesSurplus() public view returns (uint128) {
-        return _getSharesBalance() - sharesCached;
+        return _getSharesBalance() - sharesReserves;
     }
 
     function mulMu(uint256 amount) external view returns (uint256) {

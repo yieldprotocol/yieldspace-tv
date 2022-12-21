@@ -80,7 +80,7 @@ contract PoolEuler is Pool {
         if (baseOut == 0) return 0;
 
         IEToken(address(sharesToken)).deposit(0, baseOut); // first param is subaccount, 0 for primary
-        shares = _getSharesBalance() - sharesCached; // this includes any shares in pool previously
+        shares = _getSharesBalance() - sharesReserves; // this includes any shares in pool previously
         if (receiver != address(this)) {
             sharesToken.safeTransfer(receiver, shares);
         }
@@ -97,7 +97,7 @@ contract PoolEuler is Pool {
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return assets The amount of assets sent to the receiver in native decimals.
     function _unwrap(address receiver) internal virtual override returns (uint256 assets) {
-        uint256 surplus = _getSharesBalance() - sharesCached;
+        uint256 surplus = _getSharesBalance() - sharesReserves;
         if (surplus == 0) return 0;
         // convert to base
         assets = _unwrapPreview(surplus);
@@ -126,9 +126,9 @@ contract PoolEuler is Pool {
     /// @param to Address of the recipient of the shares tokens.
     /// @return retrieved The amount of shares tokens sent (in eToken decimals -- 18).
     function retrieveShares(address to) external virtual override returns (uint128 retrieved) {
-        // sharesCached is stored by Yield with the same decimals as the underlying base, but actually the Euler
-        // eTokens are always fp18.  So we scale up the sharesCached and subtract from real eToken balance.
-        retrieved = (sharesToken.balanceOf(address(this)) - (sharesCached * scaleFactor)).u128();
+        // sharesReserves is stored by Yield with the same decimals as the underlying base, but actually the Euler
+        // eTokens are always fp18.  So we scale up the sharesReserves and subtract from real eToken balance.
+        retrieved = (sharesToken.balanceOf(address(this)) - (sharesReserves * scaleFactor)).u128();
         sharesToken.safeTransfer(to, retrieved);
         // Now the current balances match the cache, so no need to update the TWAR
     }

@@ -707,6 +707,7 @@ contract YieldMathTest is Test {
             uint128(451_473)
         ];
         uint128 result;
+        uint start;
         for (uint256 idx; idx < fyTokenAmounts.length; idx++) {
             result =
                 YieldMath.sharesOutForFYTokenIn(
@@ -720,7 +721,6 @@ contract YieldMathTest is Test {
                     mu
                 ) /
                 1e18;
-
             assertApproxEqAbs(result, expectedResults[idx], 2);
         }
     }
