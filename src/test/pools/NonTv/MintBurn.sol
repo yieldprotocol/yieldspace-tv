@@ -238,13 +238,13 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
         console.log("retrieveBase returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentSharesCached, startingSharesCached);
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentsharesReserves, startingsharesReserves);
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
     }
@@ -258,13 +258,13 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveBase(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentSharesCached, startingSharesCached);
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentsharesReserves, startingsharesReserves);
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
 
         // "sharesToken" and "baseToken" both point to the same token
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance + additionalAmount);
@@ -275,14 +275,14 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
         console.log("retrieveShares returns nothing if there is no excess");
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
     }
 
     function testUnit_admin4_NonTv() public {
@@ -293,13 +293,13 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
 
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveShares(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
-        assertEq(currentSharesCached, startingSharesCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
+        assertEq(currentsharesReserves, startingsharesReserves);
 
         // "sharesToken" and "baseToken" both point to the same token
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance + additionalAmount);
@@ -311,15 +311,15 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance);
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
     }
 
     function testUnit_admin6_NonTv() public {
@@ -330,13 +330,13 @@ contract Admin__WithLiquidityNonTv is WithLiquidityNonTv {
         uint256 startingBaseBalance = pool.baseToken().balanceOf(alice);
         uint256 startingSharesBalance = pool.sharesToken().balanceOf(alice);
         uint256 startingFyTokenBalance = pool.fyToken().balanceOf(alice);
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
 
         pool.retrieveFYToken(alice);
 
-        (uint104 currentSharesCached, uint104 currentFyTokenCached, , ) = pool.getCache();
-        assertEq(currentFyTokenCached, startingFyTokenCached);
-        assertEq(currentSharesCached, startingSharesCached);
+        (uint104 currentsharesReserves, uint104 currentfyTokenReserves, , ) = pool.getCache();
+        assertEq(currentfyTokenReserves, startingfyTokenReserves);
+        assertEq(currentsharesReserves, startingsharesReserves);
         assertEq(pool.fyToken().balanceOf(alice), startingFyTokenBalance + additionalAmount);
         assertEq(pool.sharesToken().balanceOf(alice), startingSharesBalance);
         assertEq(pool.baseToken().balanceOf(alice), startingBaseBalance);

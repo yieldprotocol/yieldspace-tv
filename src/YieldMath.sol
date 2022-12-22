@@ -27,9 +27,9 @@ library YieldMath {
     using CastU256U128 for uint256;
     using CastU128I128 for uint128;
 
-    uint128 public constant WAD = 1e18;
-    uint128 public constant ONE = 0x10000000000000000; //   In 64.64
-    uint256 public constant MAX = type(uint128).max; //     Used for overflow checks
+    uint128 internal constant WAD = 1e18;
+    uint128 internal constant ONE = 0x10000000000000000; //   In 64.64
+    uint256 internal constant MAX = type(uint128).max; //     Used for overflow checks
 
     /* CORE FUNCTIONS
      ******************************************************************************************************************/
@@ -68,7 +68,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128) {
+    ) internal pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -171,7 +171,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128) {
+    ) internal pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
             return
@@ -284,7 +284,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128) {
+    ) internal pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 y = fyToken reserves
@@ -384,7 +384,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128) {
+    ) internal pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
             return
@@ -470,7 +470,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 fyTokenIn) {
+    ) internal pure returns (uint128 fyTokenIn) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 Y = fyToken reserves
@@ -543,7 +543,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 fyTokenOut) {
+    ) internal pure returns (uint128 fyTokenOut) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -598,7 +598,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 sharesIn) {
+    ) internal pure returns (uint128 sharesIn) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -648,7 +648,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 maxSharesOut_) {} */
+    ) internal pure returns (uint128 maxSharesOut_) {} */
 
     /// Calculates the total supply invariant.
     /// https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
@@ -670,7 +670,7 @@ library YieldMath {
         int128 g,
         int128 c,
         int128 mu
-    ) public pure returns (uint128 result) {
+    ) internal pure returns (uint128 result) {
         if (totalSupply == 0) return 0;
         int128 a = int128(_computeA(timeTillMaturity, k, g));
 
@@ -701,8 +701,8 @@ library YieldMath {
                 Z = sharesReserves
                 s = total supply
 
-                    c/μ ( (       numerator           ) / (  denominator  ) )^invA  / s 
-                    c/μ ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  / s 
+                    c/μ ( (       numerator           ) / (  denominator  ) )^invA  / s
+                    c/μ ( ( (    Za      ) + (  Ya  ) ) / (  denominator  ) )^invA  / s
                 y = c/μ ( ( c/μ * (μZ)^a   +    Y^a   ) / (     c/u + 1   ) )^(1/a) / s
             */
 

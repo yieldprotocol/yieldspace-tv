@@ -74,7 +74,7 @@ contract PoolYearnVault is Pool {
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return base_ The amount of base base sent to the receiver.
     function _unwrap(address receiver) internal virtual override returns (uint256 base_) {
-        uint256 surplus = _getSharesBalance() - sharesCached;
+        uint256 surplus = _getSharesBalance() - sharesReserves;
         if (surplus == 0) return 0;
         base_ = IYVToken(address(sharesToken)).withdraw(surplus, receiver);
     }

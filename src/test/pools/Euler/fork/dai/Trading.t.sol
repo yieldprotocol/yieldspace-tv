@@ -64,6 +64,7 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
         // trade
         vm.startPrank(alice);
         fyToken.transfer(address(pool), fyTokenIn);
+
         pool.sellFYToken(alice, 0);
 
         // check user balances
@@ -187,7 +188,10 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         // trade
         vm.startPrank(alice);
         asset.transfer(address(pool), assetsIn);
+
+        uint start = gasleft();
         pool.sellBase(alice, 0);
+        console.log("sellBase() gas used:", start - gasleft());
 
         // check user balances
         assertEq(assetBalBefore - asset.balanceOf(alice), assetsIn);
@@ -267,7 +271,10 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
         // trade
         vm.startPrank(alice);
         asset.transfer(address(pool), expectedAssetsIn);
+
+        uint start = gasleft();
         pool.buyFYToken(alice, fyTokenOut, uint128(MAX));
+        console.log("buyFYToken() gas used:", start - gasleft());
 
         // check user balances
         assertEq(assetBalBefore - asset.balanceOf(alice), expectedAssetsIn);
@@ -294,7 +301,10 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
 
         vm.startPrank(alice);
         fyToken.transfer(address(pool), fyTokenIn);
+
+        uint start = gasleft();
         pool.buyBase(alice, expectedAssetOut, type(uint128).max);
+        console.log("buyBase() gas used:", start - gasleft());
 
         uint256 assetBalAfter = asset.balanceOf(alice);
         uint256 fyTokenBalAfter = fyToken.balanceOf(alice);
@@ -359,7 +369,10 @@ contract Trade__PreviewFuncsDAIFork is EulerDAIFork {
 
         vm.startPrank(alice);
         fyToken.transfer(address(pool), fyTokenIn);
+
+        uint start = gasleft();
         pool.sellFYToken(alice, 0);
+        console.log("sellFYToken() gas used:", start - gasleft());
 
         uint256 assetBalAfter = asset.balanceOf(alice);
         uint256 fyTokenBalAfter = fyToken.balanceOf(alice);

@@ -250,7 +250,7 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
 
     function testUnit_Euler_tradeUSDT10() public {
         console.log("buys a certain amount of fyTokens with base");
-        (uint104 sharesCachedBefore, , , ) = pool.getCache();
+        (uint104 sharesReservesBefore, , , ) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(1000e6);
 
@@ -282,16 +282,16 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
+        (uint104 sharesReservesCurrent, uint104 fyTokenReservesCurrent, , ) = pool.getCache();
 
-        uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
-        uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
+        uint256 sharesIn = sharesReservesCurrent - sharesReservesBefore;
+        uint256 sharesChange = pool.getSharesBalance() - sharesReservesCurrent;
 
         require(fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut, "'User2' wallet should have 1 fyToken token");
 
         almostEqual(sharesIn, expectedSharesIn, sharesIn / 1000000);
-        require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
-        require(fyTokenCachedCurrent == pool.getFYTokenBalance());
+        require(sharesReservesCurrent + sharesChange == pool.getSharesBalance());
+        require(fyTokenReservesCurrent == pool.getFYTokenBalance());
     }
 }
 

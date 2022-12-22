@@ -309,7 +309,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
     function testUnit_tradeUSDC10() public {
         console.log("buys a certain amount of fyTokens with base");
-        (uint104 sharesCachedBefore, , , ) = pool.getCache();
+        (uint104 sharesReservesBefore, , , ) = pool.getCache();
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 fyTokenOut = uint128(1e6);
 
@@ -336,16 +336,16 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         vm.prank(alice);
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
+        (uint104 sharesReservesCurrent, uint104 fyTokenReservesCurrent, , ) = pool.getCache();
 
-        uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
-        uint256 sharesChange = pool.getSharesBalance() - sharesCachedCurrent;
+        uint256 sharesIn = sharesReservesCurrent - sharesReservesBefore;
+        uint256 sharesChange = pool.getSharesBalance() - sharesReservesCurrent;
 
         require(fyToken.balanceOf(bob) == userFYTokenBefore + fyTokenOut, "'User2' wallet should have 1 fyToken token");
 
         almostEqual(sharesIn, expectedSharesIn, sharesIn / 100000);
-        require(sharesCachedCurrent + sharesChange == pool.getSharesBalance());
-        require(fyTokenCachedCurrent == pool.getFYTokenBalance());
+        require(sharesReservesCurrent + sharesChange == pool.getSharesBalance());
+        require(fyTokenReservesCurrent == pool.getFYTokenBalance());
     }
 
     // Removed
@@ -355,7 +355,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         console.log("donates shares and buys fyToken");
         uint256 sharesBalances = pool.getSharesBalance();
         uint256 fyTokenBalances = pool.getFYTokenBalance();
-        (uint104 sharesCachedBefore, , , ) = pool.getCache();
+        (uint104 sharesReservesBefore, , , ) = pool.getCache();
 
         uint128 fyTokenOut = uint128(1e6);
         uint128 sharesDonation = uint128(1e6);
@@ -364,11 +364,11 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
         pool.buyFYToken(bob, fyTokenOut, uint128(MAX));
 
-        (uint104 sharesCachedCurrent, uint104 fyTokenCachedCurrent, , ) = pool.getCache();
-        uint256 sharesIn = sharesCachedCurrent - sharesCachedBefore;
+        (uint104 sharesReservesCurrent, uint104 fyTokenReservesCurrent, , ) = pool.getCache();
+        uint256 sharesIn = sharesReservesCurrent - sharesReservesBefore;
 
-        require(sharesCachedCurrent == sharesBalances + sharesIn);
-        require(fyTokenCachedCurrent == fyTokenBalances - fyTokenOut);
+        require(sharesReservesCurrent == sharesBalances + sharesIn);
+        require(fyTokenReservesCurrent == fyTokenBalances - fyTokenOut);
     }
 }
 

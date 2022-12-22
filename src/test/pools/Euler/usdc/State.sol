@@ -63,8 +63,8 @@ abstract contract WithLiquidityEulerUSDC is ZeroStateEulerUSDC {
         // There is a fractional amount of excess eUSDC shares in the pool.
         // as a result of the decimals mismatch between eUSDC (18) and actual USDC (6).
         // The amount is less than 2/10 of a wei of USDC: 0.000000181818181819 USDC
-        (uint104 startingSharesCached, uint104 startingFyTokenCached, , ) = pool.getCache();
-        uint256 fractionalExcess = pool.sharesToken().balanceOf(address(pool)) - startingSharesCached * 1e12;
+        (uint104 startingsharesReserves, uint104 startingfyTokenReserves, , ) = pool.getCache();
+        uint256 fractionalExcess = pool.sharesToken().balanceOf(address(pool)) - startingsharesReserves * 1e12;
         assertEq(fractionalExcess, 181818181819);
         pool.retrieveShares(address(0x0)); // clear that fractional excess out for cleaner tests below
     }

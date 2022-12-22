@@ -15,7 +15,7 @@ contract SyncablePoolNonTv is PoolNonTv, ISyncablePool {
 
     /// Updates the cache to match the actual balances.  Useful for testing.  Risky for prod.
     function sync() public {
-        _update(_getSharesBalance(), _getFYTokenBalance(), sharesCached, fyTokenCached);
+        _update(_getSharesBalance(), _getFYTokenBalance(), sharesReserves, fyTokenReserves);
     }
 
     function mulMu(uint256 amount) external view returns (uint256) {

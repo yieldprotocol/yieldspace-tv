@@ -21,7 +21,7 @@ interface IPool is IERC20, IERC2612 {
     function g2() external view returns(int128);
     function getC() external view returns (int128);
     function getCurrentSharePrice() external view returns (uint256);
-    function getCache() external view returns (uint104 baseCached, uint104 fyTokenCached, uint32 blockTimestampLast, uint16 g1Fee_);
+    function getCache() external view returns (uint104 baseCached, uint104 fyTokenReserves, uint32 blockTimestampLast, uint16 g1Fee_);
     function getBaseBalance() external view returns(uint128);
     function getFYTokenBalance() external view returns(uint128);
     function getSharesBalance() external view returns(uint128);
