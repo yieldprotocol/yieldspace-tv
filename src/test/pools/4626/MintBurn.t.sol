@@ -214,9 +214,11 @@ contract Burn__WithLiquidity is WithLiquidityDAI {
 
         uint256 expectedFYTokenOut = (lpTokensIn * fyTokenBalance) / poolSup;
 
+        console.log("burns liquidity tokens1");
         // Alice transfers in lp tokens then burns them.
         vm.prank(alice);
         pool.transfer(address(pool), lpTokensIn);
+        console.log("burns liquidity tokens2");
 
         vm.expectEmit(true, true, true, true);
         emit Liquidity(
@@ -232,11 +234,13 @@ contract Burn__WithLiquidity is WithLiquidityDAI {
         // Alice calls burn.
         vm.prank(alice);
         pool.burn(bob, address(charlie), 0, MAX);
+        console.log("burns liquidity tokens3");
 
         // Confirm shares and fyToken out as expected and check balances pool and users.
         uint256 assetsOut = asset.balanceOf(address(bob)) - bobAssetBefore;
         uint256 fyTokenOut = fyTokenBalance - fyToken.balanceOf(address(pool));
         uint256 sharesOut = sharesBalance - shares.balanceOf(address(pool));
+        console.log("burns liquidity tokens4");
         almostEqual(sharesOut, expectedSharesOut, sharesOut / 10000);
         almostEqual(assetsOut, expectedAssetsOut, assetsOut / 10000);
         almostEqual(fyTokenOut, expectedFYTokenOut, fyTokenOut / 10000);

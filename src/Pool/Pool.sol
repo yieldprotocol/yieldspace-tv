@@ -2,15 +2,13 @@
 pragma solidity >=0.8.15;
 import "forge-std/console.sol";
 import "./PoolImports.sol"; /*
-
-   __     ___      _     _
-   \ \   / (_)    | |   | |  ██████╗  ██████╗  ██████╗ ██╗        ███████╗ ██████╗ ██╗
+    __     ___      _     _
+    \ \   / (_)    | |   | |  ██████╗  ██████╗  ██████╗ ██╗        ███████╗ ██████╗ ██╗
     \ \_/ / _  ___| | __| |  ██╔══██╗██╔═══██╗██╔═══██╗██║        ██╔════╝██╔═══██╗██║
      \   / | |/ _ \ |/ _` |  ██████╔╝██║   ██║██║   ██║██║        ███████╗██║   ██║██║
       | |  | |  __/ | (_| |  ██╔═══╝ ██║   ██║██║   ██║██║        ╚════██║██║   ██║██║
       |_|  |_|\___|_|\__,_|  ██║     ╚██████╔╝╚██████╔╝███████╗██╗███████║╚██████╔╝███████╗
        yieldprotocol.com     ╚═╝      ╚═════╝  ╚═════╝ ╚══════╝╚═╝╚══════╝ ╚═════╝ ╚══════╝
-
                                                 ┌─────────┐
                                                 │no       │
                                                 │lifeguard│
@@ -36,8 +34,7 @@ import "./PoolImports.sol"; /*
                 `'''''''`                  _..._|____| |____| _..._
                                          .` "-. `%   | |    %` .-" `.
                                         /      \    .: :.     /      \
-                                        '-..___|_..=:` `-:=.._|___..-'
-*/
+                                        '-..___|_..=:` `-:=.._|___..-'*/
 
 /// A Yieldspace AMM implementation for pools which provide liquidity and trading of fyTokens vs base tokens.
 /// **The base tokens in this implementation are converted to ERC4626 compliant tokenized vault shares.**
@@ -112,7 +109,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Used to scale up to 18 decimals (not 64.64)
     uint96 public immutable scaleFactor;
 
-
     /* STRUCTS
      *****************************************************************************************************************/
 
@@ -123,10 +119,17 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint32 blockTimestampLast;
     }
 
+    struct Buffer {
+        uint104 base;
+        uint104 shares;
+        uint24 min;
+        uint24 max;
+    }
+
     /* STORAGE
      *****************************************************************************************************************/
 
-    // The following 4 vars use one storage slot and can be retrieved in a Cache struct with getCache()
+    // CACHE - The following 4 vars use one storage slot and can be retrieved in a Cache struct with getCache()
 
     /// This number is used to calculate the fees for buying/selling fyTokens.
     /// @dev This is a fp4 that represents a ratio out 1, where 1 is represented by 10000.
@@ -140,6 +143,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// block.timestamp of last time reserve caches were updated.
     uint32 internal blockTimestampLast;
+
+    // BUFFER - The following 4 vars use one storage slot and can be retrieved in a Buffer struct with getBuffer()
+    // TODO: use constructor args
+    uint104 baseBuffer;
+    uint104 sharesBuffer;
+    uint24 baseBufferMin = uint24(1000);
+    uint24 baseBufferMax = uint24(2000);
 
     /// This is a LAGGING, time weighted sum of the fyToken:shares reserves ratio measured in ratio seconds.
     /// @dev Footgun 🔫 alert!  Be careful, this number is probably not what you need and it should normally be
@@ -189,7 +199,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         baseToken = baseToken_;
         fyToken = IMaturingToken(fyToken_);
         ts = ts_;
-        scaleFactor = uint96(10**(18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
+        scaleFactor = uint96(10 ** (18 - uint96(baseDecimals))); // No more than 18 decimals allowed, reverts on underflow.
 
         // Set mu with check for 0.
         if ((mu = _getC()) == 0) {
@@ -256,20 +266,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseIn The amount of base found in the contract that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
-    function mint(
-        address to,
-        address remainder,
-        uint256 minRatio,
-        uint256 maxRatio
-    )
+    function mint(address to, address remainder, uint256 minRatio, uint256 maxRatio)
         external
         virtual
         override
-        returns (
-            uint256 baseIn,
-            uint256 fyTokenIn,
-            uint256 lpTokensMinted
-        )
+        returns (uint256 baseIn, uint256 fyTokenIn, uint256 lpTokensMinted)
     {
         if (_totalSupply == 0) revert NotInitialized();
 
@@ -291,11 +292,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         external
         virtual
         auth
-        returns (
-            uint256 baseIn,
-            uint256 fyTokenIn,
-            uint256 lpTokensMinted
-        )
+        returns (uint256 baseIn, uint256 fyTokenIn, uint256 lpTokensMinted)
     {
         if (_totalSupply != 0) revert Initialized();
 
@@ -334,21 +331,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
-    function mintWithBase(
-        address to,
-        address remainder,
-        uint256 fyTokenToBuy,
-        uint256 minRatio,
-        uint256 maxRatio
-    )
+    function mintWithBase(address to, address remainder, uint256 fyTokenToBuy, uint256 minRatio, uint256 maxRatio)
         external
         virtual
         override
-        returns (
-            uint256 baseIn,
-            uint256 fyTokenIn,
-            uint256 lpTokensMinted
-        )
+        returns (uint256 baseIn, uint256 fyTokenIn, uint256 lpTokensMinted)
     {
         if (_totalSupply == 0) revert NotInitialized();
         (baseIn, fyTokenIn, lpTokensMinted) = _mint(to, remainder, fyTokenToBuy, minRatio, maxRatio);
@@ -370,23 +357,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseIn The amount of base found that was used for the mint.
     /// @return fyTokenIn The amount of fyToken found that was used for the mint
     /// @return lpTokensMinted The amount of LP tokens minted.
-    function _mint(
-        address to,
-        address remainder,
-        uint256 fyTokenToBuy,
-        uint256 minRatio,
-        uint256 maxRatio
-    )
+    function _mint(address to, address remainder, uint256 fyTokenToBuy, uint256 minRatio, uint256 maxRatio)
         internal
         beforeMaturity
-        returns (
-            uint256 baseIn,
-            uint256 fyTokenIn,
-            uint256 lpTokensMinted
-        )
+        returns (uint256 baseIn, uint256 fyTokenIn, uint256 lpTokensMinted)
     {
         // Wrap all base found in this contract.
-        baseIn = baseToken.balanceOf(address(this));
+        baseIn = baseToken.balanceOf(address(this)) - baseBuffer;
 
         _wrap(address(this));
 
@@ -399,8 +376,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         // Check the burn wasn't sandwiched
         if (realfyTokenReserves_ != 0) {
             if (
-                uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) < minRatio ||
-                uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) > maxRatio
+                uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) < minRatio
+                    || uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) > maxRatio
             ) revert SlippageDuringMint(uint256(cache.sharesReserves).wdiv(realfyTokenReserves_), minRatio, maxRatio);
         } else if (maxRatio < type(uint256).max) {
             revert SlippageDuringMint(type(uint256).max, minRatio, maxRatio);
@@ -422,10 +399,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             uint256 sharesToSell;
             if (fyTokenToBuy != 0) {
                 sharesToSell = _buyFYTokenPreview(
-                    fyTokenToBuy.u128(),
-                    cache.sharesReserves,
-                    cache.fyTokenReserves,
-                    _computeG1(cache.g1Fee)
+                    fyTokenToBuy.u128(), cache.sharesReserves, cache.fyTokenReserves, _computeG1(cache.g1Fee)
                 );
             }
 
@@ -460,14 +434,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         }
 
         emit Liquidity(
-            maturity,
-            msg.sender,
-            to,
-            address(0),
-            -(baseIn.i256()),
-            -(fyTokenIn.i256()),
-            lpTokensMinted.i256()
-        );
+            maturity, msg.sender, to, address(0), -(baseIn.i256()), -(fyTokenIn.i256()), lpTokensMinted.i256()
+            );
     }
 
     /* burn
@@ -495,20 +463,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return lpTokensBurned The amount of LP tokens burned.
     /// @return baseOut The amount of base tokens received.
     /// @return fyTokenOut The amount of fyTokens received.
-    function burn(
-        address baseTo,
-        address fyTokenTo,
-        uint256 minRatio,
-        uint256 maxRatio
-    )
+    function burn(address baseTo, address fyTokenTo, uint256 minRatio, uint256 maxRatio)
         external
         virtual
         override
-        returns (
-            uint256 lpTokensBurned,
-            uint256 baseOut,
-            uint256 fyTokenOut
-        )
+        returns (uint256 lpTokensBurned, uint256 baseOut, uint256 fyTokenOut)
     {
         (lpTokensBurned, baseOut, fyTokenOut) = _burn(baseTo, fyTokenTo, false, minRatio, maxRatio);
     }
@@ -538,12 +497,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param maxRatio Maximum ratio of shares to fyToken in the pool (fp18).
     /// @return lpTokensBurned The amount of lp tokens burned.
     /// @return baseOut The amount of base tokens returned.
-    function burnForBase(
-        address to,
-        uint256 minRatio,
-        uint256 maxRatio
-    ) external virtual override beforeMaturity returns (uint256 lpTokensBurned, uint256 baseOut) {
-        (lpTokensBurned, baseOut, ) = _burn(to, address(0), true, minRatio, maxRatio);
+    function burnForBase(address to, uint256 minRatio, uint256 maxRatio)
+        external
+        virtual
+        override
+        beforeMaturity
+        returns (uint256 lpTokensBurned, uint256 baseOut)
+    {
+        (lpTokensBurned, baseOut,) = _burn(to, address(0), true, minRatio, maxRatio);
     }
 
     /// Burn liquidity tokens in exchange for base.
@@ -557,19 +518,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return lpTokensBurned The amount of pool tokens burned.
     /// @return baseOut The amount of base tokens returned.
     /// @return fyTokenOut The amount of fyTokens returned.
-    function _burn(
-        address baseTo,
-        address fyTokenTo,
-        bool tradeToBase,
-        uint256 minRatio,
-        uint256 maxRatio
-    )
+    function _burn(address baseTo, address fyTokenTo, bool tradeToBase, uint256 minRatio, uint256 maxRatio)
         internal
-        returns (
-            uint256 lpTokensBurned,
-            uint256 baseOut,
-            uint256 fyTokenOut
-        )
+        returns (uint256 lpTokensBurned, uint256 baseOut, uint256 fyTokenOut)
     {
         // Gather data
         lpTokensBurned = _balanceOf[address(this)];
@@ -580,36 +531,39 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
         // The fyToken cache includes the virtual fyToken, equal to the supply.
         uint256 realfyTokenReserves_ = cache.fyTokenReserves - supply;
-
+        console.log("pool1");
         // Check the burn wasn't sandwiched
         if (realfyTokenReserves_ != 0) {
             if (
-                (uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) < minRatio) ||
-                (uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) > maxRatio)
+                (uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) < minRatio)
+                    || (uint256(cache.sharesReserves).wdiv(realfyTokenReserves_) > maxRatio)
             ) {
                 revert SlippageDuringBurn(uint256(cache.sharesReserves).wdiv(realfyTokenReserves_), minRatio, maxRatio);
             }
         }
+        console.log("pool2");
 
         // Calculate trade
         uint256 sharesOut = (lpTokensBurned * cache.sharesReserves) / supply;
         fyTokenOut = (lpTokensBurned * realfyTokenReserves_) / supply;
 
         if (tradeToBase) {
-            sharesOut +=
-                YieldMath.sharesOutForFYTokenIn( //                                This is a virtual sell
-                    (cache.sharesReserves - sharesOut.u128()) * scaleFactor_, //     Cache, minus virtual burn
-                    (cache.fyTokenReserves - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
-                    fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
-                    maturity - uint32(block.timestamp), //                         This can't be called after maturity
-                    ts,
-                    _computeG2(cache.g1Fee),
-                    _getC(),
-                    mu
-                ) /
-                scaleFactor_;
+            sharesOut += YieldMath.sharesOutForFYTokenIn( //                                This is a virtual sell
+                (cache.sharesReserves - sharesOut.u128()) * scaleFactor_, //     Cache, minus virtual burn
+                (cache.fyTokenReserves - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
+                fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
+                maturity - uint32(block.timestamp), //                         This can't be called after maturity
+                ts,
+                _computeG2(cache.g1Fee),
+                _getC(),
+                mu
+            ) / scaleFactor_;
             fyTokenOut = 0;
         }
+
+        console.log("pool3");
+                console.log("+ + file: Pool.sol:1184 + _unwrap + sharesReserves", sharesReserves);
+        console.log("+ + file: Pool.sol:1184 + _unwrap + _getSharesBalance()", _getSharesBalance());
 
         // Update TWAR
         _update(
@@ -618,27 +572,28 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.sharesReserves,
             cache.fyTokenReserves
         );
+        console.log("+ + file: Pool.sol:1184 + _unwrap + sharesReserves", sharesReserves);
+        console.log("+ + file: Pool.sol:1184 + _unwrap + _getSharesBalance()", _getSharesBalance());
 
+        console.log("pool4");
         // Burn and transfer
         _burn(address(this), lpTokensBurned); // This is calling the actual ERC20 _burn.
+        console.log("pool5");
         baseOut = _unwrap(baseTo);
+        console.log("+ + file: Pool.sol:576 + baseOut", baseOut);
 
+        console.log("pool6");
         if (fyTokenOut != 0) fyToken.safeTransfer(fyTokenTo, fyTokenOut);
 
         // confirm new virtual fyToken balance is not less than new supply
         if ((cache.fyTokenReserves - fyTokenOut - lpTokensBurned) < supply - lpTokensBurned) {
             revert fyTokenReservesBadState();
         }
+        console.log("pool7");
 
         emit Liquidity(
-            maturity,
-            msg.sender,
-            baseTo,
-            fyTokenTo,
-            baseOut.i256(),
-            fyTokenOut.i256(),
-            -(lpTokensBurned.i256())
-        );
+            maturity, msg.sender, baseTo, fyTokenTo, baseOut.i256(), fyTokenOut.i256(), -(lpTokensBurned.i256())
+            );
 
         if (supply == lpTokensBurned && block.timestamp >= maturity) {
             emit gg();
@@ -686,11 +641,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param baseOut Amount of base being bought that will be deposited in `to` wallet.
     /// @param max This has been deprecated and was left in for backwards compatibility.
     /// @return fyTokenIn Amount of fyToken that will be taken from caller.
-    function buyBase(
-        address to,
-        uint128 baseOut,
-        uint128 max
-    ) external virtual override returns (uint128 fyTokenIn) {
+    function buyBase(address to, uint128 baseOut, uint128 max) external virtual override returns (uint128 fyTokenIn) {
         // Calculate trade and cache values
         uint128 fyTokenBalance = _getFYTokenBalance();
         Cache memory cache = _getCache();
@@ -724,34 +675,29 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     function buyBasePreview(uint128 baseOut) external view virtual override returns (uint128 fyTokenIn) {
         Cache memory cache = _getCache();
         fyTokenIn = _buyBasePreview(
-            _wrapPreview(baseOut).u128(),
-            cache.sharesReserves,
-            cache.fyTokenReserves,
-            _computeG2(cache.g1Fee)
+            _wrapPreview(baseOut).u128(), cache.sharesReserves, cache.fyTokenReserves, _computeG2(cache.g1Fee)
         );
     }
 
     /// Returns how much fyToken would be required to buy `sharesOut`.
     /// @dev Note: This fn takes sharesOut as a param while the external fn takes baseOut.
-    function _buyBasePreview(
-        uint128 sharesOut,
-        uint104 sharesBalance,
-        uint104 fyTokenBalance,
-        int128 g2_
-    ) internal view beforeMaturity returns (uint128 fyTokenIn) {
+    function _buyBasePreview(uint128 sharesOut, uint104 sharesBalance, uint104 fyTokenBalance, int128 g2_)
+        internal
+        view
+        beforeMaturity
+        returns (uint128 fyTokenIn)
+    {
         uint96 scaleFactor_ = scaleFactor;
-        fyTokenIn =
-            YieldMath.fyTokenInForSharesOut(
-                sharesBalance * scaleFactor_,
-                fyTokenBalance * scaleFactor_,
-                sharesOut * scaleFactor_,
-                maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
-                g2_,
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
+        fyTokenIn = YieldMath.fyTokenInForSharesOut(
+            sharesBalance * scaleFactor_,
+            fyTokenBalance * scaleFactor_,
+            sharesOut * scaleFactor_,
+            maturity - uint32(block.timestamp), // This can't be called after maturity
+            ts,
+            g2_,
+            _getC(),
+            mu
+        ) / scaleFactor_;
     }
 
     /*buyFYToken
@@ -791,28 +737,26 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param fyTokenOut Amount of fyToken being bought that will be deposited in `to` wallet.
     /// @param max  This has been deprecated and was left in for backwards compatibility.
     /// @return baseIn Amount of base that will be used.
-    function buyFYToken(
-        address to,
-        uint128 fyTokenOut,
-        uint128 max
-    ) external virtual override returns (uint128 baseIn) {
+    function buyFYToken(address to, uint128 fyTokenOut, uint128 max)
+        external
+        virtual
+        override
+        returns (uint128 baseIn)
+    {
         // Wrap any base assets found in contract.
         _wrap(address(this));
 
         // Calculate trade
         uint128 sharesBalance = _getSharesBalance();
         Cache memory cache = _getCache();
-        uint128 sharesIn = _buyFYTokenPreview(
-            fyTokenOut,
-            cache.sharesReserves,
-            cache.fyTokenReserves,
-            _computeG1(cache.g1Fee)
-        );
+        uint128 sharesIn =
+            _buyFYTokenPreview(fyTokenOut, cache.sharesReserves, cache.fyTokenReserves, _computeG1(cache.g1Fee));
         baseIn = _unwrapPreview(sharesIn).u128();
 
         // Checks
-        if (sharesBalance - cache.sharesReserves < sharesIn)
+        if (sharesBalance - cache.sharesReserves < sharesIn) {
             revert NotEnoughBaseIn(_unwrapPreview(sharesBalance - cache.sharesReserves), baseIn);
+        }
 
         // Update TWAR
         _update(
@@ -839,38 +783,32 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseIn Amount of base hypothetically required.
     function buyFYTokenPreview(uint128 fyTokenOut) external view virtual override returns (uint128 baseIn) {
         Cache memory cache = _getCache();
-        uint128 sharesIn = _buyFYTokenPreview(
-            fyTokenOut,
-            cache.sharesReserves,
-            cache.fyTokenReserves,
-            _computeG1(cache.g1Fee)
-        );
+        uint128 sharesIn =
+            _buyFYTokenPreview(fyTokenOut, cache.sharesReserves, cache.fyTokenReserves, _computeG1(cache.g1Fee));
 
         baseIn = _unwrapPreview(sharesIn).u128();
     }
 
     /// Returns how many shares are required to buy `fyTokenOut` fyTokens.
     /// @dev Note: This returns an amount in shares.  The external fn returns amount of base.
-    function _buyFYTokenPreview(
-        uint128 fyTokenOut,
-        uint128 sharesBalance,
-        uint128 fyTokenBalance,
-        int128 g1_
-    ) internal view beforeMaturity returns (uint128 sharesIn) {
+    function _buyFYTokenPreview(uint128 fyTokenOut, uint128 sharesBalance, uint128 fyTokenBalance, int128 g1_)
+        internal
+        view
+        beforeMaturity
+        returns (uint128 sharesIn)
+    {
         uint96 scaleFactor_ = scaleFactor;
 
-        sharesIn =
-            YieldMath.sharesInForFYTokenOut(
-                sharesBalance * scaleFactor_,
-                fyTokenBalance * scaleFactor_,
-                fyTokenOut * scaleFactor_,
-                maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
-                g1_,
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
+        sharesIn = YieldMath.sharesInForFYTokenOut(
+            sharesBalance * scaleFactor_,
+            fyTokenBalance * scaleFactor_,
+            fyTokenOut * scaleFactor_,
+            maturity - uint32(block.timestamp), // This can't be called after maturity
+            ts,
+            g1_,
+            _getC(),
+            mu
+        ) / scaleFactor_;
 
         uint128 newSharesMulMu = _mulMu(sharesBalance + sharesIn).u128();
         if ((fyTokenBalance - fyTokenOut) < newSharesMulMu) {
@@ -948,34 +886,29 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     function sellBasePreview(uint128 baseIn) external view virtual override returns (uint128 fyTokenOut) {
         Cache memory cache = _getCache();
         fyTokenOut = _sellBasePreview(
-            _wrapPreview(baseIn).u128(),
-            cache.sharesReserves,
-            cache.fyTokenReserves,
-            _computeG1(cache.g1Fee)
+            _wrapPreview(baseIn).u128(), cache.sharesReserves, cache.fyTokenReserves, _computeG1(cache.g1Fee)
         );
     }
 
     /// Returns how much fyToken would be obtained by selling `sharesIn`.
     /// @dev Note: This internal fn takes sharesIn while the external fn takes baseIn.
-    function _sellBasePreview(
-        uint128 sharesIn,
-        uint104 sharesBalance,
-        uint104 fyTokenBalance,
-        int128 g1_
-    ) internal view beforeMaturity returns (uint128 fyTokenOut) {
+    function _sellBasePreview(uint128 sharesIn, uint104 sharesBalance, uint104 fyTokenBalance, int128 g1_)
+        internal
+        view
+        beforeMaturity
+        returns (uint128 fyTokenOut)
+    {
         uint96 scaleFactor_ = scaleFactor;
-        fyTokenOut =
-            YieldMath.fyTokenOutForSharesIn(
-                sharesBalance * scaleFactor_,
-                fyTokenBalance * scaleFactor_,
-                sharesIn * scaleFactor_,
-                maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
-                g1_,
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
+        fyTokenOut = YieldMath.fyTokenOutForSharesIn(
+            sharesBalance * scaleFactor_,
+            fyTokenBalance * scaleFactor_,
+            sharesIn * scaleFactor_,
+            maturity - uint32(block.timestamp), // This can't be called after maturity
+            ts,
+            g1_,
+            _getC(),
+            mu
+        ) / scaleFactor_;
 
         uint128 newSharesMulMu = _mulMu(sharesBalance + sharesIn).u128();
         if ((fyTokenBalance - fyTokenOut) < newSharesMulMu) {
@@ -1024,12 +957,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         Cache memory cache = _getCache();
         uint104 fyTokenBalance = _getFYTokenBalance();
         uint128 fyTokenIn = fyTokenBalance - cache.fyTokenReserves;
-        uint128 sharesOut = _sellFYTokenPreview(
-            fyTokenIn,
-            cache.sharesReserves,
-            cache.fyTokenReserves,
-            _computeG2(cache.g1Fee)
-        );
+        uint128 sharesOut =
+            _sellFYTokenPreview(fyTokenIn, cache.sharesReserves, cache.fyTokenReserves, _computeG2(cache.g1Fee));
 
         // Update TWAR
         _update(cache.sharesReserves - sharesOut, fyTokenBalance, cache.sharesReserves, cache.fyTokenReserves);
@@ -1049,37 +978,31 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @return baseOut Amount of base hypothetically bought.
     function sellFYTokenPreview(uint128 fyTokenIn) public view virtual returns (uint128 baseOut) {
         Cache memory cache = _getCache();
-        uint128 sharesOut = _sellFYTokenPreview(
-            fyTokenIn,
-            cache.sharesReserves,
-            cache.fyTokenReserves,
-            _computeG2(cache.g1Fee)
-        );
+        uint128 sharesOut =
+            _sellFYTokenPreview(fyTokenIn, cache.sharesReserves, cache.fyTokenReserves, _computeG2(cache.g1Fee));
         baseOut = _unwrapPreview(sharesOut).u128();
     }
 
     /// Returns how much shares would be obtained by selling `fyTokenIn` fyToken.
     /// @dev Note: This internal fn returns sharesOut while the external fn returns baseOut.
-    function _sellFYTokenPreview(
-        uint128 fyTokenIn,
-        uint104 sharesBalance,
-        uint104 fyTokenBalance,
-        int128 g2_
-    ) internal view beforeMaturity returns (uint128 sharesOut) {
+    function _sellFYTokenPreview(uint128 fyTokenIn, uint104 sharesBalance, uint104 fyTokenBalance, int128 g2_)
+        internal
+        view
+        beforeMaturity
+        returns (uint128 sharesOut)
+    {
         uint96 scaleFactor_ = scaleFactor;
 
-        sharesOut =
-            YieldMath.sharesOutForFYTokenIn(
-                sharesBalance * scaleFactor_,
-                fyTokenBalance * scaleFactor_,
-                fyTokenIn * scaleFactor_,
-                maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
-                g2_,
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
+        sharesOut = YieldMath.sharesOutForFYTokenIn(
+            sharesBalance * scaleFactor_,
+            fyTokenBalance * scaleFactor_,
+            fyTokenIn * scaleFactor_,
+            maturity - uint32(block.timestamp), // This can't be called after maturity
+            ts,
+            g2_,
+            _getC(),
+            mu
+        ) / scaleFactor_;
     }
 
     /* LIQUIDITY FUNCTIONS
@@ -1089,41 +1012,22 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     function maxFYTokenIn() public view override returns (uint128 fyTokenIn) {
         uint96 scaleFactor_ = scaleFactor;
         Cache memory cache = _getCache();
-        fyTokenIn =
-            YieldMath.maxFYTokenIn(
-                cache.sharesReserves * scaleFactor_,
-                cache.fyTokenReserves * scaleFactor_,
-                maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
-                _computeG2(cache.g1Fee),
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
+        fyTokenIn = YieldMath.maxFYTokenIn(
+            cache.sharesReserves * scaleFactor_,
+            cache.fyTokenReserves * scaleFactor_,
+            maturity - uint32(block.timestamp), // This can't be called after maturity
+            ts,
+            _computeG2(cache.g1Fee),
+            _getC(),
+            mu
+        ) / scaleFactor_;
     }
 
     /// @inheritdoc IPool
     function maxFYTokenOut() public view override returns (uint128 fyTokenOut) {
         uint96 scaleFactor_ = scaleFactor;
         Cache memory cache = _getCache();
-        fyTokenOut =
-            YieldMath.maxFYTokenOut(
-                cache.sharesReserves * scaleFactor_,
-                cache.fyTokenReserves * scaleFactor_,
-                maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
-                _computeG1(cache.g1Fee),
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
-    }
-
-    /// @inheritdoc IPool
-    function maxBaseIn() public view override returns (uint128 baseIn) {
-        uint96 scaleFactor_ = scaleFactor;
-        Cache memory cache = _getCache();
-        uint128 sharesIn = ((YieldMath.maxSharesIn(
+        fyTokenOut = YieldMath.maxFYTokenOut(
             cache.sharesReserves * scaleFactor_,
             cache.fyTokenReserves * scaleFactor_,
             maturity - uint32(block.timestamp), // This can't be called after maturity
@@ -1131,7 +1035,26 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             _computeG1(cache.g1Fee),
             _getC(),
             mu
-        ) / 1e8) * 1e8) / scaleFactor_; // Shave 8 wei/decimals to deal with precision issues on the decimal functions
+        ) / scaleFactor_;
+    }
+
+    /// @inheritdoc IPool
+    function maxBaseIn() public view override returns (uint128 baseIn) {
+        uint96 scaleFactor_ = scaleFactor;
+        Cache memory cache = _getCache();
+        uint128 sharesIn = (
+            (
+                YieldMath.maxSharesIn(
+                    cache.sharesReserves * scaleFactor_,
+                    cache.fyTokenReserves * scaleFactor_,
+                    maturity - uint32(block.timestamp), // This can't be called after maturity
+                    ts,
+                    _computeG1(cache.g1Fee),
+                    _getC(),
+                    mu
+                ) / 1e8
+            ) * 1e8
+        ) / scaleFactor_; // Shave 8 wei/decimals to deal with precision issues on the decimal functions
 
         baseIn = _unwrapPreview(sharesIn).u128();
     }
@@ -1146,18 +1069,16 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     function invariant() public view override returns (uint128 result) {
         uint96 scaleFactor_ = scaleFactor;
         Cache memory cache = _getCache();
-        result =
-            YieldMath.invariant(
-                cache.sharesReserves * scaleFactor_,
-                cache.fyTokenReserves * scaleFactor_,
-                _totalSupply * scaleFactor_,
-                maturity - uint32(block.timestamp),
-                ts,
-                _computeG2(cache.g1Fee),
-                _getC(),
-                mu
-            ) /
-            scaleFactor_;
+        result = YieldMath.invariant(
+            cache.sharesReserves * scaleFactor_,
+            cache.fyTokenReserves * scaleFactor_,
+            _totalSupply * scaleFactor_,
+            maturity - uint32(block.timestamp),
+            ts,
+            _computeG2(cache.g1Fee),
+            _getC(),
+            mu
+        ) / scaleFactor_;
     }
 
     /* WRAPPING FUNCTIONS
@@ -1180,7 +1101,57 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         if (assets == 0) {
             shares = 0;
         } else {
-            shares = IERC4626(address(sharesToken)).deposit(assets, receiver);
+            shares = _depositWithBuffer(assets, receiver);
+        }
+    }
+
+    /// @notice This deposits into the 4626 vault.
+    /// @dev This should be overridden by modules.
+    function _deposit(uint256 assets, address receiver) internal virtual returns (uint256 sharesOut) {
+        sharesOut = IERC4626(address(sharesToken)).deposit(assets, receiver);
+    }
+
+    /// @notice This fn uses the buffer if available, otherwise it calls the 4626 deposit fn.
+    /// @dev There is no check for zero amount.  This fn uses the buffer if available
+    /// @param assets The amount of base tokens to deposit.
+    /// @param receiver The address to which the wrapped tokens will be sent.
+    /// @return sharesOut The amount of wrapped tokens sent to the receiver.
+    function _depositWithBuffer(uint256 assets, address receiver) internal virtual returns (uint256 sharesOut) {
+        // todo: think about all situations where this can fail
+        Buffer memory buffer = _getBuffer();
+        uint104 bufferMax = buffer.max * (10 ** baseDecimals).u128();
+        uint104 bufferMin = buffer.min * (10 ** baseDecimals).u128();
+        if (bufferMax == 0) {
+            return _deposit(assets, receiver);
+        }
+
+        sharesOut = _wrapPreview(assets); // shares returned
+        uint256 actualSharesBalance = sharesToken.balanceOf(address(this)); // not including buffered base
+        uint128 assetsOut; // assets that will be converted for sharesOut
+
+        if (actualSharesBalance >= sharesOut) { // if we have enough shares to cover the deposit, just transfer them directly
+            sharesToken.transfer(receiver, sharesOut);
+        } else { // Handle partial deposit.
+
+            // First, transfer the shares we have.
+            if (actualSharesBalance > 0) {
+                sharesToken.transfer(receiver, actualSharesBalance);
+            }
+
+            // Then, convert the rest of the base to shares by depositing into the 4626 vault.
+            assetsOut = _unwrapPreview(sharesOut - actualSharesBalance).u128();
+            _deposit(assetsOut, receiver);
+        }
+
+        // Update the buffer
+        uint128 newBaseBuffer = buffer.base + assets.u128() - assetsOut; // todo: safe cast
+
+        // If the new base buffer is greater than the max, deposit down to the min
+        if (newBaseBuffer > (bufferMax * 10 ** baseDecimals)) {
+            _deposit(newBaseBuffer - bufferMin, address(this));
+            baseBuffer = bufferMin;
+        } else {
+            baseBuffer = newBaseBuffer;
         }
     }
 
@@ -1216,14 +1187,84 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param receiver The address the wrapped tokens should be sent.
     /// @return assets The amount of base assets sent to the receiver.
     function _unwrap(address receiver) internal virtual returns (uint256 assets) {
+        console.log("+ + file: Pool.sol:1184 + _unwrap + sharesReserves", sharesReserves);
+        console.log("+ + file: Pool.sol:1184 + _unwrap + _getSharesBalance()", _getSharesBalance());
         uint256 surplus = _getSharesBalance() - sharesReserves;
+        console.log("+ + file: Pool.sol:1148 + _unwrap + surplus", surplus);
         if (surplus == 0) {
             assets = 0;
         } else {
-            // The third param of the 4626 redeem fn, `owner`, is always this contract address.
-            assets = IERC4626(address(sharesToken)).redeem(surplus, receiver, address(this));
+            assets = _redeemWithBuffer(surplus, receiver);
         }
     }
+
+    function _redeem(uint256 shares, address receiver) internal virtual returns (uint256 assetsOut) {
+        // The third param of the 4626 redeem fn, `owner`, is always this contract address.
+        assetsOut = IERC4626(address(sharesToken)).redeem(shares, receiver, address(this));
+    }
+
+    function _redeemWithBuffer(uint256 shares, address receiver) internal virtual returns (uint256 assetsOut) {
+        console.log("+ + file: Pool.sol:1188 + _redeemWithBuffer + shares", shares);
+        // todo: think about all situations where this can fail
+        Buffer memory buffer = _getBuffer();
+        uint128 bufferMax = buffer.max * (10 ** baseDecimals).u128();
+        uint128 bufferMin = buffer.min * (10 ** baseDecimals).u128();
+        uint128 bufferMid = (bufferMax + bufferMin) / 2;
+
+        console.log("+ + file: Pool.sol:1192 + _redeemWithBuffer + buffer.max", buffer.max);
+        console.log("+ + file: Pool.sol:1192 + _redeemWithBuffer + buffer.min", buffer.min);
+        console.log("+ + file: Pool.sol:1192 + _redeemWithBuffer + buffer.base", buffer.base);
+        if (bufferMax == 0) {
+            return _redeem(shares, receiver);
+        }
+
+        console.log(1);
+        assetsOut = _unwrapPreview(shares); // assets returned
+        uint256 sharesToRedeemForDeficit;
+        uint128 newBaseBuffer;
+        if (buffer.base < assetsOut) {
+            uint128 assetsDeficit = assetsOut.u128() - buffer.base;
+            console.log("+ + file: Pool.sol:1209 + _redeemWithBuffer + assetsDeficit", assetsDeficit);
+
+            // Redeem shares to send to base to receiver and replenish minimum base.
+            sharesToRedeemForDeficit = _wrapPreview(assetsDeficit).u128();
+            console.log("+ + file: Pool.sol:1213 + _redeemWithBuffer + sharesToRedeemForDeficit", sharesToRedeemForDeficit);
+            // newBaseBuffer = 0;  // default value above
+        } else {
+            newBaseBuffer = buffer.base - assetsOut.u128();
+            console.log("+ + file: Pool.sol:1217 + _redeemWithBuffer + newBaseBuffer", newBaseBuffer);
+            // sharesToRedeemForDeficit = 0; // default value above
+        }
+        console.log("+ + file: Pool.sol:1229 + _redeemWithBuffer + _wrapPreview(bufferMin)", _wrapPreview(bufferMin));
+        uint256 sharesToRedeemForBuffer;
+        if (newBaseBuffer < bufferMin) {
+            // If base buffer is below minimum, redeem shares to replenish buffer to midpoint.
+            sharesToRedeemForBuffer = _wrapPreview(bufferMid - newBaseBuffer).u128();
+            newBaseBuffer = bufferMid;
+        }
+        console.log("+ + file: Pool.sol:1222 + _redeemWithBuffer + sharesToRedeemForBuffer", sharesToRedeemForBuffer);
+
+        uint128 amountToRedeem = (sharesToRedeemForDeficit + sharesToRedeemForBuffer).u128();
+        console.log("+ + file: Pool.sol:1225 + _redeemWithBuffer + amountToRedeem", amountToRedeem);
+
+        // if we have enough shares in the contract, redeem enough to cover the deficit and replenish the buffer
+        if (amountToRedeem > 0 && sharesToken.balanceOf(address(this)) >= amountToRedeem) {
+            _redeem(amountToRedeem, address(this));
+            newBaseBuffer = bufferMin;
+        } else if (sharesToRedeemForDeficit > 0) {
+            // if we don't have enough shares in the contract, redeem enough to cover the deficit
+            _redeem(sharesToRedeemForDeficit, address(this));
+            newBaseBuffer = 0;
+        }
+
+        baseToken.transfer(receiver, assetsOut);
+        baseBuffer = newBaseBuffer.u104();
+        console.log("- - file: Pool.sol:1240 - _redeemWithBuffer - newBaseBuffer", newBaseBuffer);
+        sharesBuffer += shares.u104();
+    }
+
+
+
 
     /// Preview how many asset tokens will be received when unwrapping a given amount of shares.
     /// @param shares The amount of shares to preview a redemption.
@@ -1299,12 +1340,9 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     ///     - sharesReserves and fyTokenReserves updated accordingly...etc.
     ///
     /// @dev See UniV2 implmentation: https://tinyurl.com/UniV2UpdateCumulativePrice
-    function _update(
-        uint128 sharesBalance,
-        uint128 fyBalance,
-        uint104 sharesReserves_,
-        uint104 fyTokenReserves_
-    ) internal {
+    function _update(uint128 sharesBalance, uint128 fyBalance, uint104 sharesReserves_, uint104 fyTokenReserves_)
+        internal
+    {
         // No need to update and spend gas on SSTORE if reserves haven't changed.
         if (sharesBalance == sharesReserves_ && fyBalance == fyTokenReserves_) return;
 
@@ -1374,7 +1412,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev NOTE: The decimals returned here must match the decimals of the base token.  If not, then this fn should
     // be overriden by modules.
     function _getSharesBalance() internal view virtual returns (uint104) {
-        return sharesToken.balanceOf(address(this)).u104();
+        return (_wrapPreview(baseBuffer) + sharesToken.balanceOf(address(this))).u104();
     }
 
     /// Returns the base balance.
@@ -1386,7 +1424,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
 
     /// Returns the base balance
     function _getBaseBalance() internal view virtual returns (uint256) {
-        return (_getSharesBalance() * _getCurrentSharePrice()) / 10**baseDecimals;
+        return (_getSharesBalance() * _getCurrentSharePrice()) / 10 ** baseDecimals;
     }
 
     /// Returns the base token current price.
@@ -1400,7 +1438,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// This function should be overriden by modules.
     /// @return The price of 1 share of a tokenized vault token in terms of its base asset cast as uint256.
     function _getCurrentSharePrice() internal view virtual returns (uint256) {
-        uint256 scalar = 10**baseDecimals;
+        uint256 scalar = 10 ** baseDecimals;
         return IERC4626(address(sharesToken)).convertToAssets(scalar);
     }
 
@@ -1416,26 +1454,16 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return (_getCurrentSharePrice() * scaleFactor).divu(1e18);
     }
 
-    /// Returns the all storage vars except for cumulativeRatioLast
+    /// Returns the all storage vars except for cumulativeRatioLast and buffer
     /// @return Cached shares token balance.
     /// @return Cached virtual FY token balance which is the actual balance plus the pool token supply.
     /// @return Timestamp that balances were last cached.
     /// @return g1Fee  This is a fp4 number where 10_000 is 1.
-    function getCache()
-        public
-        view
-        virtual
-        returns (
-            uint104,
-            uint104,
-            uint32,
-            uint16
-        )
-    {
+    function getCache() public view virtual returns (uint104, uint104, uint32, uint16) {
         return (sharesReserves, fyTokenReserves, blockTimestampLast, g1Fee);
     }
 
-    /// Returns the all storage vars except for cumulativeRatioLast
+    /// Returns the all storage vars except for cumulativeRatioLast and buffer
     /// @dev This returns the same info as external getCache but uses a struct to help with stack too deep.
     /// @return cache A struct containing:
     /// g1Fee a fp4 number where 10_000 is 1.
@@ -1444,6 +1472,15 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Timestamp that balances were last cached.
     function _getCache() internal view virtual returns (Cache memory cache) {
         cache = Cache(g1Fee, sharesReserves, fyTokenReserves, blockTimestampLast);
+    }
+
+    /// Returns buffer related storage vars in a struct
+    /// @return buffer A struct containing:
+    /// base - amount of base in buffer using base decimals
+    /// baseMin - minimum amount of base in buffer with no decimals
+    /// baseMax - maximum amount of base in buffer with no decimals
+    function _getBuffer() internal view virtual returns (Buffer memory buffer) {
+        buffer = Buffer(baseBuffer, baseBufferMin, baseBufferMax);
     }
 
     /// The "virtual" fyToken balance, which is the actual balance plus the pool token supply.
