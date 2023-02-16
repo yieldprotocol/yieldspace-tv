@@ -40,19 +40,17 @@ import "../../../../shared/Constants.sol";
 import {ForkTestCore} from "../../../../shared/ForkTestCore.sol";
 
 abstract contract EulerDAIFork is ForkTestCore {
-    address public whale = address(0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD);
     IEToken eToken;
 
     function fundAddr(address addr) public {
-        vm.prank(whale);
-        asset.transfer(addr, WAD * 100_000);
+        deal(address(asset), addr, WAD * 100_000);
 
         vm.prank(ladle);
         fyToken.mint(addr, WAD * 100_000);
     }
 
     function setUp() public virtual {
-        pool = Pool(MAINNET_DAI_DECEMBER_2022_POOL);
+        pool = Pool(MAINNET_DAI_JUNE_2023_POOL);
         asset = ERC20(address(pool.baseToken()));
         fyToken = FYToken(address(pool.fyToken()));
         eToken = IEToken(address(pool.sharesToken()));

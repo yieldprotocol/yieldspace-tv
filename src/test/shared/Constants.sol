@@ -18,6 +18,6 @@ bytes32 constant TYPE_NONTV = keccak256(abi.encodePacked("NonTv"));
 bytes32 constant TYPE_YV = keccak256(abi.encodePacked("YearnVault"));
 bytes32 constant TYPE_EULER = keccak256(abi.encodePacked("EulerVault"));
 
-address constant MAINNET_DAI_DECEMBER_2022_POOL = 0x52956Fb3DC3361fd24713981917f2B6ef493DCcC;
-address constant MAINNET_USDC_DECEMBER_2022_POOL = 0xB2fff7FEA1D455F0BCdd38DA7DeE98af0872a13a;
+address constant MAINNET_DAI_JUNE_2023_POOL = 0xC2a463278387e649eEaA5aE5076e283260B0B1bE;
+address constant MAINNET_USDC_JUNE_2023_POOL = 0x06aaF385809c7BC00698f1E266eD4C78d6b8ba75;
 address constant EULER_MAINNET = 0x27182842E098f60e3D576794A5bFFb0777E025d3;

@@ -40,20 +40,18 @@ import "../../../../shared/Constants.sol";
 import {ForkTestCore} from "../../../../shared/ForkTestCore.sol";
 
 abstract contract EulerUSDCFork is ForkTestCore {
-    address public whale = address(0x72A53cDBBcc1b9efa39c834A540550e23463AAcB);
     uint8 decimals;
     uint256 ONE_SCALED; // scaled to asset decimals
 
     function fundAddr(address addr) public {
-        vm.prank(whale);
-        asset.transfer(addr, (ONE_SCALED * 100_000)); // scale for usdc decimals
+        deal(address(asset), addr, (ONE_SCALED * 100_000));
 
         vm.prank(ladle);
         fyToken.mint(addr, (ONE_SCALED * 100_000)); // scale for usdc decimals
     }
 
     function setUp() public virtual {
-        pool = Pool(MAINNET_USDC_DECEMBER_2022_POOL);
+        pool = Pool(MAINNET_USDC_JUNE_2023_POOL);
         asset = ERC20(address(pool.baseToken()));
         fyToken = FYToken(address(pool.fyToken()));
         shares = IEToken(address(pool.sharesToken()));
