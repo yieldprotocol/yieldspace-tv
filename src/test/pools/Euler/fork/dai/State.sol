@@ -32,7 +32,7 @@ import {ERC20, AccessControl} from "../../../../../Pool/PoolImports.sol";
 // Using FYTokenMock.sol here for the interface so we don't need to add a new dependency
 // to this repo just to get an interface:
 import {FYTokenMock as FYToken} from "../../../../mocks/FYTokenMock.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {Cast} from  "@yield-protocol/utils-v2/contracts/utils/Cast.sol";
 import {IEToken} from "../../../../../interfaces/IEToken.sol";
 
 import "../../../../shared/Utils.sol";

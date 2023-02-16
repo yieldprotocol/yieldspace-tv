@@ -56,15 +56,11 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /* LIBRARIES
      *****************************************************************************************************************/
 
-    using WDiv for uint256;
-    using RDiv for uint256;
+    using Math for uint256;
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU128I128 for uint128;
-    using CastU128U104 for uint128;
-    using CastU256U104 for uint256;
-    using CastU256U128 for uint256;
-    using CastU256I256 for uint256;
+    using Cast for uint128;
+    using Cast for uint256;
     using TransferHelper for IMaturingToken;
     using TransferHelper for IERC20Like;
 
