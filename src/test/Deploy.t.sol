@@ -7,8 +7,8 @@ import {console} from "forge-std/console.sol";
 
 import "./shared/Utils.sol";
 import "./shared/Constants.sol";
-import "../Pool/PoolErrors.sol";
-import {Pool} from "../Pool/Pool.sol";
+import "../pool/PoolErrors.sol";
+import {Pool} from "../pool/Pool.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {TestCore} from "./shared/TestCore.sol";
 import {ERC20Mock} from "./mocks/ERC20Mock.sol";

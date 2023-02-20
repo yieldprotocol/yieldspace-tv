@@ -15,7 +15,7 @@ import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {ISyncablePool} from "../mocks/ISyncablePool.sol";
 import {IERC20Like} from "../../interfaces/IERC20Like.sol";
-import "../../Pool/PoolEvents.sol";
+import "../../pool/PoolEvents.sol";
 
 // TestCore
 // - Initializes state variables.

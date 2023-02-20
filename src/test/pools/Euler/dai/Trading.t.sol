@@ -23,7 +23,7 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../../../../Pool/PoolErrors.sol";
+import "../../../../pool/PoolErrors.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
 import {Cast} from "lib/yield-utils-v2/src/utils/Cast.sol";

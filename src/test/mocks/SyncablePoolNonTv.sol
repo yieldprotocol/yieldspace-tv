@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
 
-import {PoolNonTv} from "../../Pool/Modules/PoolNonTv.sol";
+import {PoolNonTv} from "../../pool/modules/PoolNonTv.sol";
 import {ISyncablePool} from "./ISyncablePool.sol";
 
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.

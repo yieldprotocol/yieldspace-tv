@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
 
-import {PoolYearnVault} from "../../Pool/Modules/PoolYearnVault.sol";
+import {PoolYearnVault} from "../../pool/modules/PoolYearnVault.sol";
 import {ISyncablePool} from "./ISyncablePool.sol";
 
 /// Pool with sync() added for ease in manipulating reserves ratio during testing.

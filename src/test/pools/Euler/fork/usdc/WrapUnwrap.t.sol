@@ -23,8 +23,8 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../../../../../Pool/PoolErrors.sol";
-import {IERC20Like as IERC20Metadata} from "../../../../../Pool/PoolImports.sol";
+import "../../../../../pool/PoolErrors.sol";
+import {IERC20Like as IERC20Metadata} from "../../../../../pool/PoolImports.sol";
 
 import "../../../../shared/Utils.sol";
 import "../../../../shared/Constants.sol";

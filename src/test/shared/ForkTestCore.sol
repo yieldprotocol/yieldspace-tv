@@ -9,8 +9,8 @@ import {Exp64x64} from "../../Exp64x64.sol";
 import {Math64x64} from "../../Math64x64.sol";
 import {YieldMath} from "../../YieldMath.sol";
 
-import {Pool} from "../../Pool/Pool.sol";
-import {ERC20} from "../../Pool/PoolImports.sol";
+import {Pool} from "../../pool/Pool.sol";
+import {ERC20} from "../../pool/PoolImports.sol";
 import {ISyncablePool} from "../mocks/ISyncablePool.sol";
 import {FYTokenMock as FYToken} from "../mocks/FYTokenMock.sol";
 import {IEToken} from "../../../src/interfaces/IEToken.sol";

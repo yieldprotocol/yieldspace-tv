@@ -23,12 +23,12 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
-import "../../../../../Pool/PoolErrors.sol";
+import "../../../../../pool/PoolErrors.sol";
 import {Exp64x64} from "../../../../../Exp64x64.sol";
 import {Math64x64} from "../../../../../Math64x64.sol";
 import {YieldMath} from "../../../../../YieldMath.sol";
-import {Pool} from "../../../../../Pool/Pool.sol";
-import {ERC20, AccessControl} from "../../../../../Pool/PoolImports.sol";
+import {Pool} from "../../../../../pool/Pool.sol";
+import {ERC20, AccessControl} from "../../../../../pool/PoolImports.sol";
 // Using FYTokenMock.sol here for the interface so we don't need to add a new dependency
 // to this repo just to get an interface:
 import {FYTokenMock as FYToken} from "../../../../mocks/FYTokenMock.sol";
