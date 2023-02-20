@@ -27,13 +27,13 @@ import {console} from "forge-std/console.sol";
 import "../../../../Pool/PoolErrors.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {Cast} from "lib/yield-utils-v2/src/utils/Cast.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ETokenMock} from "../../../mocks/ETokenMock.sol";
 import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
-import {TransferHelper} from "@yield-protocol/utils-v2/contracts/token/TransferHelper.sol";
+import {TransferHelper} from "lib/yield-utils-v2/src/token/TransferHelper.sol";
 import "./State.sol";
 
 contract SetFeesEulerUSDT is ZeroStateEulerUSDT {
@@ -449,7 +449,7 @@ contract MintWithBase__WithLiquidityEulerUSDT is WithLiquidityEulerUSDT {
 
 contract BurnForBase__WithLiquidityEulerUSDT is WithLiquidityEulerUSDT {
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     function testUnit_Euler_burnForBaseUSDT01() public {
         console.log("does not burnForBase when mature");

@@ -28,7 +28,7 @@ import "../../../Pool/PoolErrors.sol";
 import {Exp64x64} from "../../../Exp64x64.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {Cast} from "lib/yield-utils-v2/src/utils/Cast.sol";
 
 import "../../shared/Utils.sol";
 import "../../shared/Constants.sol";
@@ -218,7 +218,7 @@ abstract contract OnceMature is WithExtraFYTokenYearnVault {
 contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     function testUnit_YearnVault_tradeDAI01() public {
         console.log("sells a certain amount of fyToken for base");
@@ -346,7 +346,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     function testUnit_YearnVault_tradeDAI07() public {
         console.log("sells base for a certain amount of FYTokens");

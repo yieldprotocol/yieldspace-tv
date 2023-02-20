@@ -2,7 +2,7 @@
 pragma solidity >=0.8.15;
 
 import "./ERC20Mock.sol";
-import "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
+import "lib/yield-utils-v2/src/token/ERC20Permit.sol";
 
 
 

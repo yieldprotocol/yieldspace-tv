@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
 
-import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
+import "lib/yield-utils-v2/src/token/ERC20.sol";
 
 
 abstract contract Mintable is ERC20 {

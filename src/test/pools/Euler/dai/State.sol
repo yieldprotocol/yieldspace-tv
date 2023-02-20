@@ -28,14 +28,14 @@ import "../../../../Pool/PoolErrors.sol";
 import {Exp64x64} from "../../../../Exp64x64.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {Cast} from "lib/yield-utils-v2/src/utils/Cast.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ZeroState, ZeroStateParams} from "../../../shared/ZeroState.sol";
 
 abstract contract ZeroStateEulerDAI is ZeroState {
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "EulerVault", false)) {}
 }

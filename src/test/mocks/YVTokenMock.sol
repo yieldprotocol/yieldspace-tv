@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
 
-import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
-import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
+import "lib/yield-utils-v2/src/token/ERC20.sol";
+import {IERC20Metadata} from "lib/yield-utils-v2/src/token/IERC20Metadata.sol";
 
 import {IYVToken} from "../../interfaces/IYVToken.sol";
 

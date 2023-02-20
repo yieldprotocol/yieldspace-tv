@@ -4,22 +4,17 @@ pragma solidity >=0.8.15;
 import "./PoolEvents.sol";
 import "./PoolErrors.sol";
 
-import {CastU256U128} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
-import {CastU256U104} from  "@yield-protocol/utils-v2/contracts/cast/CastU256U104.sol";
-import {CastU256I256} from  "@yield-protocol/utils-v2/contracts/cast/CastU256I256.sol";
-import {CastU128U104} from  "@yield-protocol/utils-v2/contracts/cast/CastU128U104.sol";
-import {CastU128I128} from  "@yield-protocol/utils-v2/contracts/cast/CastU128I128.sol";
+import {Cast} from  "lib/yield-utils-v2/src/utils/Cast.sol";
 
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
-import {WDiv} from "@yield-protocol/utils-v2/contracts/math/WDiv.sol";
-import {RDiv} from "@yield-protocol/utils-v2/contracts/math/RDiv.sol";
+import {Math} from "lib/yield-utils-v2/src/utils/Math.sol";
 
 import {IPool} from "../interfaces/IPool.sol";
 import {IERC4626} from  "../interfaces/IERC4626.sol";
 import {IMaturingToken} from "../interfaces/IMaturingToken.sol";
-import {ERC20Permit} from  "@yield-protocol/utils-v2/contracts/token/ERC20Permit.sol";
-import {AccessControl} from  "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
-import {ERC20, IERC20Metadata as IERC20Like, IERC20} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
-import {TransferHelper} from  "@yield-protocol/utils-v2/contracts/token/TransferHelper.sol";
+import {ERC20Permit} from  "lib/yield-utils-v2/src/token/ERC20Permit.sol";
+import {AccessControl} from  "lib/yield-utils-v2/src/access/AccessControl.sol";
+import {ERC20, IERC20Metadata as IERC20Like, IERC20} from  "lib/yield-utils-v2/src/token/ERC20.sol";
+import {TransferHelper} from  "lib/yield-utils-v2/src/token/TransferHelper.sol";

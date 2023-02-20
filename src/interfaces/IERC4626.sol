@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.15;
-import "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
-import "@yield-protocol/utils-v2/contracts/token/IERC20.sol";
+import "lib/yield-utils-v2/src/token/IERC20Metadata.sol";
+import "lib/yield-utils-v2/src/token/IERC20.sol";
 
 interface IERC4626 is IERC20, IERC20Metadata {
     function asset() external returns (IERC20);

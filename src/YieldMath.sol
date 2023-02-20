@@ -12,8 +12,7 @@ pragma solidity >=0.8.15;
 
 import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
-import {CastU128I128} from "@yield-protocol/utils-v2/contracts/cast/CastU128I128.sol";
+import {Cast} from "lib/yield-utils-v2/src/utils/Cast.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
@@ -24,8 +23,8 @@ library YieldMath {
     using Math64x64 for uint256;
     using Exp64x64 for uint128;
     using Exp64x64 for int128;
-    using CastU256U128 for uint256;
-    using CastU128I128 for uint128;
+    using Cast for uint256;
+    using Cast for uint128;
 
     uint128 public constant WAD = 1e18;
     uint128 public constant ONE = 0x10000000000000000; //   In 64.64
