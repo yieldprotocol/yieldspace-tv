@@ -12,7 +12,7 @@ pragma solidity >=0.8.15;
 
 import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
-import {Cast} from "@yield-protocol/utils-v2/contracts/utils/Cast.sol";
+import {Cast} from "@yield-protocol/utils-v2/src/utils/Cast.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math

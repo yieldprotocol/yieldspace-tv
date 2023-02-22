@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
-import "@yield-protocol/utils-v2/contracts/token/IERC20.sol";
-import "@yield-protocol/utils-v2/contracts/token/IERC2612.sol";
+import "@yield-protocol/utils-v2/src/token/IERC20.sol";
+import "@yield-protocol/utils-v2/src/token/IERC2612.sol";
 import {IMaturingToken} from "./IMaturingToken.sol";
-import {IERC20Metadata} from  "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
+import {IERC20Metadata} from  "@yield-protocol/utils-v2/src/token/ERC20.sol";
 
 interface IPool is IERC20, IERC2612 {
     function baseToken() external view returns(IERC20Metadata);
