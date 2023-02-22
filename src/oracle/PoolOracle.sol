@@ -65,7 +65,8 @@ contract PoolOracle is IPoolOracle {
     /// @param pool Address of pool for which the observation is required
     /// @return o The oldest observation available for `pool`
     function getOldestObservationInWindow(IPool pool) public view returns (Observation memory o) {
-        uint256 length = poolObservations[pool].length;
+        Observation[] storage observations = poolObservations[pool];
+        uint256 length = observations.length;
         if (length == 0) {
             revert NoObservationsForPool(pool);
         }
@@ -78,7 +79,7 @@ contract PoolOracle is IPoolOracle {
                 uint256 oldestObservationIndex = (++observationIndex) % granularity;
 
                 // Read the oldest observation
-                o = poolObservations[pool][oldestObservationIndex];
+                o = observations[oldestObservationIndex];
 
                 // For an observation to be valid, it has to be newer than the `windowSize`
                 if (block.timestamp - o.timestamp < windowSize) {
