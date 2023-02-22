@@ -40,7 +40,7 @@ contract PoolOracle is IPoolOracle {
     uint256 public immutable minTimeElapsed;
 
     // mapping from pool address to a list of ratio observations of that pool
-    mapping(IPool => Observation[]) public poolObservations;
+    mapping(IPool => mapping(uint256 => Observation)) public poolObservations;
 
     constructor(uint256 windowSize_, uint256 granularity_, uint256 minTimeElapsed_) {
         require(granularity_ > 1, "GRANULARITY");
@@ -65,15 +65,11 @@ contract PoolOracle is IPoolOracle {
     /// @param pool Address of pool for which the observation is required
     /// @return o The oldest observation available for `pool`
     function getOldestObservationInWindow(IPool pool) public view returns (Observation memory o) {
-        Observation[] storage observations = poolObservations[pool];
-        uint256 length = observations.length;
-        if (length == 0) {
-            revert NoObservationsForPool(pool);
-        }
+        mapping(uint => Observation) storage observations = poolObservations[pool];
 
         unchecked {
             uint256 observationIndex = observationIndexOf(block.timestamp);
-            for (uint256 i; i < length;) {
+            for (uint256 i; i < granularity;) {
                 // can't possible overflow
                 // compute the oldestObservation given `observationIndex`, basically `widowSize` in the past
                 uint256 oldestObservationIndex = (++observationIndex) % granularity;
@@ -103,14 +99,6 @@ contract PoolOracle is IPoolOracle {
 
     // @inheritdoc IPoolOracle
     function updatePool(IPool pool) public override returns (bool updated) {
-        // populate the array with empty observations (only on the first call ever for each pool)
-        unchecked {
-            for (uint256 i = poolObservations[pool].length; i < granularity;) {
-                poolObservations[pool].push();
-                ++i;
-            }
-        }
-
         // get the observation for the current period
         uint256 index = observationIndexOf(block.timestamp);
         Observation storage observation = poolObservations[pool][index];

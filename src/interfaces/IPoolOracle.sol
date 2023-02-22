@@ -10,7 +10,6 @@ interface IPoolOracleEvents {
 interface IPoolOracle is IPoolOracleEvents {
     error InsufficientElapsedTime(IPool pool, uint256 elapsedTime);
     error MissingHistoricalObservation(IPool pool);
-    error NoObservationsForPool(IPool pool);
 
     /// @notice returns the TWAR for a given `pool` using the moving average over the max available time range within the window
     /// @param pool Address of pool for which the observation is required

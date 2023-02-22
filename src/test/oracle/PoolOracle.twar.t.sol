@@ -76,8 +76,8 @@ contract PoolOracleTWARTest is IPoolOracleEvents, Test {
         (, bytes32[] memory writes) = vm.accesses(address(oracle));
         assertEq(ts, timestamp);
         assertEq(ratio, currentCumulativeRatio);
-        // 24 writes for array initialisation + 2 slots written by the actual update
-        assertEq(writes.length, 26);
+        // 2 slots written by the actual update (Observation struct)
+        assertEq(writes.length, 2);
 
         for (uint256 i = 1; i < 24; i++) {
             // Does not update before periodSize
@@ -234,7 +234,7 @@ contract PoolOracleTWARTest is IPoolOracleEvents, Test {
 
         // If there are no values recorded for the pool it'll fail
         IPool pool2 = IPool(Mocks.mock("IPool2"));
-        vm.expectRevert(abi.encodeWithSelector(IPoolOracle.NoObservationsForPool.selector, pool2));
+        vm.expectRevert(abi.encodeWithSelector(IPoolOracle.MissingHistoricalObservation.selector, pool2));
         oracle.getOldestObservationInWindow(pool2);
     }
 
@@ -366,11 +366,9 @@ contract PoolOracleTWARTest is IPoolOracleEvents, Test {
         assertEq(oracle.peek(pool), 48309178743961352);
         // Verify reads to storage
         (bytes32[] memory reads,) = vm.accesses(address(oracle));
-        // 1) length for loop
-        // 2) length for bound check (maybe use assembly to remove this?)
-        // 3) slot 1 of Observation
-        // 4) slot 2 of Observation
-        assertEq(reads.length, 4);
+        // 1) slot 1 of Observation
+        // 2) slot 2 of Observation
+        assertEq(reads.length, 2);
 
         // should use the second observation (idx 9)
         // (5e30 - 2e30) / (1645950768 - 1645867968)
@@ -378,11 +376,9 @@ contract PoolOracleTWARTest is IPoolOracleEvents, Test {
         assertEq(oracle.peek(pool), 36231884057971014);
         // Verify reads to storage
         (reads,) = vm.accesses(address(oracle));
-        // 1) length for loop
-        // 2) length for bound check (maybe use assembly to remove this?)
-        // 3) slot 1 of Observation
-        // 4) slot 2 of Observation
-        assertEq(reads.length, 4);
+        // 1) slot 1 of Observation
+        // 2) slot 2 of Observation
+        assertEq(reads.length, 2);
 
         // missing slot, so it should use the second (next) observation (idx 9)
         // (5e30 - 2e30) / (1645947168 - 1645867968)
@@ -390,13 +386,10 @@ contract PoolOracleTWARTest is IPoolOracleEvents, Test {
         assertEq(oracle.peek(pool), 37878787878787878);
         // Verify reads to storage
         (reads,) = vm.accesses(address(oracle));
-        // 1) length for loop
-        // 2) length for bound check (maybe use assembly to remove this?)
-        // 3) slot 1 of 1st Observation
-        // 4) slot 2 of 1st Observation
-        // 5) length for bound check (maybe use assembly to remove this?)
-        // 6) slot 1 of 2nd Observation
-        // 7) slot 2 of 2nd Observation
-        assertEq(reads.length, 7);
+        // 1) slot 1 of 1st Observation
+        // 2) slot 2 of 1st Observation
+        // 3) slot 1 of 2nd Observation
+        // 4) slot 2 of 2nd Observation
+        assertEq(reads.length, 4);
     }
 }
