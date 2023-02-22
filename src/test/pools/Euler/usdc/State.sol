@@ -28,7 +28,7 @@ import "../../../../Pool/PoolErrors.sol";
 import {Exp64x64} from "../../../../Exp64x64.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
-import {Cast} from  "@yield-protocol/utils-v2/contracts/utils/Cast.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";

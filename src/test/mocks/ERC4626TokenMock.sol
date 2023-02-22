@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.15;
 
-import "@yield-protocol/utils-v2/contracts/token/ERC20.sol";
+import "@yield-protocol/utils-v2/src/token/ERC20.sol";
 
 
 import {IYVToken} from "../../interfaces/IYVToken.sol";
-import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
+import {IERC20Metadata} from "@yield-protocol/utils-v2/src/token/IERC20Metadata.sol";
 
 interface IERC4626Mock {
     function convertToAssets(uint256 amount) external returns (uint256);

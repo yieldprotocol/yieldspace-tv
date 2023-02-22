@@ -27,13 +27,13 @@ import {console} from "forge-std/console.sol";
 import "../../../../Pool/PoolErrors.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
-import {Cast} from  "@yield-protocol/utils-v2/contracts/utils/Cast.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
 import {ETokenMock} from "../../../mocks/ETokenMock.sol";
 import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
-import {TransferHelper} from "@yield-protocol/utils-v2/contracts/token/TransferHelper.sol";
+import {TransferHelper} from "@yield-protocol/utils-v2/src/token/TransferHelper.sol";
 import "./State.sol";
 
 contract SetFeesEulerUSDT is ZeroStateEulerUSDT {
