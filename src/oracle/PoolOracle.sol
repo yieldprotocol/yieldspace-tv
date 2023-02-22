@@ -106,7 +106,7 @@ contract PoolOracle is IPoolOracle {
         // we only want to commit updates once per period (i.e. windowSize / granularity)
         uint256 timeElapsed = block.timestamp - observation.timestamp;
         if (timeElapsed > periodSize) {
-            (observation.ratioCumulative, observation.timestamp) = IPool(pool).currentCumulativeRatio();
+            (observation.ratioCumulative, observation.timestamp) = pool.currentCumulativeRatio();
             emit ObservationRecorded(pool, index, observation.timestamp, observation.ratioCumulative);
             updated = true;
         }
@@ -134,7 +134,7 @@ contract PoolOracle is IPoolOracle {
             revert InsufficientElapsedTime(pool, timeElapsed);
         }
 
-        (uint256 currentCumulativeRatio_,) = IPool(pool).currentCumulativeRatio();
+        (uint256 currentCumulativeRatio_,) = pool.currentCumulativeRatio();
         // cumulative ratio is in (ratio * seconds) units so for the average we simply get it after division by time elapsed
         // cumulative ratio has 27 decimals precision (RAY), the below equation returns a number on 18 decimals precision
         twar = (currentCumulativeRatio_ - oldestObservation.ratioCumulative) / timeElapsed / (RAY / WAD);
