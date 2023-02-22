@@ -3,7 +3,15 @@ pragma solidity >=0.8.15;
 
 import "./IPool.sol";
 
-interface IPoolOracle {
+interface IPoolOracleEvents {
+    event ObservationRecorded(IPool indexed pool, uint256 index, uint256 timestamp, uint256 ratioCumulative);
+}
+
+interface IPoolOracle is IPoolOracleEvents {
+    error InsufficientElapsedTime(IPool pool, uint256 elapsedTime);
+    error MissingHistoricalObservation(IPool pool);
+    error NoObservationsForPool(IPool pool);
+
     /// @notice returns the TWAR for a given `pool` using the moving average over the max available time range within the window
     /// @param pool Address of pool for which the observation is required
     /// @return twar The most up to date TWAR for `pool`
@@ -19,7 +27,7 @@ interface IPoolOracle {
     /// once per epoch period.
     /// @param pool Address of pool for which the observation should be recorded
     /// @return updated Flag to indicate if the observation at the current timestamp was actually updated
-    function updatePool(IPool pool) external returns(bool updated);
+    function updatePool(IPool pool) external returns (bool updated);
 
     /// @notice updates the cumulative ratio for the observation at the current timestamp. Each observation is updated at most
     /// once per epoch period.
@@ -40,7 +48,9 @@ interface IPoolOracle {
     /// @param fyTokenOut Amount of fyToken hypothetically desired.
     /// @return baseIn Amount of base hypothetically required.
     /// @return updateTime Timestamp for when this price was calculated.
-    function getBuyFYTokenPreview(IPool pool, uint256 fyTokenOut) external returns (uint256 baseIn, uint256 updateTime);
+    function getBuyFYTokenPreview(IPool pool, uint256 fyTokenOut)
+        external
+        returns (uint256 baseIn, uint256 updateTime);
 
     /// Returns how much fyToken would be obtained by selling `baseIn`.
     /// @notice This function will also record a new snapshot on the oracle if necessary,
@@ -66,7 +76,10 @@ interface IPoolOracle {
     /// @param baseOut Amount of base hypothetically desired.
     /// @return fyTokenIn Amount of fyToken hypothetically required.
     /// @return updateTime Timestamp for when this price was calculated.
-    function peekBuyBasePreview(IPool pool, uint256 baseOut) external view returns (uint256 fyTokenIn, uint256 updateTime);
+    function peekBuyBasePreview(IPool pool, uint256 baseOut)
+        external
+        view
+        returns (uint256 fyTokenIn, uint256 updateTime);
 
     /// Returns how much base would be required to buy `fyTokenOut`.
     /// @notice This function is view and hence it will not try to update the oracle
@@ -75,7 +88,8 @@ interface IPoolOracle {
     /// @return baseIn Amount of base hypothetically required.
     /// @return updateTime Timestamp for when this price was calculated.
     function peekBuyFYTokenPreview(IPool pool, uint256 fyTokenOut)
-        external view
+        external
+        view
         returns (uint256 baseIn, uint256 updateTime);
 
     /// Returns how much fyToken would be obtained by selling `baseIn`.
@@ -84,7 +98,10 @@ interface IPoolOracle {
     /// @param baseIn Amount of base hypothetically sold.
     /// @return fyTokenOut Amount of fyToken hypothetically bought.
     /// @return updateTime Timestamp for when this price was calculated.
-    function peekSellBasePreview(IPool pool, uint256 baseIn) external view returns (uint256 fyTokenOut, uint256 updateTime);
+    function peekSellBasePreview(IPool pool, uint256 baseIn)
+        external
+        view
+        returns (uint256 fyTokenOut, uint256 updateTime);
 
     /// Returns how much base would be obtained by selling `fyTokenIn` fyToken.
     /// @notice This function is view and hence it will not try to update the oracle
@@ -93,6 +110,7 @@ interface IPoolOracle {
     /// @return baseOut Amount of base hypothetically bought.
     /// @return updateTime Timestamp for when this price was calculated.
     function peekSellFYTokenPreview(IPool pool, uint256 fyTokenIn)
-        external view
+        external
+        view
         returns (uint256 baseOut, uint256 updateTime);
 }
