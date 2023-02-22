@@ -14,6 +14,7 @@ import "./Constants.sol";
 import {TestCore} from "./TestCore.sol";
 import {SyncablePool} from "../mocks/SyncablePool.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
+import {NonCompliantERC20Mock} from "../mocks/NonCompliantERC20Mock.sol";
 import {FYTokenMock} from "../mocks/FYTokenMock.sol";
 import {YVTokenMock} from "../mocks/YVTokenMock.sol";
 import {ETokenMock} from "../mocks/ETokenMock.sol";
@@ -66,7 +67,7 @@ abstract contract ZeroState is TestCore {
         if(!nonCompliant) {
             asset = new ERC20Mock(assetName, assetSymbol, assetDecimals);
         } else {
-            asset = ERC20Mock(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+            asset = ERC20Mock(address(new NonCompliantERC20Mock(assetName, assetSymbol, 6)));
         }
 
         // Set shares token related variables.
