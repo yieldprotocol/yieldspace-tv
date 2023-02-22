@@ -137,7 +137,7 @@ contract PoolOracle is IPoolOracle {
         (uint256 currentCumulativeRatio_,) = IPool(pool).currentCumulativeRatio();
         // cumulative ratio is in (ratio * seconds) units so for the average we simply get it after division by time elapsed
         // cumulative ratio has 27 decimals precision (RAY), the below equation returns a number on 18 decimals precision
-        twar = ((currentCumulativeRatio_ - oldestObservation.ratioCumulative) * WAD) / (timeElapsed * RAY);
+        twar = (currentCumulativeRatio_ - oldestObservation.ratioCumulative) / timeElapsed / (RAY / WAD);
     }
 
     /// @inheritdoc IPoolOracle
