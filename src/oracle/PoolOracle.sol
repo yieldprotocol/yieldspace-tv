@@ -65,7 +65,7 @@ contract PoolOracle is IPoolOracle {
     /// @param pool Address of pool for which the observation is required
     /// @return o The oldest observation available for `pool`
     function getOldestObservationInWindow(IPool pool) public view returns (Observation memory o) {
-        mapping(uint => Observation) storage observations = poolObservations[pool];
+        mapping(uint256 => Observation) storage observations = poolObservations[pool];
 
         unchecked {
             uint256 observationIndex = observationIndexOf(block.timestamp);
@@ -233,7 +233,10 @@ contract PoolOracle is IPoolOracle {
             result = amount;
         } else {
             int128 price = _price(pool, peek(pool), g, maturity, updateTime);
-            result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
+            require(price >= 0);
+            require(amount >> 192 == 0);
+            result = (amount << 64) / uint128(price); // result = amount / price
+                // result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
         }
     }
 
@@ -262,7 +265,10 @@ contract PoolOracle is IPoolOracle {
             result = amount;
         } else {
             int128 price = _price(pool, get(pool), g, maturity, updateTime);
-            result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
+            require(price >= 0);
+            require(amount >> 192 == 0);
+            result = (amount << 64) / uint128(price); // result = amount / price
+                // result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
         }
     }
 
