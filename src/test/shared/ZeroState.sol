@@ -23,7 +23,7 @@ import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
 import {SyncablePoolNonTv} from "../mocks/SyncablePoolNonTv.sol";
 import {SyncablePoolYearnVault} from "../mocks/SyncablePoolYearnVault.sol";
 import {SyncablePoolEuler} from "../mocks/SyncablePoolEuler.sol";
-import {AccessControl} from "@yield-protocol/utils-v2/contracts/access/AccessControl.sol";
+import {AccessControl} from "@yield-protocol/utils-v2/src/access/AccessControl.sol";
 
 bytes4 constant ROOT = 0x00000000;
 

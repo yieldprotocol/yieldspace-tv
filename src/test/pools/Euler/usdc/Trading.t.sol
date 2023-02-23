@@ -26,7 +26,7 @@ import {console} from "forge-std/console.sol";
 import "../../../../Pool/PoolErrors.sol";
 import {Math64x64} from "../../../../Math64x64.sol";
 import {YieldMath} from "../../../../YieldMath.sol";
-import {CastU256U128} from "@yield-protocol/utils-v2/contracts/cast/CastU256U128.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 
 import "../../../shared/Utils.sol";
 import "../../../shared/Constants.sol";
@@ -36,7 +36,7 @@ import "./State.sol";
 contract Trade__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     function testUnit_Euler_tradeUSDC01() public {
         console.log("sells a certain amount of fyToken for base");
@@ -175,7 +175,7 @@ contract Trade__WithLiquidityEulerUSDC is WithLiquidityEulerUSDC {
 contract Trade__WithExtraFYTokenEulerUSDC is WithExtraFYTokenEulerUSDC {
     using Math64x64 for int128;
     using Math64x64 for uint256;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     function testUnit_Euler_tradeUSDC07() public {
         console.log("sells base for a certain amount of FYTokens");

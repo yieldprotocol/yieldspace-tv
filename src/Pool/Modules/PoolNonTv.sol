@@ -25,7 +25,7 @@ import "../Pool.sol";/*
 /// @author @devtooligan
 contract PoolNonTv is Pool {
     using TransferHelper for IERC20Like;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     constructor(
         address base_,
