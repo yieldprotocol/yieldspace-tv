@@ -20,10 +20,13 @@ import "../../shared/Utils.sol";
 import "../../shared/Constants.sol";
 
 import "../../../Pool/PoolErrors.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import "./State.sol";
+
+using Cast for int128;
 
 contract SetFees is ZeroStateDai {
     using Math64x64 for uint256;
@@ -52,8 +55,8 @@ contract SetFees is ZeroStateDai {
         console.log("sets valid fee");
 
         uint16 g1Fee_ = 8000;
-        int128 expectedG1 = uint256(g1Fee_).divu(10000);
-        int128 expectedG2 = uint256(10000).divu(g1Fee_);
+        uint128 expectedG1 = uint256(g1Fee_).divu(10000).u128();
+        uint128 expectedG2 = uint256(10000).divu(g1Fee_).u128();
 
         vm.prank(bob);
         vm.expectEmit(true, true, true, true);

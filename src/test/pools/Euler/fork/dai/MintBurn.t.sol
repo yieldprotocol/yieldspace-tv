@@ -33,6 +33,8 @@ import "../../../../shared/Utils.sol";
 import "../../../../shared/Constants.sol";
 import "./State.sol";
 
+using Cast for int128;
+
 contract SetFeesEulerDAIFork is EulerDAIFork {
     using Math64x64 for uint256;
 
@@ -60,8 +62,8 @@ contract SetFeesEulerDAIFork is EulerDAIFork {
         console.log("sets valid fee");
 
         uint16 g1Fee_ = 8000;
-        int128 expectedG1 = uint256(g1Fee_).divu(10000);
-        int128 expectedG2 = uint256(10000).divu(g1Fee_);
+        uint128 expectedG1 = uint256(g1Fee_).divu(10000).u128();
+        uint128 expectedG2 = uint256(10000).divu(g1Fee_).u128();
 
         vm.prank(timelock);
         vm.expectEmit(true, true, true, true);

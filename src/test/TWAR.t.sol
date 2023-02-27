@@ -21,9 +21,12 @@ import "./shared/Constants.sol";
 import "./pools/4626/State.sol";
 
 import "../Pool/PoolErrors.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
+
+using Cast for int128;
 
 contract TWAR__ZeroState is ZeroStateDai {
     function testUnit_twar1() public {
@@ -103,9 +106,9 @@ contract TWAR__PoolInitialized is PoolInitialized {
         fyToken.mint(address(pool), 5e18);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint128 expectedFYTokenIn = YieldMath.fyTokenInForSharesOut(
             sharesReserves,
@@ -195,9 +198,9 @@ contract TWAR__PoolInitialized is PoolInitialized {
         // calc expected FYTokenIn
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint128 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
             sharesReserves,

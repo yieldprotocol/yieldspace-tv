@@ -36,6 +36,8 @@ import {YVTokenMock} from "../../mocks/YVTokenMock.sol";
 import {ZeroState, ZeroStateParams} from "../../shared/ZeroState.sol";
 import {IERC20Like} from "../../../interfaces/IERC20Like.sol";
 
+using Cast for int128;
+
 abstract contract ZeroStateYearnDai is ZeroState {
     constructor() ZeroState(ZeroStateParams("DAI", "DAI", 18, "YearnVault", false)) {}
 }
@@ -226,7 +228,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        uint128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt()).u128();
 
         fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
@@ -280,7 +282,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        uint128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt()).u128();
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -357,7 +359,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        uint128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt()).u128();
 
         // Transfer shares for sale to the pool
         asset.mint(address(pool), assetsIn);
@@ -428,7 +430,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt());
+        uint128 c_ = (YVTokenMock(address(shares)).pricePerShare().fromUInt()).div(uint256(1e18).fromUInt()).u128();
 
         uint128 assetsIn = pool.unwrapPreview(initialShares).u128();
         // Transfer shares for sale to the pool

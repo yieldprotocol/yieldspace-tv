@@ -9,6 +9,7 @@ import "./shared/Utils.sol";
 import "./shared/Constants.sol";
 import "../Pool/PoolErrors.sol";
 import {Pool} from "../Pool/Pool.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {TestCore} from "./shared/TestCore.sol";
 import {ERC20Mock} from "./mocks/ERC20Mock.sol";
@@ -19,6 +20,9 @@ import {ERC4626TokenMock} from "./mocks/ERC4626TokenMock.sol";
 contract Deploy is TestCore {
     using Math64x64 for int128;
     using Math64x64 for uint256;
+    using Cast for uint128;
+    using Cast for int128;
+
     ERC20Mock public assetDAI;
     ERC20Mock public assetUSDC;
     ERC20Mock public asset20DECI;
@@ -30,7 +34,7 @@ contract Deploy is TestCore {
     FYTokenMock public fy20DECI;
 
     function setUp() public virtual {
-        ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
+        ts = ONE.i128().div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt()).u128();
         assetDAI = new ERC20Mock("DAI", "DAI", 18);
         assetUSDC = new ERC20Mock("USDC", "USDC", 6);
         asset20DECI = new ERC20Mock("20DECI", "20DECI", 20);

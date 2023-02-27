@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Exp64x64} from "../../Exp64x64.sol";
 import {Math64x64} from "../../Math64x64.sol";
 import {YieldMath} from "../../YieldMath.sol";
@@ -53,9 +54,12 @@ struct ZeroStateParams {
 abstract contract ZeroState is TestCore {
     using Math64x64 for int128;
     using Math64x64 for uint256;
+    using Cast for uint128;
+    using Cast for int128;
+
 
     constructor(ZeroStateParams memory params) {
-        ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
+        ts = ONE.i128().div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt()).u128();
 
         // Set base asset state variables.
         assetName = params.assetName;

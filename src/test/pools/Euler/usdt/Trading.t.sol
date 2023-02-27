@@ -35,6 +35,8 @@ import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
 import {TransferHelper} from "@yield-protocol/utils-v2/src/token/TransferHelper.sol";
 import "./State.sol";
 
+using Cast for int128;
+
 contract Trade__WithLiquidityEulerUSDT is WithLiquidityEulerUSDT {
     using Math64x64 for int128;
     using Math64x64 for uint256;
@@ -48,9 +50,9 @@ contract Trade__WithLiquidityEulerUSDT is WithLiquidityEulerUSDT {
         uint256 fyTokenIn = 25_000 * 1e6;
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(getSharesBalanceWithDecimalsAdjusted(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
             sharesReserves * pool.scaleFactor(),
@@ -109,9 +111,9 @@ contract Trade__WithLiquidityEulerUSDT is WithLiquidityEulerUSDT {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(getSharesBalanceWithDecimalsAdjusted(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -188,9 +190,9 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(getSharesBalanceWithDecimalsAdjusted(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         // Transfer base for sale to the pool
         deal(address(asset), address(pool), assetsIn);
@@ -256,9 +258,9 @@ contract Trade__WithExtraFYTokenEulerUSDT is WithExtraFYTokenEulerUSDT {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(getSharesBalanceWithDecimalsAdjusted(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint128 assetsIn = pool.unwrapPreview(initialShares).u128();
         // Transfer shares for sale to the pool

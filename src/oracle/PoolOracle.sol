@@ -16,7 +16,7 @@ import {Math64x64} from "../Math64x64.sol";
 contract PoolOracle is IPoolOracle {
     using Math64x64 for *;
     using Exp64x64 for *;
-    using Cast for *;
+    using Cast for uint128;
 
     event ObservationRecorded(IPool indexed pool, uint256 index, Observation observation);
 
@@ -321,7 +321,7 @@ contract PoolOracle is IPoolOracle {
         int128 timeTillMaturity = (maturity - updateTime).fromUInt();
 
         // t = ts * g * ttm
-        int128 t = pool.ts().i128().mul(g).mul(timeTillMaturity);
+        int128 t = pool.ts().i128().mul(g.i128()).mul(timeTillMaturity);
 
         // make twar a binary 64.64 fraction
         int128 twar64 = twar.divu(WAD);

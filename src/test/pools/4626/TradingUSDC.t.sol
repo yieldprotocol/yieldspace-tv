@@ -17,6 +17,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
 import "../../../Pool/PoolErrors.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
@@ -26,6 +27,8 @@ import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
 import "../../shared/Constants.sol";
 import {FYTokenMock} from "../../mocks/FYTokenMock.sol";
 import "./State.sol";
+
+using Cast for int128;
 
 contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
     using Math64x64 for uint256;
@@ -72,9 +75,9 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e6).fromUInt()
-        );
+        ).u128();
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -250,9 +253,9 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
         uint256 userSharesBalanceBefore = shares.balanceOf(alice);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e6).fromUInt()
-        );
+        ).u128();
 
         // Transfer shares for sale to the pool
         shares.mint(address(pool), sharesIn);
@@ -315,9 +318,9 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e6).fromUInt()
-        );
+        ).u128();
 
         // Transfer shares for sale to the pool
         asset.mint(address(pool), pool.unwrapPreview(initialShares));

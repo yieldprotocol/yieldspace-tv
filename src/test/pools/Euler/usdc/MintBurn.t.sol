@@ -35,6 +35,8 @@ import {ETokenMock} from "../../../mocks/ETokenMock.sol";
 import {IERC20Like} from "../../../../interfaces/IERC20Like.sol";
 import "./State.sol";
 
+using Cast for int128;
+
 contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
     using Math64x64 for uint256;
 
@@ -62,8 +64,8 @@ contract SetFeesEulerUSDC is ZeroStateEulerUSDC {
         console.log("sets valid fee");
 
         uint16 g1Fee = 8000;
-        int128 expectedG1 = uint256(g1Fee).divu(10000);
-        int128 expectedG2 = uint256(10000).divu(g1Fee);
+        uint128 expectedG1 = uint256(g1Fee).divu(10000).u128();
+        uint128 expectedG2 = uint256(10000).divu(g1Fee).u128();
 
         vm.prank(bob);
         vm.expectEmit(true, true, true, true);

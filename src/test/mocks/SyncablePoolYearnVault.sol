@@ -9,7 +9,7 @@ contract SyncablePoolYearnVault is PoolYearnVault, ISyncablePool {
     constructor(
         address shares_,
         address fyToken_,
-        int128 ts_,
+        uint128 ts_,
         uint16 g1Fee_
     ) PoolYearnVault(shares_, fyToken_, ts_, g1Fee_) {}
 

@@ -33,6 +33,8 @@ import "../../../shared/Constants.sol";
 import {ETokenMock} from "../../../mocks/ETokenMock.sol";
 import "./State.sol";
 
+using Cast for int128;
+
 contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
     using Math64x64 for int128;
     using Math64x64 for uint256;
@@ -48,9 +50,9 @@ contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
         (uint104 sharesReserveBefore, uint104 fyTokenReserveBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
             sharesReserves * pool.scaleFactor(),
@@ -114,9 +116,9 @@ contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint256 expectedFYTokenIn = YieldMath.fyTokenInForSharesOut(
             sharesReserves * pool.scaleFactor(),
@@ -204,9 +206,9 @@ contract Trade__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint256 expectedFyTokenOut = YieldMath.fyTokenOutForSharesIn(
             sharesReserves * pool.scaleFactor(),
@@ -302,9 +304,9 @@ contract Trade__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
         (uint104 sharesReservesBefore, uint104 fyTokenReservesBefore, , ) = pool.getCache();
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
+        uint128 c_ = (ETokenMock(address(shares)).convertBalanceToUnderlying(1e18) * pool.scaleFactor()).fromUInt().div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         uint256 expectedSharesIn = YieldMath.sharesInForFYTokenOut(
             sharesReserves * pool.scaleFactor(),

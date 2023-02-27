@@ -16,6 +16,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
 import "../../../Pool/PoolErrors.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Math64x64} from "../../../Math64x64.sol";
 import {YieldMath} from "../../../YieldMath.sol";
 import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
@@ -25,6 +26,8 @@ import {IERC4626Mock} from "../../mocks/ERC4626TokenMock.sol";
 import "../../shared/Constants.sol";
 import {FYTokenMock} from "../../mocks/FYTokenMock.sol";
 import "./State.sol";
+
+using Cast for int128;
 
 contract TradeDAI__WithLiquidity is WithLiquidityDAI {
     using Math64x64 for int128;
@@ -37,9 +40,9 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         // Send some fyToken to pool and calculate expectedSharesOut
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
@@ -102,9 +105,9 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         // Send some fyTokens to the pool and see fyTokenIn is as expected.
         fyToken.mint(address(pool), initialFYTokens);
@@ -279,9 +282,9 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         // Transfer shares for sale to the pool.
         asset.mint(address(pool), assetsIn);
@@ -361,9 +364,9 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
+        uint128 c_ = (IERC4626Mock(address(shares)).convertToAssets(10**shares.decimals()).fromUInt()).div(
             uint256(1e18).fromUInt()
-        );
+        ).u128();
 
         // Transfer shares for sale to the pool.
         asset.mint(address(pool), pool.unwrapPreview(initialShares));

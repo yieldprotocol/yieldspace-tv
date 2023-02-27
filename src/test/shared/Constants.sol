@@ -10,8 +10,7 @@ uint256 constant INITIAL_SHARES = 1_100_000;
 uint256 constant INITIAL_YVDAI = 1_100_000 * 1e18;
 uint256 constant INITIAL_EUSDC = 1_100_000 * 1e18;
 
-// 64.64
-int128 constant ONE = 0x10000000000000000;
+uint128 constant ONE = 0x10000000000000000;
 
 bytes32 constant TYPE_4626 = keccak256(abi.encodePacked("4626"));
 bytes32 constant TYPE_NONTV = keccak256(abi.encodePacked("NonTv"));

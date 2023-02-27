@@ -33,6 +33,8 @@ import "../../shared/Utils.sol";
 import "../../shared/Constants.sol";
 import "./State.sol";
 
+using Cast for int128;
+
 contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
     using Math64x64 for int128;
     using Math64x64 for uint256;
@@ -43,7 +45,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = int128(ONE);
+        uint128 c_ = ONE;
 
         fyToken.mint(address(pool), fyTokenIn);
         uint256 expectedSharesOut = YieldMath.sharesOutForFYTokenIn(
@@ -95,7 +97,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = int128(ONE);
+        uint128 c_ = ONE;
 
         fyToken.mint(address(pool), initialFYTokens); // send some tokens to the pool
 
@@ -165,7 +167,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         uint256 userFYTokenBefore = fyToken.balanceOf(bob);
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = ONE;
+        uint128 c_ = ONE;
 
         // Transfer shares for sale to the pool
         shares.mint(address(pool), sharesIn);
@@ -238,7 +240,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
 
         uint128 virtFYTokenBal = uint128(fyToken.balanceOf(address(pool)) + pool.totalSupply());
         uint128 sharesReserves = uint128(shares.balanceOf(address(pool)));
-        int128 c_ = int128(ONE);
+        uint128 c_ = ONE;
 
         // Transfer shares for sale to the pool
         shares.mint(address(pool), initialShares);
