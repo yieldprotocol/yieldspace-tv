@@ -2,6 +2,7 @@
 pragma solidity >=0.8.15;
 
 import "../interfaces/IPoolOracle.sol";
+import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 
@@ -15,6 +16,7 @@ import {Math64x64} from "../Math64x64.sol";
 contract PoolOracle is IPoolOracle {
     using Math64x64 for *;
     using Exp64x64 for *;
+    using Cast for *;
 
     event ObservationRecorded(IPool indexed pool, uint256 index, Observation observation);
 
@@ -243,7 +245,7 @@ contract PoolOracle is IPoolOracle {
     function _peekAmountOverPrice(
         IPool pool,
         uint256 amount,
-        int128 g
+        uint128 g
     ) internal view returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -258,7 +260,7 @@ contract PoolOracle is IPoolOracle {
     function _peekAmountTimesPrice(
         IPool pool,
         uint256 amount,
-        int128 g
+        uint128 g
     ) internal view returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -273,7 +275,7 @@ contract PoolOracle is IPoolOracle {
     function _getAmountOverPrice(
         IPool pool,
         uint256 amount,
-        int128 g
+        uint128 g
     ) internal returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -288,7 +290,7 @@ contract PoolOracle is IPoolOracle {
     function _getAmountTimesPrice(
         IPool pool,
         uint256 amount,
-        int128 g
+        uint128 g
     ) internal returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -303,7 +305,7 @@ contract PoolOracle is IPoolOracle {
     function _price(
         IPool pool,
         uint256 twar,
-        int128 g,
+        uint128 g,
         uint256 maturity,
         uint256 updateTime
     ) internal view returns (int128 price) {
@@ -319,12 +321,12 @@ contract PoolOracle is IPoolOracle {
         int128 timeTillMaturity = (maturity - updateTime).fromUInt();
 
         // t = ts * g * ttm
-        int128 t = pool.ts().mul(g).mul(timeTillMaturity);
+        int128 t = pool.ts().i128().mul(g).mul(timeTillMaturity);
 
         // make twar a binary 64.64 fraction
         int128 twar64 = twar.divu(WAD);
 
         // price = (c/μ * twar)^t
-        price = pool.getC().div(pool.mu()).mul(twar64).pow(t);
+        price = pool.getC().i128().div(pool.mu().i128()).mul(twar64).pow(t);
     }
 }

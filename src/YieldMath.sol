@@ -63,11 +63,15 @@ library YieldMath {
         uint128 fyTokenReserves, // x
         uint128 sharesIn, // x == Δz
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128) {
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -166,10 +170,10 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenIn,
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -191,8 +195,8 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenIn,
         uint128 a,
-        int128 c,
-        int128 mu
+        uint128 c,
+        uint128 mu
     ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -205,6 +209,10 @@ library YieldMath {
             Δz = z -   1/μ   * ( ( (c / μ) * (μz)^(1-t) +  y^(1-t) - (y + x)^(1-t) ) / (c / μ) )^(1 / (1 - t))
 
         */
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
             uint256 normalizedSharesReserves;
@@ -279,10 +287,10 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 sharesOut,
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -295,6 +303,9 @@ library YieldMath {
                 Δy = ( c/μ * (μz)^(1-t) +  y^(1-t) - c/μ * (μz - μx)^(1-t) )^(1 / (1 - t)) - y
 
             */
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -379,10 +390,10 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenOut,
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -404,8 +415,8 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenOut,
         uint128 a,
-        int128 c,
-        int128 mu
+        uint128 c,
+        uint128 mu
     ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -418,6 +429,10 @@ library YieldMath {
         Δz = 1/μ * (( c/μ * μz^(1-t) +  y^(1-t) - (y - x)^(1-t)) / (c/μ) )^(1 / (1 - t)) - z
 
         */
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
             require(mu.mulu(sharesReserves) <= MAX, "YieldMath: Rate overflow (nsr)");
@@ -465,10 +480,10 @@ library YieldMath {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128 fyTokenIn) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -481,6 +496,9 @@ library YieldMath {
                 Δy = ( c/μ * (μz)^(1-t) +  Y^(1-t) )^(1 / (1 - t)) - Y
 
             */
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -538,11 +556,15 @@ library YieldMath {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128 fyTokenOut) {
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -593,11 +615,15 @@ library YieldMath {
         uint128 sharesReserves, // z
         uint128 fyTokenReserves, // x
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128 sharesIn) {
+
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -665,13 +691,13 @@ library YieldMath {
         uint128 fyTokenReserves, // x
         uint256 totalSupply, // s
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
     ) public pure returns (uint128 result) {
         if (totalSupply == 0) return 0;
-        int128 a = int128(_computeA(timeTillMaturity, k, g));
+        uint128 a = _computeA(timeTillMaturity, k, g);
 
         result = _invariant(sharesReserves, fyTokenReserves, totalSupply, a, c, mu);
     }
@@ -687,10 +713,15 @@ library YieldMath {
         uint128 sharesReserves, // z
         uint128 fyTokenReserves, // x
         uint256 totalSupply, // s
-        int128 a,
-        int128 c,
-        int128 mu
+        uint128 a,
+        uint128 c,
+        uint128 mu
     ) internal pure returns (uint128 result) {
+
+        int128 a = a.i128();
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -729,9 +760,13 @@ library YieldMath {
 
     function _computeA(
         uint128 timeTillMaturity,
-        int128 k,
-        int128 g
+        uint128 k,
+        uint128 g
     ) private pure returns (uint128) {
+
+        int128 k = k.i128();
+        int128 g = g.i128();
+
         // t = k * timeTillMaturity
         int128 t = k.mul(timeTillMaturity.fromUInt());
         require(t >= 0, "YieldMath: t must be positive"); // Meaning neither T or k can be negative

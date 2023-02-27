@@ -30,7 +30,7 @@ contract PoolNonTv is Pool {
     constructor(
         address base_,
         address fyToken_,
-        int128 ts_,
+        uint128 ts_,
         uint16 g1Fee_
     ) Pool(base_, fyToken_, ts_, g1Fee_) {}
 

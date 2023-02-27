@@ -38,7 +38,7 @@ contract PoolEuler is Pool {
         address euler_, // The main Euler contract address
         address eToken_,
         address fyToken_,
-        int128 ts_,
+        uint128 ts_,
         uint16 g1Fee_
     ) Pool(eToken_, fyToken_, ts_, g1Fee_) {
         // Approve the main Euler contract to take base from the Pool, used on `deposit`.

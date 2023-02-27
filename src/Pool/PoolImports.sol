@@ -9,6 +9,7 @@ import {Cast} from  "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {Exp64x64} from "../Exp64x64.sol";
 import {Math64x64} from "../Math64x64.sol";
 import {YieldMath} from "../YieldMath.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {Math} from "@yield-protocol/utils-v2/src/utils/Math.sol";
 
 import {IPool} from "../interfaces/IPool.sol";
