@@ -169,7 +169,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(uint128).max
+            type(int128).max.u128()
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -180,7 +180,7 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(uint128).max,
+            type(int128).max.u128(),
             0x10000000000000000
         ) / 1e18;
 
@@ -457,7 +457,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(uint128).max
+            type(int128).max.u128()
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -468,7 +468,7 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(uint128).max,
+            type(int128).max.u128(),
             0x10000000000000000
         ) / 1e18;
 
@@ -670,7 +670,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(uint128).max
+            type(int128).max.u128()
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -681,7 +681,7 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(uint128).max,
+            type(int128).max.u128(),
             0x10000000000000000
         ) / 1e18;
 
@@ -884,7 +884,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(uint128).max
+            type(int128).max.u128()
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -895,7 +895,7 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(uint128).max,
+            type(int128).max.u128(),
             0x10000000000000000
         ) / 1e18;
 
