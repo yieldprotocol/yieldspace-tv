@@ -98,10 +98,10 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     IERC20Like public immutable sharesToken;
 
     /// Time stretch == 1 / seconds in x years where x varies per contract (64.64)
-    uint128 public immutable ts;
+    uint256 public immutable ts;
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)
-    uint128 public immutable mu;
+    uint256 public immutable mu;
 
     /// Pool's maturity date (not 64.64)
     uint32 public immutable maturity;
@@ -149,7 +149,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     constructor(
         address sharesToken_, //    address of shares token
         address fyToken_, //  address of fyToken
-        uint128 ts_, //        time stretch(64.64)
+        uint256 ts_, //        time stretch(64.64)
         uint16 g1Fee_ //      fees (in bps) when buying fyToken
     )
         ERC20Permit(
@@ -1327,35 +1327,34 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         emit Sync(newSharesCached, newFYTokenCached, newCumulativeRatioLast);
     }
 
-    /// Exposes the 64.64 factor used for determining fees.
+    /// Exposes the factor used for determining fees.
     /// A value of 1 (in 64.64) means no fees.  g1 < 1 because it is used when selling base shares to the pool.
     /// @dev Converts state var cache.g1Fee(fp4) to a 64bit divided by 10,000
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return a 64bit factor used for applying fees when buying fyToken/selling base.
-    function g1() external view returns (uint128) {
+    function g1() external view returns (uint256) {
         Cache memory cache = _getCache();
         return _computeG1(cache.g1Fee);
     }
 
     /// Returns the ratio of net proceeds after fees, for buying fyToken
-    function _computeG1(uint16 g1Fee_) internal pure returns (uint128) {
-        return uint256(g1Fee_).divu(10000).u128();
+    function _computeG1(uint16 g1Fee_) internal pure returns (uint256) {
+        return uint256(g1Fee_) * 1e14;
     }
 
-    /// Exposes the 64.64 factor used for determining fees.
+    /// Exposes the factor used for determining fees.
     /// A value of 1 means no fees.  g2 > 1 because it is used when selling fyToken to the pool.
     /// @dev Calculated by dividing 10,000 by state var cache.g1Fee(fp4) and converting to 64bit.
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return a 64bit factor used for applying fees when selling fyToken/buying base.
-    function g2() external view returns (uint128) {
+    function g2() external view returns (uint256) {
         Cache memory cache = _getCache();
         return _computeG2(cache.g1Fee);
     }
 
     /// Returns the ratio of net proceeds after fees, for selling fyToken
-    function _computeG2(uint16 g1Fee_) internal pure returns (uint128) {
-        // Divide 1 (64.64) by g1
-        return uint256(10000).divu(g1Fee_).u128();
+    function _computeG2(uint16 g1Fee_) internal pure returns (uint256) {
+        return uint256(1e18) / (g1Fee_ * 1e14);
     }
 
     /// Returns the shares balance with the same decimals as the underlying base asset.
@@ -1403,13 +1402,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Returns current price of 1 share in 64bit.
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return The current price (as determined by the token) scalled to 18 digits and converted to 64.64.
-    function getC() external view returns (uint128) {
+    function getC() external view returns (uint256) {
         return _getC();
     }
 
     /// Returns the c based on the current price
-    function _getC() internal view returns (uint128) {
-        return (_getCurrentSharePrice() * scaleFactor).divu(1e18).u128();
+    function _getC() internal view returns (uint256) {
+        return _getCurrentSharePrice() * scaleFactor;
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
@@ -1462,7 +1461,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param amount Amount as standard fp number.
     /// @return product Return standard fp number retaining decimals of provided amount.
     function _mulMu(uint256 amount) internal view returns (uint256 product) {
-        product = mu.i128().mulu(amount);
+        product = mu * amount;
     }
 
     /// Retrieve any shares tokens not accounted for in the cache.

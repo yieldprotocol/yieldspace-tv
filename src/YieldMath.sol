@@ -63,14 +63,14 @@ library YieldMath {
         uint128 fyTokenReserves, // x
         uint128 sharesIn, // x == Δz
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128) {
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromUInt();
+        int128 mu = mu.fromUInt();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -760,12 +760,12 @@ library YieldMath {
 
     function _computeA(
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g
+        uint256 k,
+        uint256 g
     ) private pure returns (uint128) {
 
-        int128 k = k.i128();
-        int128 g = g.i128();
+        int128 k = k.fromUInt();
+        int128 g = g.fromUInt();
 
         // t = k * timeTillMaturity
         int128 t = k.mul(timeTillMaturity.fromUInt());

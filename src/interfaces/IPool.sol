@@ -17,9 +17,9 @@ interface IPool is IERC20, IERC2612 {
     function currentCumulativeRatio() external view returns (uint256 currentCumulativeRatio_, uint256 blockTimestampCurrent);
     function cumulativeRatioLast() external view returns (uint256);
     function fyToken() external view returns(IMaturingToken);
-    function g1() external view returns(uint128);
-    function g2() external view returns(uint128);
-    function getC() external view returns (uint128);
+    function g1() external view returns(uint256);
+    function g2() external view returns(uint256);
+    function getC() external view returns (uint256);
     function getCurrentSharePrice() external view returns (uint256);
     function getCache() external view returns (uint104 baseCached, uint104 fyTokenCached, uint32 blockTimestampLast, uint16 g1Fee_);
     function getBaseBalance() external view returns(uint128);
@@ -28,7 +28,7 @@ interface IPool is IERC20, IERC2612 {
     function init(address to) external returns (uint256, uint256, uint256);
     function maturity() external view returns(uint32);
     function mint(address to, address remainder, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
-    function mu() external view returns (uint128);
+    function mu() external view returns (uint256);
     function mintWithBase(address to, address remainder, uint256 fyTokenToBuy, uint256 minRatio, uint256 maxRatio) external returns (uint256, uint256, uint256);
     function retrieveBase(address to) external returns(uint128 retrieved);
     function retrieveFYToken(address to) external returns(uint128 retrieved);
@@ -40,7 +40,7 @@ interface IPool is IERC20, IERC2612 {
     function sellFYTokenPreview(uint128 fyTokenIn) external view returns(uint128);
     function setFees(uint16 g1Fee_) external;
     function sharesToken() external view returns(IERC20Metadata);
-    function ts() external view returns(uint128);
+    function ts() external view returns(uint256);
     function wrap(address receiver) external returns (uint256 shares);
     function wrapPreview(uint256 assets) external view returns (uint256 shares);
     function unwrap(address receiver) external returns (uint256 assets);
