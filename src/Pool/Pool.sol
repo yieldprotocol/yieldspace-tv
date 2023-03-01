@@ -1459,7 +1459,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param amount Amount as standard fp number.
     /// @return product Return standard fp number retaining decimals of provided amount.
     function _mulMu(uint256 amount) internal view returns (uint256 product) {
-        product = mu * amount;
+        product = mu.wmul(amount);
     }
 
     /// Retrieve any shares tokens not accounted for in the cache.
