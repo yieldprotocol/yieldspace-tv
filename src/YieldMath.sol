@@ -13,6 +13,7 @@ pragma solidity >=0.8.15;
 import {Exp64x64} from "./Exp64x64.sol";
 import {Math64x64} from "./Math64x64.sol";
 import {Cast} from "@yield-protocol/utils-v2/src/utils/Cast.sol";
+import "forge-std/console.sol";
 
 /// Ethereum smart contract library implementing Yield Math model with yield bearing tokens.
 /// @dev see Mikhail Vladimirov (ABDK) explanations of the math: https://hackmd.io/gbnqA3gCTR6z-F0HHTxF-A#Yield-Math
@@ -25,6 +26,7 @@ library YieldMath {
     using Exp64x64 for int128;
     using Cast for uint256;
     using Cast for uint128;
+    using Cast for int128;
 
     uint128 public constant WAD = 1e18;
     uint128 public constant ONE = 0x10000000000000000; //   In 64.64
@@ -69,13 +71,13 @@ library YieldMath {
         uint256 mu
     ) public pure returns (uint128) {
 
-        int128 c = c.fromUInt();
-        int128 mu = mu.fromUInt();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
+            uint256 a = _computeA(timeTillMaturity, k, g);
 
             uint256 sum;
             {
@@ -98,14 +100,14 @@ library YieldMath {
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                 uint256 za;
                 require(
-                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
+                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a.u128(), ONE))) <= MAX,
                     "YieldMath: Rate overflow (za)"
                 );
 
                 // ya = fyTokenReserves ** a
                 // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-                uint256 ya = fyTokenReserves.pow(a, ONE);
+                uint256 ya = fyTokenReserves.pow(a.u128(), ONE);
 
                 // normalizedSharesIn = μ * sharesIn
                 uint256 normalizedSharesIn;
@@ -119,7 +121,7 @@ library YieldMath {
                 // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                 uint256 zxa;
-                require((zxa = c.div(mu).mulu(uint128(zx).pow(a, ONE))) <= MAX, "YieldMath: Rate overflow (zxa)");
+                require((zxa = c.div(mu).mulu(uint128(zx).pow(a.u128(), ONE))) <= MAX, "YieldMath: Rate overflow (zxa)");
 
                 sum = za + ya - zxa;
 
@@ -131,7 +133,7 @@ library YieldMath {
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
             uint256 fyTokenOut;
             require(
-                (fyTokenOut = uint256(fyTokenReserves) - sum.u128().pow(ONE, a)) <= MAX,
+                (fyTokenOut = uint256(fyTokenReserves) - sum.u128().pow(ONE, a.u128())) <= MAX,
                 "YieldMath: Rounding error"
             );
 
@@ -170,10 +172,10 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenIn,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -194,9 +196,9 @@ library YieldMath {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 fyTokenIn,
-        uint128 a,
-        uint128 c,
-        uint128 mu
+        uint256 a,
+        uint256 c,
+        uint256 mu
     ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -210,8 +212,8 @@ library YieldMath {
 
         */
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
@@ -227,19 +229,19 @@ library YieldMath {
                     // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                     uint256 za;
                     require(
-                        (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
+                        (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a.u128(), ONE))) <= MAX,
                         "YieldMath: Rate overflow (za)"
                     );
 
                     // ya = fyTokenReserves ** a
                     // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                     // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-                    uint256 ya = fyTokenReserves.pow(a, ONE);
+                    uint256 ya = fyTokenReserves.pow(a.u128(), ONE);
 
                     // yxa = (fyTokenReserves + x) ** a   # x is aka Δy
                     // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                     // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-                    uint256 yxa = (fyTokenReserves + fyTokenIn).pow(a, ONE);
+                    uint256 yxa = (fyTokenReserves + fyTokenIn).pow(a.u128(), ONE);
 
                     require((zaYaYxa = (za + ya - yxa)) <= MAX, "YieldMath: Rate overflow (yxa)");
                 }
@@ -248,7 +250,7 @@ library YieldMath {
                     int128( // Cast zaYaYxa/(c/μ).pow(1/a) from uint128 to int128 - always < zaYaYxa/(c/μ)
                         uint128( // Cast zaYaYxa/(c/μ) from int128 to uint128 - always positive
                             zaYaYxa.divu(uint128(c.div(mu))) // Cast c/μ from int128 to uint128 - always positive
-                        ).pow(uint128(ONE), a) // Cast 2^64 from int128 to uint128 - always positive
+                        ).pow(uint128(ONE), a.u128()) // Cast 2^64 from int128 to uint128 - always positive
                     ).div(mu)
                 );
             }
@@ -287,10 +289,10 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 sharesOut,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -304,13 +306,13 @@ library YieldMath {
 
             */
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
+            uint256 a = _computeA(timeTillMaturity, k, g);
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -322,14 +324,14 @@ library YieldMath {
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                 uint256 za;
                 require(
-                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
+                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a.u128(), ONE))) <= MAX,
                     "YieldMath: Rate overflow (za)"
                 );
 
                 // ya = fyTokenReserves ** a
                 // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-                uint256 ya = fyTokenReserves.pow(a, ONE);
+                uint256 ya = fyTokenReserves.pow(a.u128(), ONE);
 
                 // normalizedSharesOut = μ * sharesOut
                 uint256 normalizedSharesOut;
@@ -342,7 +344,7 @@ library YieldMath {
                 // zxa = c/μ * zx ** a
                 // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-                uint256 zxa = c.div(mu).mulu(uint128(zx).pow(a, ONE));
+                uint256 zxa = c.div(mu).mulu(uint128(zx).pow(a.u128(), ONE));
 
                 // sum = za + ya - zxa
                 // z < MAX, y < MAX, a < 1. It can only underflow, not overflow.
@@ -354,7 +356,7 @@ library YieldMath {
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
             uint256 result;
             require(
-                (result = uint256(uint128(sum).pow(ONE, a)) - uint256(fyTokenReserves)) <= MAX,
+                (result = uint256(uint128(sum).pow(ONE, a.u128())) - uint256(fyTokenReserves)) <= MAX,
                 "YieldMath: Rounding error"
             );
 
@@ -390,10 +392,10 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenOut,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -414,9 +416,9 @@ library YieldMath {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 fyTokenOut,
-        uint128 a,
-        uint128 c,
-        uint128 mu
+        uint256 a,
+        uint256 c,
+        uint256 mu
     ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -430,8 +432,8 @@ library YieldMath {
 
         */
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
@@ -440,18 +442,18 @@ library YieldMath {
             // za = c/μ * (normalizedSharesReserves ** a)
             // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-            uint256 za = c.div(mu).mulu(uint128(mu.mulu(sharesReserves)).pow(a, ONE));
+            uint256 za = c.div(mu).mulu(uint128(mu.mulu(sharesReserves)).pow(a.u128(), ONE));
             require(za <= MAX, "YieldMath: Rate overflow (za)");
 
             // ya = fyTokenReserves ** a
             // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-            uint256 ya = fyTokenReserves.pow(a, ONE);
+            uint256 ya = fyTokenReserves.pow(a.u128(), ONE);
 
             // yxa = (fyTokenReserves - x) ** aß
             // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-            uint256 yxa = (fyTokenReserves - fyTokenOut).pow(a, ONE);
+            uint256 yxa = (fyTokenReserves - fyTokenOut).pow(a.u128(), ONE);
             require(fyTokenOut <= fyTokenReserves, "YieldMath: Underflow (yxa)");
 
             uint256 zaYaYxa;
@@ -480,10 +482,10 @@ library YieldMath {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128 fyTokenIn) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -497,13 +499,13 @@ library YieldMath {
 
             */
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
+            uint256 a = _computeA(timeTillMaturity, k, g);
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -515,14 +517,14 @@ library YieldMath {
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
                 uint256 za;
                 require(
-                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a, ONE))) <= MAX,
+                    (za = c.div(mu).mulu(uint128(normalizedSharesReserves).pow(a.u128(), ONE))) <= MAX,
                     "YieldMath: Rate overflow (za)"
                 );
 
                 // ya = fyTokenReserves ** a
                 // The “pow(x, y, z)” function not only calculates x^(y/z) but also normalizes the result to
                 // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
-                uint256 ya = fyTokenReserves.pow(a, ONE);
+                uint256 ya = fyTokenReserves.pow(a.u128(), ONE);
 
                 // sum = za + ya
                 // z < MAX, y < MAX, a < 1. It can only underflow, not overflow.
@@ -534,7 +536,7 @@ library YieldMath {
             // fit into 64.64 fixed point number, i.e. it actually calculates: x^(y/z) * (2^63)^(1 - y/z)
             uint256 result;
             require(
-                (result = uint256(uint128(sum).pow(ONE, a)) - uint256(fyTokenReserves)) <= MAX,
+                (result = uint256(uint128(sum).pow(ONE, a.u128())) - uint256(fyTokenReserves)) <= MAX,
                 "YieldMath: Rounding error"
             );
 
@@ -556,19 +558,19 @@ library YieldMath {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128 fyTokenOut) {
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
+            uint256 a = _computeA(timeTillMaturity, k, g);
 
             /*
                 y = maxFyTokenOut
@@ -593,7 +595,7 @@ library YieldMath {
             int128 denominator = c.div(mu).add(int128(ONE));
 
             // rightTerm = (numerator / denominator) ** (1/a)
-            int128 rightTerm = numerator.div(denominator).pow(int128(ONE).div(a));
+            int128 rightTerm = numerator.div(denominator).pow(int128(ONE).div(a.i128()));
 
             // maxFYTokenOut_ = fyTokenReserves - (rightTerm * 1e18)
             require((fyTokenOut = fyTokenReserves - uint128(rightTerm.mulu(WAD))) <= MAX, "YieldMath: Underflow error");
@@ -615,19 +617,19 @@ library YieldMath {
         uint128 sharesReserves, // z
         uint128 fyTokenReserves, // x
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128 sharesIn) {
 
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
+            uint256 a = _computeA(timeTillMaturity, k, g);
 
             /*
                 y = maxSharesIn_
@@ -652,7 +654,7 @@ library YieldMath {
             int128 denominator = c.div(mu).add(int128(ONE));
 
             // leftTerm = 1/μ * (numerator / denominator) ** (1/a)
-            int128 leftTerm = int128(ONE).div(mu).mul(numerator.div(denominator).pow(int128(ONE).div(a)));
+            int128 leftTerm = int128(ONE).div(mu).mul(numerator.div(denominator).pow(int128(ONE).div(a.i128())));
 
             // maxSharesIn_ = (leftTerm * 1e18) - sharesReserves
             require((sharesIn = uint128(leftTerm.mulu(WAD)) - sharesReserves) <= MAX, "YieldMath: Underflow error");
@@ -691,13 +693,13 @@ library YieldMath {
         uint128 fyTokenReserves, // x
         uint256 totalSupply, // s
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
     ) public pure returns (uint128 result) {
         if (totalSupply == 0) return 0;
-        uint128 a = _computeA(timeTillMaturity, k, g);
+        uint256 a = _computeA(timeTillMaturity, k, g);
 
         result = _invariant(sharesReserves, fyTokenReserves, totalSupply, a, c, mu);
     }
@@ -713,14 +715,14 @@ library YieldMath {
         uint128 sharesReserves, // z
         uint128 fyTokenReserves, // x
         uint256 totalSupply, // s
-        uint128 a,
-        uint128 c,
-        uint128 mu
+        uint256 a,
+        uint256 c,
+        uint256 mu
     ) internal pure returns (uint128 result) {
 
-        int128 a = a.i128();
-        int128 c = c.i128();
-        int128 mu = mu.i128();
+        int128 a = a.fromFP18();
+        int128 c = c.fromFP18();
+        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -762,10 +764,10 @@ library YieldMath {
         uint128 timeTillMaturity,
         uint256 k,
         uint256 g
-    ) private pure returns (uint128) {
+    ) private pure returns (uint256) {
 
-        int128 k = k.fromUInt();
-        int128 g = g.fromUInt();
+        int128 k = k.fromFP18();
+        int128 g = g.fromFP18();
 
         // t = k * timeTillMaturity
         int128 t = k.mul(timeTillMaturity.fromUInt());
@@ -776,6 +778,6 @@ library YieldMath {
         require(a > 0, "YieldMath: Too far from maturity");
         require(a <= int128(ONE), "YieldMath: g must be positive");
 
-        return uint128(a);
+        return uint256(uint128(a));
     }
 }

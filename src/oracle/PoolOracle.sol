@@ -16,6 +16,7 @@ import {Math64x64} from "../Math64x64.sol";
 contract PoolOracle is IPoolOracle {
     using Math64x64 for *;
     using Exp64x64 for *;
+    using Cast for uint256;
     using Cast for uint128;
 
     event ObservationRecorded(IPool indexed pool, uint256 index, Observation observation);
@@ -245,7 +246,7 @@ contract PoolOracle is IPoolOracle {
     function _peekAmountOverPrice(
         IPool pool,
         uint256 amount,
-        uint128 g
+        uint256 g
     ) internal view returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -260,7 +261,7 @@ contract PoolOracle is IPoolOracle {
     function _peekAmountTimesPrice(
         IPool pool,
         uint256 amount,
-        uint128 g
+        uint256 g
     ) internal view returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -275,7 +276,7 @@ contract PoolOracle is IPoolOracle {
     function _getAmountOverPrice(
         IPool pool,
         uint256 amount,
-        uint128 g
+        uint256 g
     ) internal returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -290,7 +291,7 @@ contract PoolOracle is IPoolOracle {
     function _getAmountTimesPrice(
         IPool pool,
         uint256 amount,
-        uint128 g
+        uint256 g
     ) internal returns (uint256 result, uint256 updateTime) {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
@@ -305,7 +306,7 @@ contract PoolOracle is IPoolOracle {
     function _price(
         IPool pool,
         uint256 twar,
-        uint128 g,
+        uint256 g,
         uint256 maturity,
         uint256 updateTime
     ) internal view returns (int128 price) {

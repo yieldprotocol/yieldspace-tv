@@ -82,20 +82,20 @@ contract YieldMathTest is Test {
     // contract we use seconds.
     uint128 public constant timeTillMaturity = uint128(90 * 24 * 60 * 60 * 10); // T
 
-    uint128 immutable k;
+    uint256 immutable k;
 
     uint256 public constant gNumerator = 95;
     uint256 public constant gDenominator = 100;
-    uint128 public g1; // g to use when selling shares to pool
-    uint128 public g2; // g to use when selling fyTokens to pool
+    uint256 public g1; // g to use when selling shares to pool
+    uint256 public g2; // g to use when selling fyTokens to pool
 
     uint256 public constant cNumerator = 11;
     uint256 public constant cDenominator = 10;
-    uint128 public c;
+    uint256 public c;
 
     uint256 public constant muNumerator = 105;
     uint256 public constant muDenominator = 100;
-    uint128 public mu;
+    uint256 public mu;
 
     constructor() {
         // The Desmos formulas use this * 10 at the end for tenths of a second.  Pool.sol does not.

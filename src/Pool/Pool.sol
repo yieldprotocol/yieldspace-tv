@@ -57,8 +57,6 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
      *****************************************************************************************************************/
 
     using Math for uint256;
-    using Math64x64 for int128;
-    using Math64x64 for uint256;
     using FixedPointMathLib for uint256;
     using Cast for uint128;
     using Cast for uint256;
@@ -733,7 +731,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint128 sharesOut,
         uint104 sharesBalance,
         uint104 fyTokenBalance,
-        uint128 g2_
+        uint256 g2_
     ) internal view beforeMaturity returns (uint128 fyTokenIn) {
         uint96 scaleFactor_ = scaleFactor;
         fyTokenIn =
@@ -851,7 +849,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint128 fyTokenOut,
         uint128 sharesBalance,
         uint128 fyTokenBalance,
-        uint128 g1_
+        uint256 g1_
     ) internal view beforeMaturity returns (uint128 sharesIn) {
         uint96 scaleFactor_ = scaleFactor;
 
@@ -957,7 +955,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint128 sharesIn,
         uint104 sharesBalance,
         uint104 fyTokenBalance,
-        uint128 g1_
+        uint256 g1_
     ) internal view beforeMaturity returns (uint128 fyTokenOut) {
         uint96 scaleFactor_ = scaleFactor;
         fyTokenOut =
@@ -1060,7 +1058,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         uint128 fyTokenIn,
         uint104 sharesBalance,
         uint104 fyTokenBalance,
-        uint128 g2_
+        uint256 g2_
     ) internal view beforeMaturity returns (uint128 sharesOut) {
         uint96 scaleFactor_ = scaleFactor;
 
