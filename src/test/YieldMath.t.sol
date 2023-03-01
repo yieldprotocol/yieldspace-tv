@@ -100,12 +100,12 @@ contract YieldMathTest is Test {
     constructor() {
         // The Desmos formulas use this * 10 at the end for tenths of a second.  Pool.sol does not.
         uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;
-        k = uint256(1).fromUInt().div(invK.fromUInt()).u128();
+        k = uint256(1e18) / invK;
 
-        g1 = gNumerator.fromUInt().div(gDenominator.fromUInt()).u128();
-        g2 = gDenominator.fromUInt().div(gNumerator.fromUInt()).u128();
-        c = cNumerator.fromUInt().div(cDenominator.fromUInt()).u128();
-        mu = muNumerator.fromUInt().div(muDenominator.fromUInt()).u128();
+        g1 = gNumerator * 1e18 / gDenominator;
+        g2 = gDenominator * 1e18 / gNumerator;
+        c = cNumerator * 1e18 / cDenominator;
+        mu = muNumerator * 1e18 / muDenominator;
     }
 
     function percentOrMinimum(
@@ -169,7 +169,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(int128).max.u128()
+            uint128(type(int128).max / 2**64 * 1e18)
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -180,8 +180,8 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(int128).max.u128(),
-            0x10000000000000000
+            uint128(type(int128).max / 2**64 * 1e18),
+            1e18
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (nsi)"));
@@ -272,7 +272,7 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -282,7 +282,7 @@ contract YieldMathTest is Test {
             result,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -299,7 +299,7 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -309,7 +309,7 @@ contract YieldMathTest is Test {
             sharesAmount,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -328,7 +328,7 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             0,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         ) / 1e18;
@@ -347,9 +347,9 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             25 * 365 * 24 * 60 * 60 * 10 - 10,
             k,
-            YieldMath.ONE, // set fees to 0
-            YieldMath.ONE, // set c to 1
-            YieldMath.ONE //  set mu to 1
+            1e18, // set fees to 0
+            1e18, // set c to 1
+            1e18 //  set mu to 1
         );
         uint256 oldK = uint256(fyTokenReserves) * uint256(sharesReserves);
 
@@ -457,7 +457,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(int128).max.u128()
+            uint128(type(int128).max / 2**64 * 1e18)
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -468,8 +468,8 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(int128).max.u128(),
-            0x10000000000000000
+            uint128(type(int128).max / 2**64 * 1e18),
+            1e18
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Underflow (yxa)"));
@@ -550,7 +550,7 @@ contract YieldMathTest is Test {
             fyTokenAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -560,7 +560,7 @@ contract YieldMathTest is Test {
             result,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -577,7 +577,7 @@ contract YieldMathTest is Test {
             fyTokenAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -587,7 +587,7 @@ contract YieldMathTest is Test {
             fyTokenAmount,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -604,7 +604,7 @@ contract YieldMathTest is Test {
             fyTokenAmount, // x or ΔZ
             0,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -670,7 +670,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(int128).max.u128()
+            uint128(type(int128).max / 2**64 * 1e18)
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -681,8 +681,8 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(int128).max.u128(),
-            0x10000000000000000
+            uint128(type(int128).max / 2**64 * 1e18),
+            1e18
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (yxa)"));
@@ -764,7 +764,7 @@ contract YieldMathTest is Test {
             fyTokenAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -774,7 +774,7 @@ contract YieldMathTest is Test {
             result,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -792,7 +792,7 @@ contract YieldMathTest is Test {
             fyTokenAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -802,7 +802,7 @@ contract YieldMathTest is Test {
             fyTokenAmount,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -819,7 +819,7 @@ contract YieldMathTest is Test {
             fyTokenAmount, // x or ΔZ
             0,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -884,7 +884,7 @@ contract YieldMathTest is Test {
             k,
             g1,
             c,
-            type(int128).max.u128()
+            uint128(type(int128).max / 2**64 * 1e18)
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (za)"));
@@ -895,8 +895,8 @@ contract YieldMathTest is Test {
             timeTillMaturity,
             k,
             g1,
-            type(int128).max.u128(),
-            0x10000000000000000
+            uint128(type(int128).max / 2**64 * 1e18),
+            1e18
         ) / 1e18;
 
         vm.expectRevert(bytes("YieldMath: Rate overflow (nso)"));
@@ -1000,7 +1000,7 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -1010,7 +1010,7 @@ contract YieldMathTest is Test {
             result,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -1025,7 +1025,7 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -1035,7 +1035,7 @@ contract YieldMathTest is Test {
             sharesAmount,
             timeTillMaturity,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -1055,7 +1055,7 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             0,
             k,
-            YieldMath.ONE,
+            1e18,
             c,
             mu
         );
@@ -1072,9 +1072,9 @@ contract YieldMathTest is Test {
             sharesAmount, // x or ΔZ
             25 * 365 * 24 * 60 * 60 * 10 - 10,
             k,
-            YieldMath.ONE, // set fees to 0
-            YieldMath.ONE, // set c to 1
-            YieldMath.ONE //  set mu to 1
+            1e18, // set fees to 0
+            1e18, // set c to 1
+            1e18 //  set mu to 1
         );
         uint256 oldK = uint256(fyTokenReserves) * uint256(sharesReserves);
 
