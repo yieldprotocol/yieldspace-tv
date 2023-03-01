@@ -71,13 +71,31 @@ library YieldMath {
         uint256 mu
     ) public pure returns (uint128) {
 
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
+        return _fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            sharesIn,
+            _computeA(
+                timeTillMaturity,
+                k.fromFP18(),
+                g.fromFP18()
+            ),
+            c.fromFP18(),
+            mu.fromFP18()
+        );
+    }
+
+    function _fyTokenOutForSharesIn(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 sharesIn, // x == Δz
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128) {
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            uint128 a = _computeA(timeTillMaturity, k, g);
 
             uint256 sum;
             {
@@ -184,9 +202,13 @@ library YieldMath {
                     sharesReserves,
                     fyTokenReserves,
                     fyTokenIn,
-                    _computeA(timeTillMaturity, k, g),
-                    c,
-                    mu
+                    _computeA(
+                        timeTillMaturity,
+                        k.fromFP18(),
+                        g.fromFP18()
+                    ),
+                    c.fromFP18(),
+                    mu.fromFP18()
                 );
         }
     }
@@ -197,8 +219,8 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenIn,
         uint128 a,
-        uint256 c,
-        uint256 mu
+        int128 c,
+        int128 mu
     ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -211,9 +233,6 @@ library YieldMath {
             Δz = z -   1/μ   * ( ( (c / μ) * (μz)^(1-t) +  y^(1-t) - (y + x)^(1-t) ) / (c / μ) )^(1 / (1 - t))
 
         */
-
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
 
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
@@ -294,6 +313,28 @@ library YieldMath {
         uint256 c,
         uint256 mu
     ) public pure returns (uint128) {
+        return _fyTokenInForSharesOut(
+            sharesReserves,
+            fyTokenReserves,
+            sharesOut,
+            _computeA(
+                timeTillMaturity,
+                k.fromFP18(),
+                g.fromFP18()
+            ),
+            c.fromFP18(),
+            mu.fromFP18()
+        );
+    }
+
+    function _fyTokenInForSharesOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 sharesOut,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 y = fyToken reserves
@@ -306,13 +347,9 @@ library YieldMath {
 
             */
 
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
-
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -404,9 +441,13 @@ library YieldMath {
                     sharesReserves,
                     fyTokenReserves,
                     fyTokenOut,
-                    _computeA(timeTillMaturity, k, g),
-                    c,
-                    mu
+                    _computeA(
+                        timeTillMaturity,
+                        k.fromFP18(),
+                        g.fromFP18()
+                    ),
+                    c.fromFP18(),
+                    mu.fromFP18()
                 );
         }
     }
@@ -417,8 +458,8 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 fyTokenOut,
         uint128 a,
-        uint256 c,
-        uint256 mu
+        int128 c,
+        int128 mu
     ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
@@ -431,9 +472,6 @@ library YieldMath {
         Δz = 1/μ * (( c/μ * μz^(1-t) +  y^(1-t) - (y - x)^(1-t)) / (c/μ) )^(1 / (1 - t)) - z
 
         */
-
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
 
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
@@ -487,6 +525,26 @@ library YieldMath {
         uint256 c,
         uint256 mu
     ) public pure returns (uint128 fyTokenIn) {
+        return _maxFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            _computeA(
+                timeTillMaturity,
+                k.fromFP18(),
+                g.fromFP18()
+            ),
+            c.fromFP18(),
+            mu.fromFP18()
+        );
+    }
+
+    function _maxFYTokenIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 fyTokenIn) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 Y = fyToken reserves
@@ -499,13 +557,9 @@ library YieldMath {
 
             */
 
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
-
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -564,13 +618,30 @@ library YieldMath {
         uint256 mu
     ) public pure returns (uint128 fyTokenOut) {
 
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
+        return _maxFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            _computeA(
+                timeTillMaturity,
+                k.fromFP18(),
+                g.fromFP18()
+            ),
+            c.fromFP18(),
+            mu.fromFP18()
+        );
+    }
+
+    /// @dev Splitting maxFYTokenOut in two functions to avoid Stack Too Deep errors
+    function _maxFYTokenOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 fyTokenOut) {
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            uint128 a = _computeA(timeTillMaturity, k, g);
 
             /*
                 y = maxFyTokenOut
@@ -623,13 +694,30 @@ library YieldMath {
         uint256 mu
     ) public pure returns (uint128 sharesIn) {
 
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
+        return _maxSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            _computeA(
+                timeTillMaturity,
+                k.fromFP18(),
+                g.fromFP18()
+            ),
+            c.fromFP18(),
+            mu.fromFP18()
+        );
+    }
+
+    /// Splitting maxSharesIn into two functions to avoid stack too deep error
+    function _maxSharesIn(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) public pure returns (uint128 sharesIn) {
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            uint128 a = _computeA(timeTillMaturity, k, g);
 
             /*
                 y = maxSharesIn_
@@ -699,9 +787,19 @@ library YieldMath {
         uint256 mu
     ) public pure returns (uint128 result) {
         if (totalSupply == 0) return 0;
-        uint128 a = _computeA(timeTillMaturity, k, g);
 
-        result = _invariant(sharesReserves, fyTokenReserves, totalSupply, a, c, mu);
+        result = _invariant(
+            sharesReserves,
+            fyTokenReserves,
+            totalSupply,
+            _computeA(
+                timeTillMaturity,
+                k.fromFP18(),
+                g.fromFP18()
+            ),
+            c.fromFP18(),
+            mu.fromFP18()
+        );
     }
 
     /// @param sharesReserves yield bearing vault shares reserve amount
@@ -716,13 +814,9 @@ library YieldMath {
         uint128 fyTokenReserves, // x
         uint256 totalSupply, // s
         uint128 a,
-        uint256 c,
-        uint256 mu
+        int128 c,
+        int128 mu
     ) internal pure returns (uint128 result) {
-
-        int128 a = a.fromFP18();
-        int128 c = c.fromFP18();
-        int128 mu = mu.fromFP18();
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
@@ -751,7 +845,7 @@ library YieldMath {
             int128 denominator = c.div(mu).add(int128(ONE));
 
             // topTerm = c/μ * (numerator / denominator) ** (1/a)
-            int128 topTerm = c.div(mu).mul((numerator.div(denominator)).pow(int128(ONE).div(a)));
+            int128 topTerm = c.div(mu).mul((numerator.div(denominator)).pow(int128(ONE).div(a.i128())));
 
             result = uint128((topTerm.mulu(WAD) * WAD) / totalSupply);
         }
@@ -762,12 +856,9 @@ library YieldMath {
 
     function _computeA(
         uint128 timeTillMaturity,
-        uint256 k,
-        uint256 g
+        int128 k,
+        int128 g
     ) private pure returns (uint128) {
-
-        int128 k = k.fromFP18();
-        int128 g = g.fromFP18();
 
         // t = k * timeTillMaturity
         int128 t = k.mul(timeTillMaturity.fromUInt());
