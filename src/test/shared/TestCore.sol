@@ -41,21 +41,21 @@ abstract contract TestCore is PoolEvents, Test {
 
     uint32 public maturity = uint32(block.timestamp + THREE_MONTHS);
 
-    uint128 public ts;
+    uint256 public ts;
 
-    uint128 immutable k;
+    uint256 immutable k;
 
     uint16 public constant g1Fee = 9500;
     uint16 public constant g1Denominator = 10000;
-    uint128 public g1; // g to use when selling shares to pool
-    uint128 public g2; // g to use when selling fyTokens to pool
+    uint256 public g1; // g to use when selling shares to pool
+    uint256 public g2; // g to use when selling fyTokens to pool
 
     uint256 public constant cNumerator = 11;
     uint256 public constant cDenominator = 10;
 
     uint256 public constant muNumerator = 105;
     uint256 public constant muDenominator = 100;
-    uint128 public mu;
+    uint256 public mu;
 
     string public assetName;
     string public assetSymbol;

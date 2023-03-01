@@ -37,7 +37,7 @@ contract PoolYearnVault is Pool {
     constructor(
         address sharesToken_,
         address fyToken_,
-        uint128 ts_,
+        uint256 ts_,
         uint16 g1Fee_
     ) Pool(sharesToken_, fyToken_, ts_, g1Fee_) {}
 

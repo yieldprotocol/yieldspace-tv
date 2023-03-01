@@ -9,7 +9,7 @@ contract SyncablePoolNonTv is PoolNonTv, ISyncablePool {
     constructor(
         address shares_,
         address fyToken_,
-        uint128 ts_,
+        uint256 ts_,
         uint16 g1Fee_
     ) PoolNonTv(shares_, fyToken_, ts_, g1Fee_) {}
 

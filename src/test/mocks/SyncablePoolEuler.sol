@@ -10,7 +10,7 @@ contract SyncablePoolEuler is PoolEuler, ISyncablePool {
         address euler_, // The main Euler contract address
         address shares_,
         address fyToken_,
-        uint128 ts_,
+        uint256 ts_,
         uint16 g1Fee_
     ) PoolEuler(euler_, shares_, fyToken_, ts_, g1Fee_) {}
 

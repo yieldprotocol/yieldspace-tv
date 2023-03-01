@@ -59,7 +59,7 @@ abstract contract ZeroState is TestCore {
 
 
     constructor(ZeroStateParams memory params) {
-        ts = ONE.i128().div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt()).u128();
+        ts = 1e18 / uint256(25 * 365 * 24 * 60 * 60 * 10);
 
         // Set base asset state variables.
         assetName = params.assetName;
