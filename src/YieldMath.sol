@@ -227,10 +227,7 @@ library YieldMath {
             Δz = z -   1/μ   * ( ( (c / μ) * (μz)^(1-t) +  y^(1-t) - (y + x)^(1-t) ) / (c / μ) )^(1 / (1 - t))
 
         */
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
             uint256 normalizedSharesReserves;
@@ -305,14 +302,6 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 sharesOut,
         uint128 timeTillMaturity,
-<<<<<<< Updated upstream
-        int128 k,
-        int128 g,
-        int128 c,
-        int128 mu
-    ) public pure returns (uint128) {
-        /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
-=======
         uint128 k,
         uint128 g,
         uint128 c,
@@ -342,7 +331,6 @@ library YieldMath {
         uint128 mu
     ) private view returns (uint128) {
             /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
->>>>>>> Stashed changes
 
                 y = fyToken reserves
                 z = shares reserves
@@ -354,16 +342,9 @@ library YieldMath {
 
             */
 
-<<<<<<< Updated upstream
-        unchecked {
-            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            uint128 a = _computeA(timeTillMaturity, k, g);
-=======
             int128 c = c.i128();
             int128 mu = mu.i128();
 
->>>>>>> Stashed changes
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -622,8 +603,6 @@ library YieldMath {
         int128 c,
         int128 mu
     ) public pure returns (uint128 fyTokenOut) {
-<<<<<<< Updated upstream
-=======
         return _maxFYTokenOut(
             sharesReserves,
             fyTokenReserves,
@@ -648,7 +627,6 @@ library YieldMath {
         int128 c = c.i128();
         int128 mu = mu.i128();
 
->>>>>>> Stashed changes
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
@@ -702,8 +680,6 @@ library YieldMath {
         int128 c,
         int128 mu
     ) public pure returns (uint128 sharesIn) {
-<<<<<<< Updated upstream
-=======
         return _maxSharesIn(
             sharesReserves,
             fyTokenReserves,
@@ -728,7 +704,6 @@ library YieldMath {
         int128 c = c.i128();
         int128 mu = mu.i128();
 
->>>>>>> Stashed changes
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
