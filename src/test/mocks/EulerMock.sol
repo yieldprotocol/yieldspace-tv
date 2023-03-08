@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.15;
-import {IERC20Metadata} from "@yield-protocol/utils-v2/contracts/token/IERC20Metadata.sol";
-import {TransferHelper} from "@yield-protocol/utils-v2/contracts/token/TransferHelper.sol";
+import {IERC20Metadata} from "@yield-protocol/utils-v2/src/token/IERC20Metadata.sol";
+import {TransferHelper} from "@yield-protocol/utils-v2/src/token/TransferHelper.sol";
 
 /// @notice This contract mimics the Euler router
 contract EulerMock {

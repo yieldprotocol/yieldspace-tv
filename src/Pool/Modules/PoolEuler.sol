@@ -32,8 +32,7 @@ import "../../interfaces/IEToken.sol";
 /// @author @devtooligan
 contract PoolEuler is Pool {
     using TransferHelper for IERC20Like;
-    using CastU256U104 for uint256;
-    using CastU256U128 for uint256;
+    using Cast for uint256;
 
     constructor(
         address euler_, // The main Euler contract address
