@@ -72,7 +72,29 @@ library YieldMath {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
+            return 
+                _fyTokenOutForSharesIn(
+                    sharesReserves,
+                    fyTokenReserves,
+                    sharesIn,
+                    _computeA(timeTillMaturity, k, g),
+                    c,
+                    mu
+                );
+        }
+    }
+
+    function _fyTokenOutForSharesIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 sharesIn,
+        uint128 a,
+        uint128 c,
+        uint128 mu
+    ) private pure returns (uint128) {
+
+            int128 c = c.i128();
+            int128 mu = mu.i128();
 
             uint256 sum;
             {
@@ -135,7 +157,6 @@ library YieldMath {
             require(fyTokenOut <= fyTokenReserves, "YieldMath: > fyToken reserves");
 
             return uint128(fyTokenOut);
-        }
     }
 
     /* ----------------------------------------------------------------------------------------------------------------
@@ -180,8 +201,8 @@ library YieldMath {
                     fyTokenReserves,
                     fyTokenIn,
                     _computeA(timeTillMaturity, k, g),
-                    c,
-                    mu
+                    c.i128(),
+                    mu.i128()
                 );
         }
     }
@@ -206,6 +227,10 @@ library YieldMath {
             Δz = z -   1/μ   * ( ( (c / μ) * (μz)^(1-t) +  y^(1-t) - (y + x)^(1-t) ) / (c / μ) )^(1 / (1 - t))
 
         */
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
         unchecked {
             // normalizedSharesReserves = μ * sharesReserves
             uint256 normalizedSharesReserves;
@@ -280,12 +305,44 @@ library YieldMath {
         uint128 fyTokenReserves,
         uint128 sharesOut,
         uint128 timeTillMaturity,
+<<<<<<< Updated upstream
         int128 k,
         int128 g,
         int128 c,
         int128 mu
     ) public pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+=======
+        uint128 k,
+        uint128 g,
+        uint128 c,
+        uint128 mu
+    ) public view returns (uint128) {
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+            return 
+                _fyTokenInForSharesOut(
+                    sharesReserves,
+                    fyTokenReserves,
+                    sharesOut,
+                    _computeA(timeTillMaturity, k, g),
+                    c,
+                    mu
+                );
+
+        }
+    }
+
+    function _fyTokenInForSharesOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 sharesOut,
+        uint128 a,
+        uint128 c,
+        uint128 mu
+    ) private view returns (uint128) {
+            /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
+>>>>>>> Stashed changes
 
                 y = fyToken reserves
                 z = shares reserves
@@ -297,10 +354,16 @@ library YieldMath {
 
             */
 
+<<<<<<< Updated upstream
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
             uint128 a = _computeA(timeTillMaturity, k, g);
+=======
+            int128 c = c.i128();
+            int128 mu = mu.i128();
+
+>>>>>>> Stashed changes
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -349,7 +412,6 @@ library YieldMath {
             );
 
             return uint128(result);
-        }
     }
 
     /* ----------------------------------------------------------------------------------------------------------------
@@ -471,6 +533,23 @@ library YieldMath {
         int128 c,
         int128 mu
     ) public pure returns (uint128 fyTokenIn) {
+        return
+            _maxFYTokenIn(
+                sharesReserves,
+                fyTokenReserves,
+                _computeA(timeTillMaturity, k, g),
+                c,
+                mu
+            );
+    }
+
+    function _maxFYTokenIn(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 a,
+        uint128 c,
+        uint128 mu
+    ) private pure returns (uint128 fyTokenIn) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 Y = fyToken reserves
@@ -486,7 +565,6 @@ library YieldMath {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -544,10 +622,35 @@ library YieldMath {
         int128 c,
         int128 mu
     ) public pure returns (uint128 fyTokenOut) {
+<<<<<<< Updated upstream
+=======
+        return _maxFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            _computeA(
+                timeTillMaturity,
+                k,
+                g
+            ),
+            c,
+            mu
+        );
+    }
+
+    function _maxFYTokenOut(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 a,
+        uint128 c,
+        uint128 mu
+    ) private pure returns (uint128 fyTokenOut) {
+        int128 a = a.i128();
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
+>>>>>>> Stashed changes
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
 
             /*
                 y = maxFyTokenOut
@@ -599,10 +702,35 @@ library YieldMath {
         int128 c,
         int128 mu
     ) public pure returns (uint128 sharesIn) {
+<<<<<<< Updated upstream
+=======
+        return _maxSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            _computeA(
+                timeTillMaturity,
+                k,
+                g
+            ),
+            c,
+            mu
+        );
+    }
+
+    function _maxSharesIn(
+        uint128 sharesReserves, // z
+        uint128 fyTokenReserves, // x
+        uint128 a,
+        uint128 c,
+        uint128 mu
+    ) private pure returns (uint128 sharesIn) {
+        int128 a = a.i128();
+        int128 c = c.i128();
+        int128 mu = mu.i128();
+
+>>>>>>> Stashed changes
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
 
             /*
                 y = maxSharesIn_
@@ -674,7 +802,7 @@ library YieldMath {
         if (totalSupply == 0) return 0;
         int128 a = int128(_computeA(timeTillMaturity, k, g));
 
-        result = _invariant(sharesReserves, fyTokenReserves, totalSupply, a, c, mu);
+        result = _invariant(sharesReserves, fyTokenReserves, totalSupply, a.i128(), c.i128(), mu.i128());
     }
 
     /// @param sharesReserves yield bearing vault shares reserve amount
