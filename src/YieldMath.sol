@@ -70,9 +70,27 @@ library YieldMath {
     ) public pure returns (uint128) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+            return 
+                _fyTokenOutForSharesIn(
+                    sharesReserves,
+                    fyTokenReserves,
+                    sharesIn,
+                    _computeA(timeTillMaturity, k, g),
+                    c,
+                    mu
+                );
+        }
+    }
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
-
+    function _fyTokenOutForSharesIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 sharesIn,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) private pure returns (uint128) {
+        unchecked {
             uint256 sum;
             {
                 /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
@@ -284,6 +302,28 @@ library YieldMath {
         int128 c,
         int128 mu
     ) public pure returns (uint128) {
+        unchecked {
+            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+            return 
+                _fyTokenInForSharesOut(
+                    sharesReserves,
+                    fyTokenReserves,
+                    sharesOut,
+                    _computeA(timeTillMaturity, k, g),
+                    c,
+                    mu
+                );
+        }
+    }
+
+    function _fyTokenInForSharesOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 sharesOut,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) private pure returns (uint128) {
         /* https://docs.google.com/spreadsheets/d/14K_McZhlgSXQfi6nFGwDvDh4BmOu6_Hczi_sFreFfOE/
 
                 y = fyToken reserves
@@ -297,9 +337,6 @@ library YieldMath {
             */
 
         unchecked {
-            require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
-
-            uint128 a = _computeA(timeTillMaturity, k, g);
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
