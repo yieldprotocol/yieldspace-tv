@@ -521,8 +521,25 @@ library YieldMath {
 
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+            return 
+                _maxFYTokenIn(
+                    sharesReserves,
+                    fyTokenReserves,
+                    _computeA(timeTillMaturity, k, g),
+                    c,
+                    mu
+                );
+        }
+    }
 
-            uint128 a = _computeA(timeTillMaturity, k, g);
+    function _maxFYTokenIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) private pure returns (uint128 fyTokenIn) {
+        unchecked {
             uint256 sum;
             {
                 // normalizedSharesReserves = μ * sharesReserves
@@ -582,8 +599,26 @@ library YieldMath {
     ) public pure returns (uint128 fyTokenOut) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+            return 
+                _maxFYTokenOut(
+                    sharesReserves,
+                    fyTokenReserves,
+                    _computeA(timeTillMaturity, k, g),
+                    c,
+                    mu
+                );
+        }
+    }
 
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
+    function _maxFYTokenOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) private pure returns (uint128 fyTokenOut) {
+        unchecked {
+            int128 a = int128(a);
 
             /*
                 y = maxFyTokenOut
@@ -637,8 +672,25 @@ library YieldMath {
     ) public pure returns (uint128 sharesIn) {
         unchecked {
             require(c > 0 && mu > 0, "YieldMath: c and mu must be positive");
+            return _maxSharesIn(
+                sharesReserves,
+                fyTokenReserves,
+                _computeA(timeTillMaturity, k, g),
+                c,
+                mu
+            );
+        }
+    }
 
-            int128 a = int128(_computeA(timeTillMaturity, k, g));
+    function _maxSharesIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint128 a,
+        int128 c,
+        int128 mu
+    ) private pure returns (uint128 sharesIn) {
+        unchecked {
+            int128 a = int128(a);
 
             /*
                 y = maxSharesIn_
