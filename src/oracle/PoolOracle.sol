@@ -46,7 +46,7 @@ contract PoolOracle is IPoolOracle {
         require(granularity_ > 1, "GRANULARITY");
 
         periodSize = windowSize_ / granularity_;
-        require(periodSize * granularity_ == windowSize_, "WINDOW_NOT_EVENLY_DIVISIBLE");
+        require(windowSize_ % granularity_ == 0, "WINDOW_NOT_EVENLY_DIVISIBLE");
 
         windowSize = windowSize_;
         granularity = granularity_;
@@ -236,7 +236,6 @@ contract PoolOracle is IPoolOracle {
             require(price >= 0);
             require(amount >> 192 == 0);
             result = (amount << 64) / uint128(price); // result = amount / price
-                // result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
         }
     }
 
@@ -268,7 +267,6 @@ contract PoolOracle is IPoolOracle {
             require(price >= 0);
             require(amount >> 192 == 0);
             result = (amount << 64) / uint128(price); // result = amount / price
-                // result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
         }
     }
 
@@ -286,6 +284,12 @@ contract PoolOracle is IPoolOracle {
         }
     }
 
+    /// @param pool The pool to get the price for
+    /// @param twar The twap ratio
+    /// @param g The pool's g1 or g2 - signed 64.64-bit fixed point number
+    /// @param maturity The pool's maturity
+    /// @param updateTime The time at which the price is calculated
+    /// @return price signed 64.64-bit fixed point number
     function _price(IPool pool, uint256 twar, int128 g, uint256 maturity, uint256 updateTime)
         internal
         view
