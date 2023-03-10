@@ -72,6 +72,12 @@ library Math64x64 {
         }
     }
 
+    function fromFP18(uint256 x) internal pure returns (int128) {
+        uint256 max = 2**64;
+        uint256 wad = 10**18;
+        return int128(uint128(x * max / wad));
+    }
+
     /// @dev Convert signed 128.128 fixed point number into signed 64.64-bit fixed point number rounding down.
     /// Reverts on overflow.
     /// @param x signed 128.128-bin fixed point number

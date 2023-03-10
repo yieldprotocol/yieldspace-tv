@@ -115,7 +115,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         // Send some fyToken to the pool.
@@ -143,7 +143,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         vm.warp(block.timestamp + 1000);
         expectedCurrCumRat += pool.calcRatioSeconds(fyTokenReserves, sharesReserves_, 1000);
         (uint256 currCumRat2, ) = pool.currentCumulativeRatio();
-        assertEq(expectedCurrCumRat + 1, currCumRat2); // off by one wei
+        assertEq(expectedCurrCumRat, currCumRat2);
     }
 
     function testUnit_twar4() public {
@@ -207,7 +207,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         // Alice calls mint to Bob.

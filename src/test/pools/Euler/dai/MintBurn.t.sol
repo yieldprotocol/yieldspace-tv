@@ -473,8 +473,8 @@ contract BurnForBase__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
             maturity - uint32(block.timestamp),
             k,
             pool.g2(),
-            pool.getC(),
-            pool.mu()
+            pool.getC().fromFP18(),
+            pool.mu().fromFP18()
         );
         uint256 totalSharesOut = sharesOut + fyTokenOutToShares;
         uint256 expectedAssetsOut = pool.unwrapPreview(totalSharesOut);

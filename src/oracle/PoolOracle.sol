@@ -325,6 +325,6 @@ contract PoolOracle is IPoolOracle {
         int128 twar64 = twar.divu(WAD);
 
         // price = (c/μ * twar)^t
-        price = pool.getC().div(pool.mu()).mul(twar64).pow(t);
+        price = pool.getC().fromFP18().div(pool.mu().fromFP18()).mul(twar64).pow(t);
     }
 }

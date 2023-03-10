@@ -60,7 +60,7 @@ contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         ) / pool.scaleFactor();
         uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
 
@@ -126,7 +126,7 @@ contract Trade__WithLiquidityEulerDAI is WithLiquidityEulerDAI {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         ) / pool.scaleFactor();
 
         vm.expectEmit(true, true, false, true);
@@ -216,7 +216,7 @@ contract Trade__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         ) / pool.scaleFactor();
 
         vm.expectEmit(true, true, false, true);
@@ -314,7 +314,7 @@ contract Trade__WithExtraFYTokenEulerDAI is WithExtraFYTokenEulerDAI {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         ) / pool.scaleFactor();
         uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn) + 1; // NOTE one wei issue
 

@@ -50,7 +50,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
@@ -117,7 +117,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         vm.expectEmit(true, true, false, true);
@@ -294,7 +294,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         vm.expectEmit(true, true, false, true);
@@ -376,7 +376,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         );
         uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn);
 

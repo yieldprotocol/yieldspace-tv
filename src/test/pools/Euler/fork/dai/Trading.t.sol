@@ -53,8 +53,8 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
             pool.maturity() - uint32(block.timestamp),
             pool.ts(),
             pool.g2(),
-            pool.getC(),
-            pool.mu()
+            pool.getC().fromFP18(),
+            pool.mu().fromFP18()
         );
         uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
 
@@ -95,8 +95,8 @@ contract Trade__WithLiquidityEulerDAIFork is EulerDAIFork {
             pool.maturity() - uint32(block.timestamp),
             pool.ts(),
             pool.g2(),
-            pool.getC(),
-            pool.mu()
+            pool.getC().fromFP18(),
+            pool.mu().fromFP18()
         );
 
         vm.expectEmit(true, true, false, true);
@@ -177,8 +177,8 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
             pool.maturity() - uint32(block.timestamp),
             pool.ts(),
             pool.g1(),
-            pool.getC(),
-            pool.mu()
+            pool.getC().fromFP18(),
+            pool.mu().fromFP18()
         );
 
         vm.expectEmit(true, true, false, true);
@@ -256,8 +256,8 @@ contract Trade__WithExtraFYTokenEulerDAIFork is EulerDAIFork {
             pool.maturity() - uint32(block.timestamp),
             pool.ts(),
             pool.g1(),
-            pool.getC(),
-            pool.mu()
+            pool.getC().fromFP18(),
+            pool.mu().fromFP18()
         );
         uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn) + 1; // NOTE one wei issue
 

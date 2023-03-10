@@ -86,7 +86,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         ) / 1e12;
 
         vm.prank(bob);
@@ -264,7 +264,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         ) / 1e12;
 
         vm.prank(alice);
@@ -330,7 +330,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         vm.prank(alice);

@@ -2,6 +2,7 @@
 pragma solidity >=0.8.15;
 
 import "forge-std/Test.sol";
+import "forge-std/console2.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "forge-std/console.sol";
 
@@ -53,7 +54,7 @@ abstract contract TestCore is PoolEvents, Test {
 
     uint256 public constant muNumerator = 105;
     uint256 public constant muDenominator = 100;
-    int128 public mu;
+    uint256 public mu;
 
     string public assetName;
     string public assetSymbol;
@@ -82,6 +83,6 @@ abstract contract TestCore is PoolEvents, Test {
         k = uint256(1).fromUInt().div(invK.fromUInt());
         g1 = uint256(g1Fee).fromUInt().div(uint256(g1Denominator).fromUInt());
         g2 = uint256(g1Denominator).fromUInt().div(uint256(g1Fee).fromUInt());
-        mu = muNumerator.fromUInt().div(muDenominator.fromUInt());
+        mu = muNumerator * 1e18 / muDenominator;
     }
 }
