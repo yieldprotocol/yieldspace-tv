@@ -143,7 +143,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
         vm.warp(block.timestamp + 1000);
         expectedCurrCumRat += pool.calcRatioSeconds(fyTokenReserves, sharesReserves_, 1000);
         (uint256 currCumRat2, ) = pool.currentCumulativeRatio();
-        assertEq(expectedCurrCumRat + 1, currCumRat2); // off by one wei
+        assertEq(expectedCurrCumRat, currCumRat2); // fixed with 64.64 removed?
     }
 
     function testUnit_twar4() public {

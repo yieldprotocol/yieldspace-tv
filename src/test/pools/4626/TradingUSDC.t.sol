@@ -204,7 +204,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
         // I can't sell more to the pool
         assertEq(pool.maxBaseIn(), 1);
         vm.expectRevert(
-            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000.624893e6, 1155000.624895e6)
+            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000624894, 1155000624895)
         );
         pool.sellBasePreview(4);
     }
@@ -215,7 +215,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
         uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
 
         uint128 maxFYTokenOut = pool.maxFYTokenOut();
-        assertEq(maxFYTokenOut, 122221.597326e6);
+        assertEq(maxFYTokenOut, 122221597327);
         uint128 requiredBase = pool.buyFYTokenPreview(maxFYTokenOut);
 
         // I'll mint what's required + an extra tenner to test the retrieve method
@@ -232,9 +232,9 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
         assertEq(shares.balanceOf(bob), bobSharesBefore + 9.090908e6);
 
         // I can't buy more from the pool
-        assertEq(pool.maxFYTokenOut(), 1);
+        assertEq(pool.maxFYTokenOut(), 0);
         vm.expectRevert(
-            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000.624892e6, 1155000.624894e6)
+            abi.encodeWithSelector(NegativeInterestRatesNotAllowed.selector, 1155000624892, 1155000624895)
         );
         pool.buyFYTokenPreview(3);
     }

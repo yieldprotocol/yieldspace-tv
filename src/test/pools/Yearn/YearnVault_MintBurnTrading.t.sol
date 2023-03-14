@@ -394,7 +394,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100213484622196799,
+                1100213484622244504,
                 340282366920938463463374607431768211455
             )
         );

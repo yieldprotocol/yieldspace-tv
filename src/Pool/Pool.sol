@@ -1398,7 +1398,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         return IERC4626(address(sharesToken)).convertToAssets(scalar);
     }
 
-    /// Returns current price of 1 share in 64bit.
+    /// Returns current price of 1 share.
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return The current price (as determined by the token) scalled to 18 digits and converted to 64.64.
     function getC() external view returns (uint256) {

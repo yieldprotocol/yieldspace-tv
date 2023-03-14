@@ -184,7 +184,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         uint256 bobAssetBefore = asset.balanceOf(bob);
 
         uint128 maxFYTokenIn = pool.maxFYTokenIn();
-        assertEq(maxFYTokenIn, 1089539.945494126677240200e18);
+        assertEq(maxFYTokenIn, 1089539945494126677192495);
         uint128 expectedBaseOut = pool.sellFYTokenPreview(maxFYTokenIn);
 
         // I'll mint what's required, can't mint extra as I'm dealing on the max
@@ -222,8 +222,8 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         vm.expectRevert(
             abi.encodeWithSelector(
                 NegativeInterestRatesNotAllowed.selector,
-                1155000.624923905628839852e18,
-                1155000.624943450946453460e18
+                1155000624923905628839852,
+                1155000624943450946501165
             )
         );
         pool.sellBasePreview(10e12); // Super low value in DAI
@@ -235,7 +235,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
 
         uint128 maxFYTokenOut = pool.maxFYTokenOut();
-        assertEq(maxFYTokenOut, 122221.597288316649102088e18);
+        assertEq(maxFYTokenOut, 122221597288316649106393);
         uint128 requiredBase = pool.buyFYTokenPreview(maxFYTokenOut);
 
         // I'll mint what's required + an extra tenner to test the retrieve method
@@ -256,8 +256,8 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         vm.expectRevert(
             abi.encodeWithSelector(
                 NegativeInterestRatesNotAllowed.selector,
-                1155000.624933875573072429e18,
-                1155000.624933934173771036e18
+                1155000624933875573115829,
+                1155000624933934173818741
             )
         );
         pool.buyFYTokenPreview(3e10); // Super low value in DAI
@@ -325,7 +325,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100213481329461717,
+                1100213481329509422,
                 340282366920938463463374607431768211455
             )
         );
