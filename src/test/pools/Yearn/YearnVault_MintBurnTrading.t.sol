@@ -237,7 +237,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         );
         uint256 expectedBaseOut = pool.unwrapPreview(expectedSharesOut);
         vm.expectEmit(true, true, false, true);
@@ -292,7 +292,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             k,
             g2,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         vm.expectEmit(true, true, false, true);
@@ -370,7 +370,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         );
 
         vm.expectEmit(true, true, false, true);
@@ -442,7 +442,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             k,
             g1,
             c_,
-            mu
+            mu.fromFP18()
         );
         uint256 expectedAssetsIn = pool.unwrapPreview(expectedSharesIn);
 

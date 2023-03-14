@@ -99,7 +99,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     int128 public immutable ts;
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)
-    int128 public immutable mu;
+    uint256 public immutable mu;
 
     /// Pool's maturity date (not 64.64)
     uint32 public immutable maturity;
@@ -598,8 +598,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                     maturity - uint32(block.timestamp), //                         This can't be called after maturity
                     ts,
                     _computeG2(cache.g1Fee),
-                    _getC(),
-                    mu
+                    _getC().fromFP18(),
+                    mu.fromFP18()
                 ) /
                 scaleFactor_;
             fyTokenOut = 0;
@@ -742,8 +742,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 g2_,
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
     }
@@ -861,8 +861,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 g1_,
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
 
@@ -966,8 +966,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 g1_,
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
 
@@ -1070,8 +1070,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 g2_,
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
     }
@@ -1090,8 +1090,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 _computeG2(cache.g1Fee),
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
     }
@@ -1107,8 +1107,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts,
                 _computeG1(cache.g1Fee),
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
     }
@@ -1123,8 +1123,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             maturity - uint32(block.timestamp), // This can't be called after maturity
             ts,
             _computeG1(cache.g1Fee),
-            _getC(),
-            mu
+            _getC().fromFP18(),
+            mu.fromFP18()
         ) / 1e8) * 1e8) / scaleFactor_; // Shave 8 wei/decimals to deal with precision issues on the decimal functions
 
         baseIn = _unwrapPreview(sharesIn).u128();
@@ -1148,8 +1148,8 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 maturity - uint32(block.timestamp),
                 ts,
                 _computeG2(cache.g1Fee),
-                _getC(),
-                mu
+                _getC().fromFP18(),
+                mu.fromFP18()
             ) /
             scaleFactor_;
     }
@@ -1401,13 +1401,13 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// Returns current price of 1 share in 64bit.
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return The current price (as determined by the token) scalled to 18 digits and converted to 64.64.
-    function getC() external view returns (int128) {
+    function getC() external view returns (uint256) {
         return _getC();
     }
 
     /// Returns the c based on the current price
-    function _getC() internal view returns (int128) {
-        return (_getCurrentSharePrice() * scaleFactor).divu(1e18);
+    function _getC() internal view returns (uint256) {
+        return _getCurrentSharePrice() * scaleFactor;
     }
 
     /// Returns the all storage vars except for cumulativeRatioLast
@@ -1460,7 +1460,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @param amount Amount as standard fp number.
     /// @return product Return standard fp number retaining decimals of provided amount.
     function _mulMu(uint256 amount) internal view returns (uint256 product) {
-        product = mu.mulu(amount);
+        product = mu.wmul(amount);
     }
 
     /// Retrieve any shares tokens not accounted for in the cache.
