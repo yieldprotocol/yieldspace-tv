@@ -96,7 +96,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     IERC20Like public immutable sharesToken;
 
     /// Time stretch == 1 / seconds in x years where x varies per contract (64.64)
-    int128 public immutable ts;
+    uint256 public immutable ts;
 
     /// The normalization coefficient, the initial c value or price per 1 share of base (64.64)
     uint256 public immutable mu;
@@ -147,7 +147,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     constructor(
         address sharesToken_, //    address of shares token
         address fyToken_, //  address of fyToken
-        int128 ts_, //        time stretch(64.64)
+        uint256 ts_, //        time stretch(64.64)
         uint16 g1Fee_ //      fees (in bps) when buying fyToken
     )
         ERC20Permit(
@@ -596,7 +596,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                     (cache.fyTokenCached - fyTokenOut.u128()) * scaleFactor_, //  Cache, minus virtual burn
                     fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
                     maturity - uint32(block.timestamp), //                         This can't be called after maturity
-                    ts,
+                    ts.fromFP18(),
                     _computeG2(cache.g1Fee),
                     _getC().fromFP18(),
                     mu.fromFP18()
@@ -740,7 +740,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 fyTokenBalance * scaleFactor_,
                 sharesOut * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
+                ts.fromFP18(),
                 g2_,
                 _getC().fromFP18(),
                 mu.fromFP18()
@@ -859,7 +859,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 fyTokenBalance * scaleFactor_,
                 fyTokenOut * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
+                ts.fromFP18(),
                 g1_,
                 _getC().fromFP18(),
                 mu.fromFP18()
@@ -964,7 +964,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 fyTokenBalance * scaleFactor_,
                 sharesIn * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
+                ts.fromFP18(),
                 g1_,
                 _getC().fromFP18(),
                 mu.fromFP18()
@@ -1068,7 +1068,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 fyTokenBalance * scaleFactor_,
                 fyTokenIn * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
+                ts.fromFP18(),
                 g2_,
                 _getC().fromFP18(),
                 mu.fromFP18()
@@ -1088,7 +1088,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.sharesCached * scaleFactor_,
                 cache.fyTokenCached * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
+                ts.fromFP18(),
                 _computeG2(cache.g1Fee),
                 _getC().fromFP18(),
                 mu.fromFP18()
@@ -1105,7 +1105,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.sharesCached * scaleFactor_,
                 cache.fyTokenCached * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
-                ts,
+                ts.fromFP18(),
                 _computeG1(cache.g1Fee),
                 _getC().fromFP18(),
                 mu.fromFP18()
@@ -1121,7 +1121,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.sharesCached * scaleFactor_,
             cache.fyTokenCached * scaleFactor_,
             maturity - uint32(block.timestamp), // This can't be called after maturity
-            ts,
+            ts.fromFP18(),
             _computeG1(cache.g1Fee),
             _getC().fromFP18(),
             mu.fromFP18()
@@ -1146,7 +1146,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.fyTokenCached * scaleFactor_,
                 _totalSupply * scaleFactor_,
                 maturity - uint32(block.timestamp),
-                ts,
+                ts.fromFP18(),
                 _computeG2(cache.g1Fee),
                 _getC().fromFP18(),
                 mu.fromFP18()
