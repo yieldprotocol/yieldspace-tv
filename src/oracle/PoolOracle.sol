@@ -319,7 +319,7 @@ contract PoolOracle is IPoolOracle {
         int128 timeTillMaturity = (maturity - updateTime).fromUInt();
 
         // t = ts * g * ttm
-        int128 t = pool.ts().mul(g).mul(timeTillMaturity);
+        int128 t = int128(uint128(pool.ts())).mul(g).mul(timeTillMaturity);
 
         // make twar a binary 64.64 fraction
         int128 twar64 = twar.divu(WAD);
