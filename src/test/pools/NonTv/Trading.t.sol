@@ -51,7 +51,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
             virtFYTokenBal,
             uint128(fyTokenIn),
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             c_
@@ -73,7 +73,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999768370574989354,
+                999768370584290140,
                 340282366920938463463374607431768211455
             )
         );
@@ -104,7 +104,7 @@ contract TradeDAI__ZeroStateNonTv is WithLiquidityNonTv {
             virtFYTokenBal,
             sharesOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             c_
@@ -175,7 +175,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
             virtFYTokenBal,
             sharesIn,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             c_
@@ -205,7 +205,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1000209141672476586,
+                1000209141666597955,
                 340282366920938463463374607431768211455
             )
         );
@@ -248,7 +248,7 @@ contract TradeDAI__WithExtraFYTokenNonTv is WithExtraFYTokenNonTv {
             virtFYTokenBal,
             fyTokenOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             c_

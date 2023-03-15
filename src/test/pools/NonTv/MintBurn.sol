@@ -443,7 +443,7 @@ contract BurnForBase__WithLiquidityNonTv is WithLiquidityNonTv {
             (fyTokenReservesBefore - fyTokenOut).u128(),
             fyTokenOut.u128(),
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             pool.g2(),
             pool.getC().fromFP18(),
             pool.mu().fromFP18()

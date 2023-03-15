@@ -234,7 +234,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             virtFYTokenBal,
             uint128(fyTokenIn),
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()
@@ -257,7 +257,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999785051469477284,
+                999785051464157745,
                 340282366920938463463374607431768211455
             )
         );
@@ -289,7 +289,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             virtFYTokenBal,
             sharesOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()
@@ -367,7 +367,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             virtFYTokenBal,
             sharesIn,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             mu.fromFP18()
@@ -439,7 +439,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             virtFYTokenBal,
             fyTokenOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             mu.fromFP18()

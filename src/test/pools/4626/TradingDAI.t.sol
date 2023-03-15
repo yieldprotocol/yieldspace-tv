@@ -47,7 +47,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
             virtFYTokenBal,
             uint128(fyTokenIn),
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()
@@ -77,7 +77,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellFYToken.selector,
-                999785054771931334,
+                999785054782307548,
                 340282366920938463463374607431768211455
             )
         );
@@ -114,7 +114,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
             virtFYTokenBal,
             sharesOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()
@@ -157,7 +157,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
 
         uint128 maxBaseOut = pool.maxBaseOut();
-        assertEq(maxBaseOut, 1087790.901202388886334554e18);
+        assertEq(maxBaseOut, 1087790_901202293555512470);
         uint128 requiredFYTokens = pool.buyBasePreview(maxBaseOut);
 
         // I'll mint what's required + an extra tenner to test the retrieve method
@@ -184,7 +184,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         uint256 bobAssetBefore = asset.balanceOf(bob);
 
         uint128 maxFYTokenIn = pool.maxFYTokenIn();
-        assertEq(maxFYTokenIn, 1089539945494126677192495);
+        assertEq(maxFYTokenIn, 1089539_945481305261573217);
         uint128 expectedBaseOut = pool.sellFYTokenPreview(maxFYTokenIn);
 
         // I'll mint what's required, can't mint extra as I'm dealing on the max
@@ -206,7 +206,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
 
         uint128 maxBaseIn = pool.maxBaseIn();
-        assertEqDecimal(maxBaseIn, 122209.753490274010000000e18, 18);
+        assertEqDecimal(maxBaseIn, 122209_753490364650000000, 18);
         uint128 expectedFYTokenOut = pool.sellBasePreview(maxBaseIn);
 
         // I'll mint what's required, can't mint extra as I'm dealing on the max
@@ -222,8 +222,8 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         vm.expectRevert(
             abi.encodeWithSelector(
                 NegativeInterestRatesNotAllowed.selector,
-                1155000624923905628839852,
-                1155000624943450946501165
+                1155000_624923901040263371,
+                1155000_624943446468898267
             )
         );
         pool.sellBasePreview(10e12); // Super low value in DAI
@@ -235,7 +235,7 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         uint256 bobFYTokensBefore = fyToken.balanceOf(bob);
 
         uint128 maxFYTokenOut = pool.maxFYTokenOut();
-        assertEq(maxFYTokenOut, 122221597288316649106393);
+        assertEq(maxFYTokenOut, 122221597288321184778490);
         uint128 requiredBase = pool.buyFYTokenPreview(maxFYTokenOut);
 
         // I'll mint what's required + an extra tenner to test the retrieve method
@@ -252,12 +252,12 @@ contract TradeDAI__WithLiquidity is WithLiquidityDAI {
         assertEq(shares.balanceOf(bob), bobSharesBefore + 9.090909090909090908e18);
 
         // I can't buy more from the pool
-        assertEq(pool.maxFYTokenOut(), 0.000000000010502757e18);
+        assertEq(pool.maxFYTokenOut(), 3602185);
         vm.expectRevert(
             abi.encodeWithSelector(
                 NegativeInterestRatesNotAllowed.selector,
-                1155000624933875573115829,
-                1155000624933934173818741
+                1155000624933871037443732,
+                1155000624933929646349213
             )
         );
         pool.buyFYTokenPreview(3e10); // Super low value in DAI
@@ -291,7 +291,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
             virtFYTokenBal,
             sharesIn,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             mu.fromFP18()
@@ -325,7 +325,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlippageDuringSellBase.selector,
-                1100213481329509422,
+                1_100213481323366260,
                 340282366920938463463374607431768211455
             )
         );
@@ -373,7 +373,7 @@ contract TradeDAI__WithExtraFYToken is WithExtraFYTokenDAI {
             virtFYTokenBal,
             fyTokenOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             mu.fromFP18()

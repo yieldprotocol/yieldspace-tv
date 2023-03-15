@@ -39,9 +39,9 @@ abstract contract TestCore is PoolEvents, Test {
 
     uint32 public maturity = uint32(block.timestamp + THREE_MONTHS);
 
-    int128 public ts;
+    uint256 public ts;
 
-    int128 immutable k;
+    uint256 immutable k;
 
     uint16 public constant g1Fee = 9500;
     uint16 public constant g1Denominator = 10000;
@@ -79,7 +79,7 @@ abstract contract TestCore is PoolEvents, Test {
 
     constructor() {
         uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;
-        k = uint256(1).fromUInt().div(invK.fromUInt());
+        k = uint256(1e18) / invK;
         g1 = uint256(g1Fee).fromUInt().div(uint256(g1Denominator).fromUInt());
         g2 = uint256(g1Denominator).fromUInt().div(uint256(g1Fee).fromUInt());
         mu = muNumerator * 1e18 / muDenominator;

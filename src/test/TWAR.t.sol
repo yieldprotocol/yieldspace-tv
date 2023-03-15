@@ -112,7 +112,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
             virtFYTokenBal,
             3e18,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()
@@ -204,7 +204,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
             virtFYTokenBal,
             3e18,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()

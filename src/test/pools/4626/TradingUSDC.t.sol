@@ -83,7 +83,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
             virtFYTokenBal * 1e12,
             sharesOut * 1e12,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g2,
             c_,
             mu.fromFP18()
@@ -168,7 +168,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
         uint256 bobAssetBefore = asset.balanceOf(bob);
 
         uint128 maxFYTokenIn = pool.maxFYTokenIn();
-        assertEq(maxFYTokenIn, 1089539.972626e6);
+        assertEq(maxFYTokenIn, 1089539972613);
         uint128 expectedBaseOut = pool.sellFYTokenPreview(maxFYTokenIn);
 
         // I'll mint what's required, can't mint extra as I'm dealing on the max
@@ -261,7 +261,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
             virtFYTokenBal * 1e12,
             sharesIn * 1e12,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             mu.fromFP18()
@@ -327,7 +327,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
             virtFYTokenBal,
             fyTokenOut,
             maturity - uint32(block.timestamp),
-            k,
+            k.fromFP18(),
             g1,
             c_,
             mu.fromFP18()

@@ -30,7 +30,7 @@ contract Deploy is TestCore {
     FYTokenMock public fy20DECI;
 
     function setUp() public virtual {
-        ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
+        ts = (1e18 / uint256(25 * 365 * 24 * 60 * 60 * 10));
         assetDAI = new ERC20Mock("DAI", "DAI", 18);
         assetUSDC = new ERC20Mock("USDC", "USDC", 6);
         asset20DECI = new ERC20Mock("20DECI", "20DECI", 20);

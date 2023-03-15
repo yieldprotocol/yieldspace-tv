@@ -22,7 +22,6 @@ import {IERC20Like} from "../../interfaces/IERC20Like.sol";
 import {ERC4626TokenMock} from "../mocks/ERC4626TokenMock.sol";
 import {SyncablePoolNonTv} from "../mocks/SyncablePoolNonTv.sol";
 import {SyncablePoolYearnVault} from "../mocks/SyncablePoolYearnVault.sol";
-import {SyncablePoolEuler} from "../mocks/SyncablePoolEuler.sol";
 import {AccessControl} from "@yield-protocol/utils-v2/src/access/AccessControl.sol";
 
 bytes4 constant ROOT = 0x00000000;
@@ -55,7 +54,7 @@ abstract contract ZeroState is TestCore {
     using Math64x64 for uint256;
 
     constructor(ZeroStateParams memory params) {
-        ts = ONE.div(uint256(25 * 365 * 24 * 60 * 60 * 10).fromUInt());
+        ts = (1e18 / uint256(25 * 365 * 24 * 60 * 60 * 10));
 
         // Set base asset state variables.
         assetName = params.assetName;
@@ -112,10 +111,6 @@ abstract contract ZeroState is TestCore {
             if (sharesType == TYPE_YV) {
                 shares = IERC20Like(address(new YVTokenMock(sharesName, sharesSymbol, assetDecimals, address(asset))));
             }
-            if (sharesType == TYPE_EULER) {
-                EulerMock euler = new EulerMock();
-                shares = IERC20Like(address(new ETokenMock(sharesName, sharesSymbol, address(euler), address(asset))));
-            }
             setPrice(address(shares), (muNumerator * (10**sharesDecimals)) / muDenominator);
             deal(address(asset), address(shares), 500_000_000 * 10**assetDecimals); // this is the vault reserves
         }
@@ -140,10 +135,6 @@ abstract contract ZeroState is TestCore {
         }
         if (sharesType == TYPE_YV) {
             pool = new SyncablePoolYearnVault(address(shares), address(fyToken), ts, g1Fee);
-        }
-        if (sharesType == TYPE_EULER) {
-            EulerMock euler = ETokenMock(address(shares)).euler(); // Will work as long as there is only one ETokenMock contract
-            pool = new SyncablePoolEuler(address(euler), address(shares), address(fyToken), ts, g1Fee);
         }
         if (sharesType == TYPE_NONTV) {
             pool = new SyncablePoolNonTv(address(shares), address(fyToken), ts, g1Fee);
