@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
+/// Audited by [ABDK](https://www.abdk.consulting/) 13/03/23, report pending.
 pragma solidity >=0.8.15;
 
 import "../interfaces/IPoolOracle.sol";
@@ -233,6 +234,7 @@ contract PoolOracle is IPoolOracle {
             result = amount;
         } else {
             int128 price = _price(pool, peek(pool), g, maturity, updateTime);
+            // Audit CVF-7: simplification of amount.divu(WAD).div(price).mulu(WAD)
             require(price >= 0);
             require(amount >> 192 == 0);
             result = (amount << 64) / uint128(price); // result = amount / price
@@ -264,6 +266,7 @@ contract PoolOracle is IPoolOracle {
             result = amount;
         } else {
             int128 price = _price(pool, get(pool), g, maturity, updateTime);
+            // Audit CVF-7: simplification of amount.divu(WAD).div(price).mulu(WAD)
             require(price >= 0);
             require(amount >> 192 == 0);
             result = (amount << 64) / uint128(price); // result = amount / price
