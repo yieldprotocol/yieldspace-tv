@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
+/// Audited by [ABDK](https://www.abdk.consulting/) 13/03/23, report pending.
 pragma solidity >=0.8.15;
 
 import "../interfaces/IPoolOracle.sol";
@@ -15,12 +16,6 @@ import {Math64x64} from "../Math64x64.sol";
 contract PoolOracle is IPoolOracle {
     using Math64x64 for *;
     using Exp64x64 for *;
-
-    event ObservationRecorded(IPool indexed pool, uint256 index, Observation observation);
-
-    error NoObservationsForPool(IPool pool);
-    error MissingHistoricalObservation(IPool pool);
-    error InsufficientElapsedTime(IPool pool, uint256 elapsedTime);
 
     struct Observation {
         uint256 timestamp;
@@ -46,15 +41,14 @@ contract PoolOracle is IPoolOracle {
     uint256 public immutable minTimeElapsed;
 
     // mapping from pool address to a list of ratio observations of that pool
-    mapping(IPool => Observation[]) public poolObservations;
+    mapping(IPool => mapping(uint256 => Observation)) public poolObservations;
 
-    constructor(
-        uint256 windowSize_,
-        uint256 granularity_,
-        uint256 minTimeElapsed_
-    ) {
+    constructor(uint256 windowSize_, uint256 granularity_, uint256 minTimeElapsed_) {
         require(granularity_ > 1, "GRANULARITY");
-        require((periodSize = windowSize_ / granularity_) * granularity_ == windowSize_, "WINDOW_NOT_EVENLY_DIVISIBLE");
+
+        periodSize = windowSize_ / granularity_;
+        require(windowSize_ % granularity_ == 0, "WINDOW_NOT_EVENLY_DIVISIBLE");
+
         windowSize = windowSize_;
         granularity = granularity_;
         minTimeElapsed = minTimeElapsed_;
@@ -72,20 +66,17 @@ contract PoolOracle is IPoolOracle {
     /// @param pool Address of pool for which the observation is required
     /// @return o The oldest observation available for `pool`
     function getOldestObservationInWindow(IPool pool) public view returns (Observation memory o) {
-        uint256 length = poolObservations[pool].length;
-        if (length == 0) {
-            revert NoObservationsForPool(pool);
-        }
+        mapping(uint256 => Observation) storage observations = poolObservations[pool];
 
         unchecked {
             uint256 observationIndex = observationIndexOf(block.timestamp);
-            for (uint256 i; i < length; ) {
+            for (uint256 i; i < granularity;) {
                 // can't possible overflow
                 // compute the oldestObservation given `observationIndex`, basically `widowSize` in the past
                 uint256 oldestObservationIndex = (++observationIndex) % granularity;
 
                 // Read the oldest observation
-                o = poolObservations[pool][oldestObservationIndex];
+                o = observations[oldestObservationIndex];
 
                 // For an observation to be valid, it has to be newer than the `windowSize`
                 if (block.timestamp - o.timestamp < windowSize) {
@@ -108,15 +99,7 @@ contract PoolOracle is IPoolOracle {
     }
 
     // @inheritdoc IPoolOracle
-    function updatePool(IPool pool) public override returns(bool updated) {
-        // populate the array with empty observations (only on the first call ever for each pool)
-        unchecked {
-            for (uint256 i = poolObservations[pool].length; i < granularity; ) {
-                poolObservations[pool].push();
-                ++i;
-            }
-        }
-
+    function updatePool(IPool pool) public override returns (bool updated) {
         // get the observation for the current period
         uint256 index = observationIndexOf(block.timestamp);
         Observation storage observation = poolObservations[pool][index];
@@ -124,16 +107,16 @@ contract PoolOracle is IPoolOracle {
         // we only want to commit updates once per period (i.e. windowSize / granularity)
         uint256 timeElapsed = block.timestamp - observation.timestamp;
         if (timeElapsed > periodSize) {
-            (observation.ratioCumulative, observation.timestamp) = IPool(pool).currentCumulativeRatio();
-            emit ObservationRecorded(pool, index, observation);
+            (observation.ratioCumulative, observation.timestamp) = pool.currentCumulativeRatio();
+            emit ObservationRecorded(pool, index, observation.timestamp, observation.ratioCumulative);
             updated = true;
         }
     }
 
     // @inheritdoc IPoolOracle
     function updatePools(IPool[] calldata pools) public override {
-        uint length = pools.length;
-        for(uint i = 0; i < length;i ++) {
+        uint256 length = pools.length;
+        for (uint256 i = 0; i < length; i++) {
             updatePool(pools[i]);
         }
     }
@@ -152,10 +135,10 @@ contract PoolOracle is IPoolOracle {
             revert InsufficientElapsedTime(pool, timeElapsed);
         }
 
-        (uint256 currentCumulativeRatio_, ) = IPool(pool).currentCumulativeRatio();
+        (uint256 currentCumulativeRatio_,) = pool.currentCumulativeRatio();
         // cumulative ratio is in (ratio * seconds) units so for the average we simply get it after division by time elapsed
         // cumulative ratio has 27 decimals precision (RAY), the below equation returns a number on 18 decimals precision
-        twar = ((currentCumulativeRatio_ - oldestObservation.ratioCumulative) * WAD) / (timeElapsed * RAY);
+        twar = (currentCumulativeRatio_ - oldestObservation.ratioCumulative) / timeElapsed / (RAY / WAD);
     }
 
     /// @inheritdoc IPoolOracle
@@ -240,26 +223,29 @@ contract PoolOracle is IPoolOracle {
         (fyTokenIn, updateTime) = _peekAmountTimesPrice(pool, baseOut, pool.g2());
     }
 
-    function _peekAmountOverPrice(
-        IPool pool,
-        uint256 amount,
-        int128 g
-    ) internal view returns (uint256 result, uint256 updateTime) {
+    function _peekAmountOverPrice(IPool pool, uint256 amount, int128 g)
+        internal
+        view
+        returns (uint256 result, uint256 updateTime)
+    {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
         if (updateTime >= maturity) {
             result = amount;
         } else {
             int128 price = _price(pool, peek(pool), g, maturity, updateTime);
-            result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
+            // Audit CVF-7: simplification of amount.divu(WAD).div(price).mulu(WAD)
+            require(price >= 0);
+            require(amount >> 192 == 0);
+            result = (amount << 64) / uint128(price); // result = amount / price
         }
     }
 
-    function _peekAmountTimesPrice(
-        IPool pool,
-        uint256 amount,
-        int128 g
-    ) internal view returns (uint256 result, uint256 updateTime) {
+    function _peekAmountTimesPrice(IPool pool, uint256 amount, int128 g)
+        internal
+        view
+        returns (uint256 result, uint256 updateTime)
+    {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
         if (updateTime >= maturity) {
@@ -270,26 +256,27 @@ contract PoolOracle is IPoolOracle {
         }
     }
 
-    function _getAmountOverPrice(
-        IPool pool,
-        uint256 amount,
-        int128 g
-    ) internal returns (uint256 result, uint256 updateTime) {
+    function _getAmountOverPrice(IPool pool, uint256 amount, int128 g)
+        internal
+        returns (uint256 result, uint256 updateTime)
+    {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
         if (updateTime >= maturity) {
             result = amount;
         } else {
             int128 price = _price(pool, get(pool), g, maturity, updateTime);
-            result = amount.divu(WAD).div(price).mulu(WAD); // result = amount / price
+            // Audit CVF-7: simplification of amount.divu(WAD).div(price).mulu(WAD)
+            require(price >= 0);
+            require(amount >> 192 == 0);
+            result = (amount << 64) / uint128(price); // result = amount / price
         }
     }
 
-    function _getAmountTimesPrice(
-        IPool pool,
-        uint256 amount,
-        int128 g
-    ) internal returns (uint256 result, uint256 updateTime) {
+    function _getAmountTimesPrice(IPool pool, uint256 amount, int128 g)
+        internal
+        returns (uint256 result, uint256 updateTime)
+    {
         updateTime = block.timestamp;
         uint256 maturity = pool.maturity();
         if (updateTime >= maturity) {
@@ -300,13 +287,17 @@ contract PoolOracle is IPoolOracle {
         }
     }
 
-    function _price(
-        IPool pool,
-        uint256 twar,
-        int128 g,
-        uint256 maturity,
-        uint256 updateTime
-    ) internal view returns (int128 price) {
+    /// @param pool The pool to get the price for
+    /// @param twar The twap ratio
+    /// @param g The pool's g1 or g2 - signed 64.64-bit fixed point number
+    /// @param maturity The pool's maturity
+    /// @param updateTime The time at which the price is calculated
+    /// @return price signed 64.64-bit fixed point number
+    function _price(IPool pool, uint256 twar, int128 g, uint256 maturity, uint256 updateTime)
+        internal
+        view
+        returns (int128 price)
+    {
         /*
             https://hackmd.io/VlQkYJ6cTzWIaIyxuR1g2w
             https://www.desmos.com/calculator/39jpmawgpu

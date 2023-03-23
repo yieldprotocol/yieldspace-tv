@@ -7,7 +7,7 @@ import "../mocks/Mocks.sol";
 import "../../oracle/PoolOracle.sol";
 
 // "Magic" numbers are taken from the inputs/results of the test at https://github.com/yieldprotocol/vault-v2/blob/master/packages/foundry/contracts/test/oracles/PoolOracle.t.sol
-contract PoolOracleTWARTest is Test {
+contract PoolOracleTWARTest is IPoolOracleEvents, Test {
     using Mocks for *;
 
     PoolOracle private oracle;
@@ -76,8 +76,8 @@ contract PoolOracleTWARTest is Test {
         (, bytes32[] memory writes) = vm.accesses(address(oracle));
         assertEq(ts, timestamp);
         assertEq(ratio, currentCumulativeRatio);
-        // 24 writes for array initialisation + 2 slots written by the actual update
-        assertEq(writes.length, 26);
+        // 2 slots written by the actual update (Observation struct)
+        assertEq(writes.length, 2);
 
         for (uint256 i = 1; i < 24; i++) {
             // Does not update before periodSize
@@ -93,7 +93,7 @@ contract PoolOracleTWARTest is Test {
             pool.currentCumulativeRatio.mock(currentCumulativeRatio, block.timestamp);
 
             vm.expectEmit(true, true, true, true);
-            emit ObservationRecorded(pool, i, PoolOracle.Observation(block.timestamp, currentCumulativeRatio));
+            emit ObservationRecorded(pool, i, block.timestamp, currentCumulativeRatio);
 
             assertTrue(oracle.updatePool(pool));
             (ts, ratio) = oracle.poolObservations(pool, i);
@@ -234,7 +234,7 @@ contract PoolOracleTWARTest is Test {
 
         // If there are no values recorded for the pool it'll fail
         IPool pool2 = IPool(Mocks.mock("IPool2"));
-        vm.expectRevert(abi.encodeWithSelector(PoolOracle.NoObservationsForPool.selector, pool2));
+        vm.expectRevert(abi.encodeWithSelector(IPoolOracle.MissingHistoricalObservation.selector, pool2));
         oracle.getOldestObservationInWindow(pool2);
     }
 
@@ -248,12 +248,12 @@ contract PoolOracleTWARTest is Test {
         skip(46 hours);
 
         // No valid observation exists
-        vm.expectRevert(abi.encodeWithSelector(PoolOracle.MissingHistoricalObservation.selector, pool));
+        vm.expectRevert(abi.encodeWithSelector(IPoolOracle.MissingHistoricalObservation.selector, pool));
         oracle.peek(pool);
 
         // get will record an observation, but it'd be the only one and hence too recent
         pool.currentCumulativeRatio.mock(420, block.timestamp);
-        vm.expectRevert(abi.encodeWithSelector(PoolOracle.InsufficientElapsedTime.selector, pool, 0));
+        vm.expectRevert(abi.encodeWithSelector(IPoolOracle.InsufficientElapsedTime.selector, pool, 0));
         oracle.get(pool);
     }
 
@@ -267,7 +267,7 @@ contract PoolOracleTWARTest is Test {
 
         uint256 timeElapsed = 4 minutes + 59 seconds;
         skip(timeElapsed);
-        vm.expectRevert(abi.encodeWithSelector(PoolOracle.InsufficientElapsedTime.selector, pool, timeElapsed));
+        vm.expectRevert(abi.encodeWithSelector(IPoolOracle.InsufficientElapsedTime.selector, pool, timeElapsed));
         oracle.peek(pool);
     }
 
@@ -365,40 +365,31 @@ contract PoolOracleTWARTest is Test {
         vm.warp(initialTs + 23 hours);
         assertEq(oracle.peek(pool), 48309178743961352);
         // Verify reads to storage
-        (bytes32[] memory reads, ) = vm.accesses(address(oracle));
-        // 1) length for loop
-        // 2) length for bound check (maybe use assembly to remove this?)
-        // 3) slot 1 of Observation
-        // 4) slot 2 of Observation
-        assertEq(reads.length, 4);
+        (bytes32[] memory reads,) = vm.accesses(address(oracle));
+        // 1) slot 1 of Observation
+        // 2) slot 2 of Observation
+        assertEq(reads.length, 2);
 
         // should use the second observation (idx 9)
         // (5e30 - 2e30) / (1645950768 - 1645867968)
         vm.warp(initialTs + 25 hours);
         assertEq(oracle.peek(pool), 36231884057971014);
         // Verify reads to storage
-        (reads, ) = vm.accesses(address(oracle));
-        // 1) length for loop
-        // 2) length for bound check (maybe use assembly to remove this?)
-        // 3) slot 1 of Observation
-        // 4) slot 2 of Observation
-        assertEq(reads.length, 4);
+        (reads,) = vm.accesses(address(oracle));
+        // 1) slot 1 of Observation
+        // 2) slot 2 of Observation
+        assertEq(reads.length, 2);
 
         // missing slot, so it should use the second (next) observation (idx 9)
         // (5e30 - 2e30) / (1645947168 - 1645867968)
         vm.warp(initialTs + 24 hours);
         assertEq(oracle.peek(pool), 37878787878787878);
         // Verify reads to storage
-        (reads, ) = vm.accesses(address(oracle));
-        // 1) length for loop
-        // 2) length for bound check (maybe use assembly to remove this?)
-        // 3) slot 1 of 1st Observation
-        // 4) slot 2 of 1st Observation
-        // 5) length for bound check (maybe use assembly to remove this?)
-        // 6) slot 1 of 2nd Observation
-        // 7) slot 2 of 2nd Observation
-        assertEq(reads.length, 7);
+        (reads,) = vm.accesses(address(oracle));
+        // 1) slot 1 of 1st Observation
+        // 2) slot 2 of 1st Observation
+        // 3) slot 1 of 2nd Observation
+        // 4) slot 2 of 2nd Observation
+        assertEq(reads.length, 4);
     }
-
-    event ObservationRecorded(IPool indexed pool, uint256 index, PoolOracle.Observation observation);
 }
