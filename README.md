@@ -28,7 +28,7 @@ Additional notes:
 
 As this repo is still under development, these smart contracts have not yet been deployed.
 
-Detailed documentation can be found in the [Yield docs](docs.yieldprotocol.com).
+Detailed documentation can be found in the [Yield docs](https://docs.yieldprotocol.com/#/developers/smart_contracts_overview?id=yieldspace).
 
 ## Install
 
