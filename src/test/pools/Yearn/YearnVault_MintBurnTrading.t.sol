@@ -235,7 +235,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             uint128(fyTokenIn),
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g2,
+            g2.fromFP18(),
             c_,
             mu.fromFP18()
         );
@@ -290,7 +290,7 @@ contract TradeDAI__ZeroStateYearnVault is WithLiquidityYearnVault {
             sharesOut,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g2,
+            g2.fromFP18(),
             c_,
             mu.fromFP18()
         );
@@ -368,7 +368,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             sharesIn,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g1,
+            g1.fromFP18(),
             c_,
             mu.fromFP18()
         );
@@ -440,7 +440,7 @@ contract TradeDAI__WithExtraFYTokenYearnVault is WithExtraFYTokenYearnVault {
             fyTokenOut,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g1,
+            g1.fromFP18(),
             c_,
             mu.fromFP18()
         );

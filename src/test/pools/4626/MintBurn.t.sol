@@ -52,8 +52,8 @@ contract SetFees is ZeroStateDai {
         console.log("sets valid fee");
 
         uint16 g1Fee_ = 8000;
-        int128 expectedG1 = uint256(g1Fee_).divu(10000);
-        int128 expectedG2 = uint256(10000).divu(g1Fee_);
+        uint256 expectedG1 = uint256(g1Fee_) * 1e14;
+        uint256 expectedG2 = uint256(1e18 * 1e4) / g1Fee_;
 
         vm.prank(bob);
         vm.expectEmit(true, true, true, true);
@@ -380,7 +380,7 @@ contract BurnForBase__WithLiquidity is WithLiquidityDAI {
             fyTokenOut.u128(),
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            pool.g2(),
+            pool.g2().fromFP18(),
             pool.getC().fromFP18(),
             pool.mu().fromFP18()
         );

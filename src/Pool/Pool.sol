@@ -419,7 +419,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                     fyTokenToBuy.u128(),
                     cache.sharesCached,
                     cache.fyTokenCached,
-                    _computeG1(cache.g1Fee)
+                    _computeG1(cache.g1Fee).fromFP18()
                 );
             }
 
@@ -597,7 +597,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                     fyTokenOut.u128() * scaleFactor_, //                          Sell the virtual fyToken obtained
                     maturity - uint32(block.timestamp), //                         This can't be called after maturity
                     ts.fromFP18(),
-                    _computeG2(cache.g1Fee),
+                    _computeG2(cache.g1Fee).fromFP18(),
                     _getC().fromFP18(),
                     mu.fromFP18()
                 ) /
@@ -690,7 +690,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         Cache memory cache = _getCache();
 
         uint128 sharesOut = _wrapPreview(baseOut).u128();
-        fyTokenIn = _buyBasePreview(sharesOut, cache.sharesCached, cache.fyTokenCached, _computeG2(cache.g1Fee));
+        fyTokenIn = _buyBasePreview(
+            sharesOut, 
+            cache.sharesCached, 
+            cache.fyTokenCached, 
+            _computeG2(cache.g1Fee).fromFP18()
+        );
 
         // Checks
         if (fyTokenBalance - cache.fyTokenCached < fyTokenIn) {
@@ -721,7 +726,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             _wrapPreview(baseOut).u128(),
             cache.sharesCached,
             cache.fyTokenCached,
-            _computeG2(cache.g1Fee)
+            _computeG2(cache.g1Fee).fromFP18()
         );
     }
 
@@ -800,7 +805,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             fyTokenOut,
             cache.sharesCached,
             cache.fyTokenCached,
-            _computeG1(cache.g1Fee)
+            _computeG1(cache.g1Fee).fromFP18()
         );
         baseIn = _unwrapPreview(sharesIn).u128();
 
@@ -837,7 +842,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             fyTokenOut,
             cache.sharesCached,
             cache.fyTokenCached,
-            _computeG1(cache.g1Fee)
+            _computeG1(cache.g1Fee).fromFP18()
         );
 
         baseIn = _unwrapPreview(sharesIn).u128();
@@ -916,7 +921,12 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
         Cache memory cache = _getCache();
         uint104 sharesBalance = _getSharesBalance();
         uint128 sharesIn = sharesBalance - cache.sharesCached;
-        fyTokenOut = _sellBasePreview(sharesIn, cache.sharesCached, cache.fyTokenCached, _computeG1(cache.g1Fee));
+        fyTokenOut = _sellBasePreview(
+            sharesIn, 
+            cache.sharesCached, 
+            cache.fyTokenCached, 
+            _computeG1(cache.g1Fee).fromFP18()
+        );
 
         // Check slippage
         if (fyTokenOut < min) revert SlippageDuringSellBase(fyTokenOut, min);
@@ -945,7 +955,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             _wrapPreview(baseIn).u128(),
             cache.sharesCached,
             cache.fyTokenCached,
-            _computeG1(cache.g1Fee)
+            _computeG1(cache.g1Fee).fromFP18()
         );
     }
 
@@ -1022,7 +1032,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             fyTokenIn,
             cache.sharesCached,
             cache.fyTokenCached,
-            _computeG2(cache.g1Fee)
+            _computeG2(cache.g1Fee).fromFP18()
         );
 
         // Update TWAR
@@ -1047,7 +1057,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             fyTokenIn,
             cache.sharesCached,
             cache.fyTokenCached,
-            _computeG2(cache.g1Fee)
+            _computeG2(cache.g1Fee).fromFP18()
         );
         baseOut = _unwrapPreview(sharesOut).u128();
     }
@@ -1089,7 +1099,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.fyTokenCached * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts.fromFP18(),
-                _computeG2(cache.g1Fee),
+                _computeG2(cache.g1Fee).fromFP18(),
                 _getC().fromFP18(),
                 mu.fromFP18()
             ) /
@@ -1106,7 +1116,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 cache.fyTokenCached * scaleFactor_,
                 maturity - uint32(block.timestamp), // This can't be called after maturity
                 ts.fromFP18(),
-                _computeG1(cache.g1Fee),
+                _computeG1(cache.g1Fee).fromFP18(),
                 _getC().fromFP18(),
                 mu.fromFP18()
             ) /
@@ -1122,7 +1132,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
             cache.fyTokenCached * scaleFactor_,
             maturity - uint32(block.timestamp), // This can't be called after maturity
             ts.fromFP18(),
-            _computeG1(cache.g1Fee),
+            _computeG1(cache.g1Fee).fromFP18(),
             _getC().fromFP18(),
             mu.fromFP18()
         ) / 1e8) * 1e8) / scaleFactor_; // Shave 8 wei/decimals to deal with precision issues on the decimal functions
@@ -1147,7 +1157,7 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
                 _totalSupply * scaleFactor_,
                 maturity - uint32(block.timestamp),
                 ts.fromFP18(),
-                _computeG2(cache.g1Fee),
+                _computeG2(cache.g1Fee).fromFP18(),
                 _getC().fromFP18(),
                 mu.fromFP18()
             ) /
@@ -1330,14 +1340,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev Converts state var cache.g1Fee(fp4) to a 64bit divided by 10,000
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return a 64bit factor used for applying fees when buying fyToken/selling base.
-    function g1() external view returns (int128) {
+    function g1() external view returns (uint256) {
         Cache memory cache = _getCache();
         return _computeG1(cache.g1Fee);
     }
 
     /// Returns the ratio of net proceeds after fees, for buying fyToken
-    function _computeG1(uint16 g1Fee_) internal pure returns (int128) {
-        return uint256(g1Fee_).divu(10000);
+    function _computeG1(uint256 g1Fee_) internal pure returns (uint256) {
+        return uint256(g1Fee_) * 1e14;
     }
 
     /// Exposes the 64.64 factor used for determining fees.
@@ -1345,15 +1355,14 @@ contract Pool is PoolEvents, IPool, ERC20Permit, AccessControl {
     /// @dev Calculated by dividing 10,000 by state var cache.g1Fee(fp4) and converting to 64bit.
     /// Useful for external contracts that need to perform calculations related to pool.
     /// @return a 64bit factor used for applying fees when selling fyToken/buying base.
-    function g2() external view returns (int128) {
+    function g2() external view returns (uint256) {
         Cache memory cache = _getCache();
         return _computeG2(cache.g1Fee);
     }
 
     /// Returns the ratio of net proceeds after fees, for selling fyToken
-    function _computeG2(uint16 g1Fee_) internal pure returns (int128) {
-        // Divide 1 (64.64) by g1
-        return uint256(10000).divu(g1Fee_);
+    function _computeG2(uint256 g1Fee_) internal pure returns (uint256) {
+        return uint256(1e18) * 1e4 / g1Fee_;
     }
 
     /// Returns the shares balance with the same decimals as the underlying base asset.

@@ -84,7 +84,7 @@ contract TradeUSDC__WithLiquidity is WithLiquidityUSDC {
             sharesOut * 1e12,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g2,
+            g2.fromFP18(),
             c_,
             mu.fromFP18()
         ) / 1e12;
@@ -262,7 +262,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
             sharesIn * 1e12,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g1,
+            g1.fromFP18(),
             c_,
             mu.fromFP18()
         ) / 1e12;
@@ -328,7 +328,7 @@ contract TradeUSDC__WithExtraFYToken is WithExtraFYTokenUSDC {
             fyTokenOut,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g1,
+            g1.fromFP18(),
             c_,
             mu.fromFP18()
         );

@@ -113,7 +113,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
             3e18,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g2,
+            g2.fromFP18(),
             c_,
             mu.fromFP18()
         );
@@ -205,7 +205,7 @@ contract TWAR__PoolInitialized is PoolInitialized {
             3e18,
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            g2,
+            g2.fromFP18(),
             c_,
             mu.fromFP18()
         );

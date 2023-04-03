@@ -170,7 +170,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 baseOut, uint256 updateTime)
     {
-        (baseOut, updateTime) = _getAmountOverPrice(pool, fyTokenIn, pool.g2());
+        (baseOut, updateTime) = _getAmountOverPrice(pool, fyTokenIn, pool.g2().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -179,7 +179,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 fyTokenOut, uint256 updateTime)
     {
-        (fyTokenOut, updateTime) = _getAmountTimesPrice(pool, baseIn, pool.g1());
+        (fyTokenOut, updateTime) = _getAmountTimesPrice(pool, baseIn, pool.g1().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -188,7 +188,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 baseIn, uint256 updateTime)
     {
-        (baseIn, updateTime) = _getAmountOverPrice(pool, fyTokenOut, pool.g1());
+        (baseIn, updateTime) = _getAmountOverPrice(pool, fyTokenOut, pool.g1().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -197,7 +197,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 fyTokenIn, uint256 updateTime)
     {
-        (fyTokenIn, updateTime) = _getAmountTimesPrice(pool, baseOut, pool.g2());
+        (fyTokenIn, updateTime) = _getAmountTimesPrice(pool, baseOut, pool.g2().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -207,7 +207,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 baseOut, uint256 updateTime)
     {
-        (baseOut, updateTime) = _peekAmountOverPrice(pool, fyTokenIn, pool.g2());
+        (baseOut, updateTime) = _peekAmountOverPrice(pool, fyTokenIn, pool.g2().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -217,7 +217,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 fyTokenOut, uint256 updateTime)
     {
-        (fyTokenOut, updateTime) = _peekAmountTimesPrice(pool, baseIn, pool.g1());
+        (fyTokenOut, updateTime) = _peekAmountTimesPrice(pool, baseIn, pool.g1().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -227,7 +227,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 baseIn, uint256 updateTime)
     {
-        (baseIn, updateTime) = _peekAmountOverPrice(pool, fyTokenOut, pool.g1());
+        (baseIn, updateTime) = _peekAmountOverPrice(pool, fyTokenOut, pool.g1().fromFP18());
     }
 
     /// @inheritdoc IPoolOracle
@@ -237,7 +237,7 @@ contract PoolOracle is IPoolOracle {
         override
         returns (uint256 fyTokenIn, uint256 updateTime)
     {
-        (fyTokenIn, updateTime) = _peekAmountTimesPrice(pool, baseOut, pool.g2());
+        (fyTokenIn, updateTime) = _peekAmountTimesPrice(pool, baseOut, pool.g2().fromFP18());
     }
 
     function _peekAmountOverPrice(

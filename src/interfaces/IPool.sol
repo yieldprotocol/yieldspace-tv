@@ -17,8 +17,8 @@ interface IPool is IERC20, IERC2612 {
     function currentCumulativeRatio() external view returns (uint256 currentCumulativeRatio_, uint256 blockTimestampCurrent);
     function cumulativeRatioLast() external view returns (uint256);
     function fyToken() external view returns(IMaturingToken);
-    function g1() external view returns(int128);
-    function g2() external view returns(int128);
+    function g1() external view returns(uint256);
+    function g2() external view returns(uint256);
     function getC() external view returns (uint256);
     function getCurrentSharePrice() external view returns (uint256);
     function getCache() external view returns (uint104 baseCached, uint104 fyTokenCached, uint32 blockTimestampLast, uint16 g1Fee_);

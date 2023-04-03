@@ -34,8 +34,8 @@ contract PoolOracleUSDCIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getSellFYTokenPreview(pool, amount);
 
-        assertEqDecimal(spotValue, 998.180998e6, 6, "spotValue");
-        assertEqDecimal(oracleValue, 998.181891e6, 6, "oracleValue");
+        assertEqDecimal(spotValue, 998180998, 6, "spotValue");
+        assertEqDecimal(oracleValue, 966988476, 6, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
@@ -45,8 +45,8 @@ contract PoolOracleUSDCIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getSellBasePreview(pool, amount);
 
-        assertEqDecimal(spotValue, 1001.470373e6, 6, "spotValue");
-        assertEqDecimal(oracleValue, 1001.475094e6, 6, "oracleValue");
+        assertEqDecimal(spotValue, 1001470373, 6, "spotValue");
+        assertEqDecimal(oracleValue, 1027563686, 6, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
@@ -56,8 +56,8 @@ contract PoolOracleUSDCIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getBuyFYTokenPreview(pool, amount);
 
-        assertEqDecimal(spotValue, 998.531781e6, 6, "spotValue");
-        assertEqDecimal(oracleValue, 998.527077e6, 6, "oracleValue");
+        assertEqDecimal(spotValue, 998531781, 6, "spotValue");
+        assertEqDecimal(oracleValue, 973175690, 6, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
@@ -67,8 +67,8 @@ contract PoolOracleUSDCIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getBuyBasePreview(pool, amount);
 
-        assertEqDecimal(spotValue, 1001.822320e6, 6, "spotValue");
-        assertEqDecimal(oracleValue, 1001.821419e6, 6, "oracleValue");
+        assertEqDecimal(spotValue, 1001822320, 6, "spotValue");
+        assertEqDecimal(oracleValue, 1034138486, 6, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 

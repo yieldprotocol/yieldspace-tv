@@ -45,8 +45,8 @@ abstract contract TestCore is PoolEvents, Test {
 
     uint16 public constant g1Fee = 9500;
     uint16 public constant g1Denominator = 10000;
-    int128 public g1; // g to use when selling shares to pool
-    int128 public g2; // g to use when selling fyTokens to pool
+    uint256 public g1; // g to use when selling shares to pool
+    uint256 public g2; // g to use when selling fyTokens to pool
 
     uint256 public constant cNumerator = 11;
     uint256 public constant cDenominator = 10;
@@ -80,8 +80,8 @@ abstract contract TestCore is PoolEvents, Test {
     constructor() {
         uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;
         k = uint256(1e18) / invK;
-        g1 = uint256(g1Fee).fromUInt().div(uint256(g1Denominator).fromUInt());
-        g2 = uint256(g1Denominator).fromUInt().div(uint256(g1Fee).fromUInt());
+        g1 = uint256(g1Fee) * 1e18 / uint256(g1Denominator);
+        g2 = uint256(g1Denominator) * 1e18 / uint256(g1Fee);
         mu = muNumerator * 1e18 / muDenominator;
     }
 }

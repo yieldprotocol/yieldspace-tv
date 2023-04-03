@@ -70,8 +70,8 @@ contract SetFeesNonTv is ZeroStateNonTv {
 
         pool.setFees(g1Fee_);
 
-        assertEq(pool.g1(), expectedG1);
-        assertEq(pool.g2(), expectedG2);
+        assertEq(pool.g1().fromFP18(), expectedG1);
+        assertEq(pool.g2().fromFP18(), expectedG2);
     }
 }
 
@@ -444,7 +444,7 @@ contract BurnForBase__WithLiquidityNonTv is WithLiquidityNonTv {
             fyTokenOut.u128(),
             maturity - uint32(block.timestamp),
             k.fromFP18(),
-            pool.g2(),
+            pool.g2().fromFP18(),
             pool.getC().fromFP18(),
             pool.mu().fromFP18()
         );

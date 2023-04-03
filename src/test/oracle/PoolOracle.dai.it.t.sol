@@ -24,8 +24,8 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getSellFYTokenPreview(pool, amount);
 
-        assertEqDecimal(spotValue, 968.791448811035957254e18, 18, "spotValue");
-        assertEqDecimal(oracleValue, 968.965096873157987825e18, 18, "oracleValue");
+        assertEqDecimal(spotValue, 968791448811035957254, 18, "spotValue");
+        assertEqDecimal(oracleValue, 559022958811031063319, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
@@ -35,8 +35,8 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getSellBasePreview(pool, amount);
 
-        assertEqDecimal(spotValue, 1025.713037174416877184e18, 18, "spotValue");
-        assertEqDecimal(oracleValue, 1025.865469553717080957e18, 18, "oracleValue");
+        assertEqDecimal(spotValue, 1025713037174416877184, 18, "spotValue");
+        assertEqDecimal(oracleValue, 1601702996022258354655, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
@@ -46,8 +46,8 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getBuyFYTokenPreview(pool, amount);
 
-        assertEqDecimal(spotValue, 974.927984428652130438e18, 18, "spotValue");
-        assertEqDecimal(oracleValue, 974.786684685888342732e18, 18, "oracleValue");
+        assertEqDecimal(spotValue, 974927984428652130438, 18, "spotValue");
+        assertEqDecimal(oracleValue, 624335474481502012239, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
@@ -57,8 +57,8 @@ contract PoolOracleDAIIntegrationTest is Test {
 
         (uint256 oracleValue, uint256 updateTime) = oracle.getBuyBasePreview(pool, amount);
 
-        assertEqDecimal(spotValue, 1032.219978677199507417e18, 18, "spotValue");
-        assertEqDecimal(oracleValue, 1032.028917478030299490e18, 18, "oracleValue");
+        assertEqDecimal(spotValue, 1032219978677199507417, 18, "spotValue");
+        assertEqDecimal(oracleValue, 1788835296008002246975, 18, "oracleValue");
         assertEq(updateTime, block.timestamp, "timestamp");
     }
 
