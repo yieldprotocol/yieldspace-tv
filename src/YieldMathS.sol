@@ -23,6 +23,9 @@ library YieldMathS {
     using FixedPointMathLib for int256;
 
     error CAndMuMustBePositive();
+    error TMustBePositive();
+    error TooFarFromMaturity();
+    error Underflow();
 
     uint256 public constant WAD = 1e18;
     uint256 public constant ONE_FP18 = 1e18;
@@ -108,12 +111,52 @@ library YieldMathS {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
+        uint256 k,
+        uint256 g,
         uint128 c,
         uint128 mu
-    ) public pure returns (uint128 sharesIn) {
+    ) public pure returns (uint256 sharesIn) {
+        unchecked {
+            if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
+            return _maxSharesIn(
+                sharesReserves,
+                fyTokenReserves,
+                _computeA(timeTillMaturity, k, g),
+                c,
+                mu
+            );
+        }
+    }
 
+    function _maxSharesIn(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint256 a,
+        uint256 c,
+        uint256 mu
+    ) private pure returns (uint256 sharesIn) {
+            uint256 za = c.divWadDown(mu).mulWadDown(
+                uint256(int256(mu.mulWadDown(
+                    sharesReserves.divWadDown(WAD)
+                )).powWad(int256(a))
+            ));
+
+            uint256 ya = uint256(int256(fyTokenReserves.divWadDown(WAD)).powWad(int256(a)));
+
+            uint256 numerator = za + ya;
+
+            uint256 denominator = c.divWadDown(mu) + WAD;
+
+            uint256 leftTerm = WAD.divWadDown(mu).mulWadDown(
+                uint256(
+                    int256(
+                        numerator.divWadDown(denominator)
+                    ).powWad(int256(WAD.divWadDown(a)))
+                )
+            );
+
+            if((sharesIn = leftTerm.mulWadDown(WAD) - sharesReserves) > MAX) revert Underflow();
+            if(sharesIn > leftTerm.mulWadDown(WAD)) revert Underflow();
     }
 
     function invariant(
@@ -125,7 +168,7 @@ library YieldMathS {
         uint256 g,
         uint256 c,
         uint256 mu
-    ) public view returns (uint256 result) {
+    ) public pure returns (uint256 result) {
         if (totalSupply == 0) return 0;
         uint256 a = _computeA(timeTillMaturity, k, g);
 
@@ -139,7 +182,7 @@ library YieldMathS {
         uint256 a,
         uint256 c,
         uint256 mu
-    ) internal view returns (uint256 result) {
+    ) internal pure returns (uint256 result) {
         unchecked {
             if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
 
@@ -150,29 +193,6 @@ library YieldMathS {
             ));
 
             uint256 ya = uint256(int256(fyTokenReserves.divWadDown(WAD)).powWad(int256(a)));
-
-            // za            
-            // new: 1046749_878211857922501622
-            // old: 1046749_877120733165336967
-
-            // ya
-            // new: 1294107_460482386983274229
-            // old: 1294107_459108161770416706
-
-            // numerator
-            // new: 2340857_338694244905775851
-            // old: 2340857_336228894935753673
-
-            // denominator
-            // new:       2_047619047619047619
-            // old:       2_047619047619047619
-
-            // topTerm
-            // new: 1387066_105608761466741116
-            // old: 1386389_322465120886431258
-
-            // new:       1_155888421340634555
-            // old:       1_155324435387600738
 
             uint256 numerator = za + ya;
 
@@ -189,8 +209,6 @@ library YieldMathS {
             );
 
             result = (topTerm.mulWadDown(WAD) * WAD) / totalSupply;
-
-            console2.log(result);
         }
 
     }
@@ -202,11 +220,11 @@ library YieldMathS {
     ) public pure returns (uint256) {
         // t = k * timeTillMaturity
         uint256 t = k * timeTillMaturity;
-        require(t >= 0, "YieldMath: t must be positive");
+        if (t <= 0) revert TMustBePositive();
 
         // a = (1 - gt)
         uint256 a = ONE_FP18 - g.mulWadDown(t);
-        require(a > 0, "YieldMath: Too far from maturity");
+        if (a <= 0) revert TooFarFromMaturity();
 
         return a;
     }
