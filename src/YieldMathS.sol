@@ -99,11 +99,51 @@ library YieldMathS {
         uint128 sharesReserves,
         uint128 fyTokenReserves,
         uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
+        uint256 k,
+        uint256 g,
         uint128 c,
         uint128 mu
-    ) public pure returns (uint128 fyTokenOut) {
+    ) public pure returns (uint256 fyTokenOut) {
+        unchecked {
+            if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
+            return _maxFYTokenOut(
+                sharesReserves,
+                fyTokenReserves,
+                _computeA(timeTillMaturity, k, g),
+                c,
+                mu
+            );
+        }
+    }
+
+    function _maxFYTokenOut(
+        uint128 sharesReserves,
+        uint128 fyTokenReserves,
+        uint256 a,
+        uint256 c,
+        uint256 mu
+    ) private pure returns (uint256 fyTokenOut) {
+            uint256 za = c.divWadDown(mu).mulWadDown(
+                uint256(int256(mu.mulWadDown(
+                    sharesReserves.divWadDown(WAD)
+                )).powWad(int256(a))
+            ));
+
+            uint256 ya = uint256(int256(fyTokenReserves.divWadDown(WAD)).powWad(int256(a)));
+
+            uint256 numerator = za + ya;
+
+            uint256 denominator = c.divWadDown(mu) + WAD;
+
+            uint256 rightTerm = uint256(
+                int256(
+                    numerator.divWadDown(denominator)).powWad(
+                        int256(WAD.divWadDown(a))
+                )
+            );
+
+            if ((fyTokenOut = fyTokenReserves - rightTerm.mulWadDown(WAD)) > MAX) revert Underflow();
+            if (fyTokenOut > fyTokenReserves) revert Underflow();
 
     }
 
