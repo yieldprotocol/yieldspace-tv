@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-/// Audited by [ABDK](https://www.abdk.consulting/) 13/03/23, report pending.
+// Audited by [ABDK](https://www.abdk.consulting/) 13/03/23, report pending.
 pragma solidity >=0.8.15;
 
 import "../interfaces/IPoolOracle.sol";
