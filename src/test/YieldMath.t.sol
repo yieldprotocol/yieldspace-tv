@@ -12,6 +12,7 @@ pragma solidity >=0.8.15; /*
 import "forge-std/Test.sol";
 import {Exp64x64} from "./../Exp64x64.sol";
 import {YieldMath} from "./../YieldMath.sol";
+import {YieldMathS} from "./../YieldMathS.sol";
 import {Math64x64} from "./../Math64x64.sol";
 
 import "./helpers.sol";
@@ -106,11 +107,7 @@ contract YieldMathTest is Test {
         mu = muNumerator.fromUInt().div(muDenominator.fromUInt());
     }
 
-    function percentOrMinimum(
-        uint256 result,
-        uint256 divisor,
-        uint256 nominalDiff
-    ) public pure returns (uint256) {
+    function percentOrMinimum(uint256 result, uint256 divisor, uint256 nominalDiff) public pure returns (uint256) {
         uint256 fraction = result / divisor;
         return fraction > nominalDiff ? fraction : nominalDiff;
     }
@@ -697,7 +694,7 @@ contract YieldMathTest is Test {
             uint128(50_000 * 1e18),
             uint128(100_000 * 1e18),
             uint128(200_000 * 1e18),
-            uint128(500_000 * 10**18)
+            uint128(500_000 * 10 ** 18)
         ];
         uint128[5] memory expectedResults = [
             uint128(22_661),
@@ -1087,8 +1084,19 @@ contract YieldMathTest is Test {
      ***************************************************************/
 
     function test_maxFYTokenIn() public {
+        // old: 1230211594943003825306158
         uint128 _maxFYTokenIn = YieldMath.maxFYTokenIn(sharesReserves, fyTokenReserves, timeTillMaturity, k, g2, c, mu);
+        uint256 _maxFYTokenInSol = YieldMathS.maxFYTokenIn(
+            sharesReserves,
+            fyTokenReserves,
+            timeTillMaturity,
+            (k * 1e18).toUInt(),
+            (g2 * 1e18).toUInt(),
+            (c * 1e18).toUInt(),
+            (mu * 1e18).toUInt()
+        );
 
+        assertApproxEqAbs(uint256(_maxFYTokenIn), _maxFYTokenInSol, 1e13);
         // https://www.desmos.com/calculator/jcdfr1qv3z
         assertApproxEqAbs(_maxFYTokenIn, 1230211.59495e18, 1e13);
 
