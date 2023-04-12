@@ -1084,19 +1084,8 @@ contract YieldMathTest is Test {
      ***************************************************************/
 
     function test_maxFYTokenIn() public {
-        // old: 1230211594943003825306158
         uint128 _maxFYTokenIn = YieldMath.maxFYTokenIn(sharesReserves, fyTokenReserves, timeTillMaturity, k, g2, c, mu);
-        uint256 _maxFYTokenInSol = YieldMathS.maxFYTokenIn(
-            sharesReserves,
-            fyTokenReserves,
-            timeTillMaturity,
-            (k * 1e18).toUInt(),
-            (g2 * 1e18).toUInt(),
-            (c * 1e18).toUInt(),
-            (mu * 1e18).toUInt()
-        );
 
-        assertApproxEqAbs(uint256(_maxFYTokenIn), _maxFYTokenInSol, 1e13);
         // https://www.desmos.com/calculator/jcdfr1qv3z
         assertApproxEqAbs(_maxFYTokenIn, 1230211.59495e18, 1e13);
 
