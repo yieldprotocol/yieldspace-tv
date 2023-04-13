@@ -23,13 +23,16 @@ library YieldMathS {
 
     error CAndMuMustBePositive();
     error GreaterThanFYTokenReserves();
+    error RateOverflowNSR();
+    error RateOverflowZA();
+    error RateOverflowZYY();
     error RoundingError();
     error TMustBePositive();
     error TooFarFromMaturity();
     error Underflow();
+    error UnderflowYXA();
 
     uint256 public constant WAD = 1e18;
-    uint256 public constant ONE_FP18 = 1e18;
     uint256 public constant MAX = type(uint128).max; //     Used for overflow checks
 
     function fyTokenForSharesIn(
@@ -74,7 +77,44 @@ library YieldMathS {
         uint128 g,
         uint128 c,
         uint128 mu
-    ) public pure returns (uint128) {}
+    ) public view returns (uint256 sharesOut) {
+        unchecked {
+            if(c <= 0 || mu <= 0) revert CAndMuMustBePositive();
+            return _sharesInForFYTokenOut(sharesReserves, fyTokenReserves, fyTokenOut, _computeA(timeTillMaturity, k, g), c, mu);
+        }
+    }
+
+    function _sharesInForFYTokenOut(
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 fyTokenOut,
+        uint256 a,
+        uint256 c,
+        uint256 mu
+    ) private view returns (uint256 sharesOut) {
+        unchecked {
+            if (mu.mulWadDown(sharesReserves) > MAX) revert RateOverflowNSR();
+            uint256 za = c.divWadDown(mu).mulWadDown(
+                uint256(int256(mu.mulWadDown(sharesReserves.divWadDown(WAD))).powWad(int256(a)))
+            );
+            if (za > MAX) revert RateOverflowZA();
+
+            uint256 ya = _powHelper(fyTokenReserves, a);
+
+            uint256 yxa = _powHelper(fyTokenReserves - fyTokenOut, a);
+            if (fyTokenOut > fyTokenReserves) revert UnderflowYXA();
+
+            uint256 zaYaYxa = (za + ya - yxa);
+            if (zaYaYxa > MAX) revert RateOverflowZYY(); 
+
+            uint256 subtotal = WAD.divWadDown(mu).mulWadDown(
+                _powHelper(zaYaYxa.divWadDown(c.divWadDown(mu)), WAD.divWadDown(a))
+            );
+        
+            sharesOut = subtotal - sharesReserves;
+            if (sharesOut > subtotal) revert Underflow();
+        }
+    }
 
     function maxFYTokenIn(
         uint128 sharesReserves,
@@ -99,6 +139,7 @@ library YieldMathS {
         uint256 mu
     ) private pure returns (uint256 fyTokenIn) {
         uint256 normalizedSharesReserves = mu.mulWadDown(uint256(sharesReserves));
+        if (normalizedSharesReserves > MAX) revert RateOverflowNSR();
         uint256 za = c.divWadDown(mu).mulWadDown(uint256(int256(normalizedSharesReserves).powWad(int256(a))));
         uint256 ya = uint256(int256(int128(fyTokenReserves)).powWad(int256(a)));
         uint256 sum = za + ya;
@@ -237,9 +278,18 @@ library YieldMathS {
         if (t <= 0) revert TMustBePositive();
 
         // a = (1 - gt)
-        uint256 a = ONE_FP18 - g.mulWadDown(t);
+        uint256 a = WAD - g.mulWadDown(t);
         if (a <= 0) revert TooFarFromMaturity();
 
         return a;
     }
+
+    function _powHelper(uint256 x, uint256 y) internal pure returns (uint256 result) {
+        if (x == 0) {
+            return 0;
+        } else {
+            result = uint256(int256(x).powWad(int256(y)));
+        }
+    }
+
 }
