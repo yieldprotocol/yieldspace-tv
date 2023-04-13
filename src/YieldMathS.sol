@@ -10,7 +10,6 @@ pragma solidity >=0.8.15;
        yieldprotocol.com       ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
 */
 
-import "forge-std/console2.sol";
 import {Cast} from "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
@@ -23,6 +22,8 @@ library YieldMathS {
     using FixedPointMathLib for int256;
 
     error CAndMuMustBePositive();
+    error GreaterThanFYTokenReserves();
+    error RoundingError();
     error TMustBePositive();
     error TooFarFromMaturity();
     error Underflow();
@@ -101,8 +102,10 @@ library YieldMathS {
         uint256 za = c.divWadDown(mu).mulWadDown(uint256(int256(normalizedSharesReserves).powWad(int256(a))));
         uint256 ya = uint256(int256(int128(fyTokenReserves)).powWad(int256(a)));
         uint256 sum = za + ya;
+        if (sum > MAX) revert GreaterThanFYTokenReserves();
 
         fyTokenIn = uint256(int256(sum).powWad(int256(WAD.divWadDown(a)))) - uint256(fyTokenReserves);
+        if (fyTokenIn > MAX) revert RoundingError();
     }
 
     function maxFYTokenOut(
