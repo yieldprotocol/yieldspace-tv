@@ -23,12 +23,14 @@ library YieldMathS {
 
     error CAndMuMustBePositive();
     error GreaterThanFYTokenReserves();
+    error RateOverflowNSO();
     error RateOverflowNSR();
     error RateOverflowZA();
     error RateOverflowZYY();
     error RoundingError();
     error TMustBePositive();
     error TooFarFromMaturity();
+    error TooManySharesIn();
     error Underflow();
     error UnderflowYXA();
 
@@ -58,26 +60,71 @@ library YieldMathS {
     ) public pure returns (uint128) {}
 
     function fyTokenInForSharesOut(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 sharesOut,
-        uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
-    ) public pure returns (uint128) {}
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 sharesOut,
+        uint256 timeTillMaturity,
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
+    ) public pure returns (uint256) {
+        unchecked {
+            if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
+            return _fyTokenInForSharesOut(sharesReserves, fyTokenReserves, sharesOut, _computeA(timeTillMaturity, k, g), c, mu);
+        }
+    }
+
+    function _fyTokenInForSharesOut(
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 sharesOut,
+        uint256 a,
+        uint256 c,
+        uint256 mu
+    ) public pure returns (uint256) {
+        unchecked {
+            uint256 sum;
+            {
+                uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
+                if (normalizedSharesReserves > MAX) revert RateOverflowNSR();
+
+                uint256 za = c.divWadDown(mu).mulWadDown(
+                    uint256(int256(mu.mulWadDown(sharesReserves.divWadDown(WAD))).powWad(int256(a)))
+                );
+                if (za > MAX) revert RateOverflowZA();
+
+                uint256 ya = _powHelper(fyTokenReserves, a);
+
+                uint256 normalizedSharesOut = mu.mulWadDown(sharesOut);
+                if (normalizedSharesOut > MAX) revert RateOverflowNSO();
+
+                if (normalizedSharesOut > normalizedSharesReserves) revert TooManySharesIn();
+                uint256 zx = normalizedSharesReserves - normalizedSharesOut;
+
+                uint256 zxa = c.divWadDown(mu).mulWadDown(_powHelper(zx, a));
+
+                sum = za + ya - zxa;
+                if (sum > MAX) revert GreaterThanFYTokenReserves();
+            }
+
+            uint256 result = _powHelper(sum, WAD.divWadDown(a)) - fyTokenReserves;
+            if (result > MAX) revert RoundingError();
+
+            return result;
+        }
+    }
 
     function sharesInForFYTokenOut(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 fyTokenOut,
-        uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
-    ) external pure returns (uint256 sharesOut) {
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 fyTokenOut,
+        uint256 timeTillMaturity,
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
+    ) external pure returns (uint256) {
         unchecked {
             if(c <= 0 || mu <= 0) revert CAndMuMustBePositive();
             return _sharesInForFYTokenOut(sharesReserves, fyTokenReserves, fyTokenOut, _computeA(timeTillMaturity, k, g), c, mu);
@@ -91,7 +138,7 @@ library YieldMathS {
         uint256 a,
         uint256 c,
         uint256 mu
-    ) internal pure returns (uint256 sharesOut) {
+    ) internal pure returns (uint256) {
         unchecked {
             if (mu.mulWadDown(sharesReserves) > MAX) revert RateOverflowNSR();
             uint256 za = c.divWadDown(mu).mulWadDown(
@@ -111,19 +158,21 @@ library YieldMathS {
                 _powHelper(zaYaYxa.divWadDown(c.divWadDown(mu)), WAD.divWadDown(a))
             );
         
-            sharesOut = subtotal - sharesReserves;
-            if (sharesOut > subtotal) revert Underflow();
+            uint256 result = subtotal - sharesReserves;
+            if (result > subtotal) revert Underflow();
+
+            return result;
         }
     }
 
     function maxFYTokenIn(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 timeTillMaturity,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 timeTillMaturity,
         uint256 k,
         uint256 g,
-        uint128 c,
-        uint128 mu
+        uint256 c,
+        uint256 mu
     ) external pure returns (uint256 fyTokenIn) {
         unchecked {
             if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
@@ -132,16 +181,16 @@ library YieldMathS {
     }
 
     function _maxFYTokenIn(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
         uint256 a,
         uint256 c,
         uint256 mu
     ) internal pure returns (uint256 fyTokenIn) {
-        uint256 normalizedSharesReserves = mu.mulWadDown(uint256(sharesReserves));
+        uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
         if (normalizedSharesReserves > MAX) revert RateOverflowNSR();
         uint256 za = c.divWadDown(mu).mulWadDown(uint256(int256(normalizedSharesReserves).powWad(int256(a))));
-        uint256 ya = uint256(int256(int128(fyTokenReserves)).powWad(int256(a)));
+        uint256 ya = uint256(int256(fyTokenReserves).powWad(int256(a)));
         uint256 sum = za + ya;
         if (sum > MAX) revert GreaterThanFYTokenReserves();
 
@@ -150,13 +199,13 @@ library YieldMathS {
     }
 
     function maxFYTokenOut(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 timeTillMaturity,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 timeTillMaturity,
         uint256 k,
         uint256 g,
-        uint128 c,
-        uint128 mu
+        uint256 c,
+        uint256 mu
     ) external pure returns (uint256 fyTokenOut) {
         unchecked {
             if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
@@ -165,8 +214,8 @@ library YieldMathS {
     }
 
     function _maxFYTokenOut(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
         uint256 a,
         uint256 c,
         uint256 mu
@@ -188,13 +237,13 @@ library YieldMathS {
     }
 
     function maxSharesIn(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 timeTillMaturity,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 timeTillMaturity,
         uint256 k,
         uint256 g,
-        uint128 c,
-        uint128 mu
+        uint256 c,
+        uint256 mu
     ) external pure returns (uint256 sharesIn) {
         unchecked {
             if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
@@ -203,8 +252,8 @@ library YieldMathS {
     }
 
     function _maxSharesIn(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
         uint256 a,
         uint256 c,
         uint256 mu
@@ -228,10 +277,10 @@ library YieldMathS {
     }
 
     function invariant(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
         uint256 totalSupply,
-        uint128 timeTillMaturity,
+        uint256 timeTillMaturity,
         uint256 k,
         uint256 g,
         uint256 c,
@@ -244,8 +293,8 @@ library YieldMathS {
     }
 
     function _invariant(
-        uint128 sharesReserves, // z
-        uint128 fyTokenReserves, // x
+        uint256 sharesReserves, // z
+        uint256 fyTokenReserves, // x
         uint256 totalSupply, // s
         uint256 a,
         uint256 c,
@@ -272,7 +321,7 @@ library YieldMathS {
         }
     }
 
-    function _computeA(uint128 timeTillMaturity, uint256 k, uint256 g) internal pure returns (uint256) {
+    function _computeA(uint256 timeTillMaturity, uint256 k, uint256 g) internal pure returns (uint256) {
         // t = k * timeTillMaturity
         uint256 t = k * timeTillMaturity;
         if (t <= 0) revert TMustBePositive();
