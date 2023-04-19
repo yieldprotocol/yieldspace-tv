@@ -10,6 +10,7 @@ pragma solidity >=0.8.15;
        yieldprotocol.com       ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
 */
 
+import "forge-std/Test.sol";
 import {Cast} from "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
@@ -27,6 +28,7 @@ library YieldMathS {
     error RateOverflowNSR();
     error RateOverflowZA();
     error RateOverflowZYY();
+    error RateUnderflow();
     error RoundingError();
     error TMustBePositive();
     error TooFarFromMaturity();
@@ -38,26 +40,70 @@ library YieldMathS {
     uint256 public constant MAX = type(uint128).max; //     Used for overflow checks
 
     function fyTokenForSharesIn(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 sharesIn,
-        uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
-    ) public pure returns (uint128) {}
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 sharesIn,
+        uint256 timeTillMaturity,
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
+    ) public pure returns (uint256) {}
+
+    function _fyTokenForSharesIn(
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 sharesIn,
+        uint256 a,
+        uint256 c,
+        uint256 mu
+    ) public pure returns (uint256) {}
 
     function sharesOutForFYTokenIn(
-        uint128 sharesReserves,
-        uint128 fyTokenReserves,
-        uint128 fyTokenIn,
-        uint128 timeTillMaturity,
-        uint128 k,
-        uint128 g,
-        uint128 c,
-        uint128 mu
-    ) public pure returns (uint128) {}
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 fyTokenIn,
+        uint256 timeTillMaturity,
+        uint256 k,
+        uint256 g,
+        uint256 c,
+        uint256 mu
+    ) public pure returns (uint256) {
+        unchecked {
+            if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
+            return _sharesOutForFYTokenIn(sharesReserves, fyTokenReserves, fyTokenIn, _computeA(timeTillMaturity, k, g), c, mu);
+        }
+    }
+
+    function _sharesOutForFYTokenIn(
+        uint256 sharesReserves,
+        uint256 fyTokenReserves,
+        uint256 fyTokenIn,
+        uint256 a,
+        uint256 c,
+        uint256 mu
+    ) public pure returns (uint256) {
+        uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
+        if (normalizedSharesReserves > MAX) revert RateOverflowNSR();
+
+        uint256 za = c.divWadDown(mu).mulWadDown(
+            uint256(int256(mu.mulWadDown(normalizedSharesReserves)).powWad(int256(a)))
+        );
+
+        if (za > MAX) revert RateOverflowZA();
+
+        // za + ya - yxa 
+        uint256 zaYaYxa = za + _powHelper(fyTokenReserves, a) - _powHelper(fyTokenReserves + fyTokenIn, a);
+        if (zaYaYxa > MAX) revert RateOverflowZYY();
+
+        uint256 rightTerm = WAD.divWadDown(mu).mulWadDown(
+            _powHelper(zaYaYxa.divWadDown(c.divWadDown(mu)), WAD.divWadDown(a))
+        ).divWadDown(mu);
+
+        if (rightTerm > sharesReserves) revert RateUnderflow();
+
+        return sharesReserves - rightTerm;
+    }
 
     function fyTokenInForSharesOut(
         uint256 sharesReserves,
