@@ -10,7 +10,6 @@ pragma solidity >=0.8.15;
        yieldprotocol.com       ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
 */
 
-import "forge-std/Test.sol";
 import {Cast} from "@yield-protocol/utils-v2/src/utils/Cast.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
@@ -69,9 +68,7 @@ library YieldMathS {
         uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
         if (normalizedSharesReserves > MAX) revert RateOverflowNSR();
 
-        uint256 za = c.divWadDown(mu).mulWadDown(
-            uint256(int256(mu.mulWadDown(normalizedSharesReserves)).powWad(int256(a)))
-        );
+        uint256 za = c.divWadDown(mu).mulWadDown(_powHelper(normalizedSharesReserves, a));
         if (za > MAX) revert RateOverflowZA();
 
         uint256 ya = _powHelper(fyTokenReserves, a);
