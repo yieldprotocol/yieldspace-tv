@@ -364,7 +364,7 @@ library YieldMathS {
     function _computeA(uint256 timeTillMaturity, uint256 k, uint256 g) internal pure returns (uint256) {
         // t = k * timeTillMaturity
         uint256 t = k * timeTillMaturity;
-        if (t <= 0) revert TMustBePositive();
+        if (t < 0) revert TMustBePositive();
 
         // a = (1 - gt)
         uint256 a = WAD - g.mulWadDown(t);
