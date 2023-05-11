@@ -126,7 +126,7 @@ library YieldMathS {
         uint256 g,
         uint256 c,
         uint256 mu
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         unchecked {
             if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
             return _fyTokenInForSharesOut(sharesReserves, fyTokenReserves, sharesOut, _computeA(timeTillMaturity, k, g), c, mu);
@@ -140,24 +140,21 @@ library YieldMathS {
         uint256 a,
         uint256 c,
         uint256 mu
-    ) public view returns (uint256) {
-        uint256 sum;
-        {
-            uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
+    ) public pure returns (uint256) {
+        uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
 
-            uint256 za = c.divWadDown(mu).mulWadDown(_powHelper(normalizedSharesReserves, a));
+        uint256 za = c.divWadDown(mu).mulWadDown(_powHelper(normalizedSharesReserves, a));
 
-            uint256 ya = _powHelper(fyTokenReserves, a);
+        uint256 ya = _powHelper(fyTokenReserves, a);
 
-            uint256 normalizedSharesOut = mu.mulWadDown(sharesOut);
+        uint256 normalizedSharesOut = mu.mulWadDown(sharesOut);
 
-            if (normalizedSharesOut > normalizedSharesReserves) revert TooManySharesIn();
-            uint256 zx = normalizedSharesReserves - normalizedSharesOut;
+        if (normalizedSharesOut > normalizedSharesReserves) revert TooManySharesIn();
+        uint256 zx = normalizedSharesReserves - normalizedSharesOut;
 
-            uint256 zxa = c.divWadDown(mu).mulWadDown(_powHelper(zx, a));
+        uint256 zxa = c.divWadDown(mu).mulWadDown(_powHelper(zx, a));
 
-            sum = za + ya - zxa;
-        }
+        uint256 sum = za + ya - zxa;
 
         uint256 result = _powHelper(sum, WAD.divWadDown(a)) - fyTokenReserves;
 
