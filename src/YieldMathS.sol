@@ -18,7 +18,6 @@ import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 library YieldMathS {
     using Cast for uint256;
     using Cast for uint128;
-    using FixedPointMathLib for uint128;
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
@@ -232,7 +231,7 @@ library YieldMathS {
     ) internal pure returns (uint256 fyTokenIn) {
         uint256 normalizedSharesReserves = mu.mulWadDown(sharesReserves);
         uint256 za = c.divWadDown(mu).mulWadDown(_powHelper(normalizedSharesReserves, a));
-        uint256 ya = uint256(int256(fyTokenReserves).powWad(int256(a)));
+        uint256 ya = _powHelper(fyTokenReserves, a);
         uint256 sum = za + ya;
 
         fyTokenIn = _powHelper(sum, WAD.divWadDown(a)) - fyTokenReserves;
@@ -354,7 +353,7 @@ library YieldMathS {
             uint256 denominator = c.divWadDown(mu) + WAD;
 
             uint256 topTerm = uint256(
-                int256(c.divWadDown(mu).mulWadDown(numerator.divWadDown(denominator))).powWad(int256(WAD.divWadDown(a)))
+                _powHelper(c.divWadDown(mu).mulWadDown(numerator.divWadDown(denominator)), WAD.divWadDown(a))
             );
 
             result = (topTerm.mulWadDown(WAD) * WAD) / totalSupply;

@@ -4,7 +4,7 @@
 
 ---
 
-`yieldspace-tv` is a new implementation of [Yieldspace](https://github.com/yieldprotocol/yieldspace-v2) that allows for the use of shares in tokenized vaults as base reserves. This is based on concepts and formulas derived in ["YieldSpace with Yield Bearing Vaults"](https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw?both) by Allan Niemerg which was based on the original ["The Yield Protocol: On-Chain Lending With
+`yieldspace-tv` is a new implementation of [Yieldspace](https://github.com/yieldprotocol/yieldspace-v2) that allows for the use of shares in tokenized vaults as base reserves. This is based on concepts and formulas derived in ["YieldSpace with Yield Bearing Vaults"](https://hackmd.io/lRZ4mgdrRgOpxZQXqKYlFw) by Allan Niemerg which was based on the original ["The Yield Protocol: On-Chain Lending With
 Interest Rate Discovery"](https://yield.is/Yield.pdf) written by Dan Robinson and Allan Niemerg.
 
 The pool is an [UniV2 style, x/y fixed constant automated market maker](https://uniswap.org/whitepaper.pdf) used for providing liquidity and trading a pair of "fyToken" and related underlying "base" token as described in the papers noted above. In this new version, the base tokens can now be tokenized vault shares.
