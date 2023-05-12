@@ -187,7 +187,7 @@ library YieldMathS {
     ) internal pure returns (uint256) {
         unchecked {
             uint256 za = c.divWadDown(mu).mulWadDown(
-                uint256(int256(mu.mulWadDown(sharesReserves.divWadDown(WAD))).powWad(int256(a)))
+                _powHelper(mu.mulWadDown(sharesReserves.divWadDown(WAD)), a)
             );
 
             uint256 ya = _powHelper(fyTokenReserves, a);
@@ -261,16 +261,16 @@ library YieldMathS {
         uint256 mu
     ) internal pure returns (uint256 fyTokenOut) {
         uint256 za = c.divWadDown(mu).mulWadDown(
-            uint256(int256(mu.mulWadDown(sharesReserves.divWadDown(WAD))).powWad(int256(a)))
+            _powHelper(mu.mulWadDown(sharesReserves.divWadDown(WAD)), a)
         );
 
-        uint256 ya = uint256(int256(fyTokenReserves.divWadDown(WAD)).powWad(int256(a)));
+        uint256 ya = _powHelper(fyTokenReserves.divWadDown(WAD), a);
 
         uint256 numerator = za + ya;
 
         uint256 denominator = c.divWadDown(mu) + WAD;
 
-        uint256 rightTerm = uint256(int256(numerator.divWadDown(denominator)).powWad(int256(WAD.divWadDown(a))));
+        uint256 rightTerm = _powHelper(numerator.divWadDown(denominator), WAD.divWadDown(a));
 
         fyTokenOut = fyTokenReserves - rightTerm.mulWadDown(WAD);
         if (fyTokenOut > fyTokenReserves) revert Underflow();
@@ -299,17 +299,17 @@ library YieldMathS {
         uint256 mu
     ) internal pure returns (uint256 sharesIn) {
         uint256 za = c.divWadDown(mu).mulWadDown(
-            uint256(int256(mu.mulWadDown(sharesReserves.divWadDown(WAD))).powWad(int256(a)))
+            _powHelper(mu.mulWadDown(sharesReserves.divWadDown(WAD)), a)
         );
 
-        uint256 ya = uint256(int256(fyTokenReserves.divWadDown(WAD)).powWad(int256(a)));
+        uint256 ya = _powHelper(fyTokenReserves.divWadDown(WAD), a);
 
         uint256 numerator = za + ya;
 
         uint256 denominator = c.divWadDown(mu) + WAD;
 
         uint256 leftTerm = WAD.divWadDown(mu).mulWadDown(
-            uint256(int256(numerator.divWadDown(denominator)).powWad(int256(WAD.divWadDown(a))))
+            _powHelper(numerator.divWadDown(denominator), WAD.divWadDown(a))
         );
 
         sharesIn = leftTerm.mulWadDown(WAD) - sharesReserves;
@@ -344,10 +344,10 @@ library YieldMathS {
             if (c <= 0 || mu <= 0) revert CAndMuMustBePositive();
 
             uint256 za = c.divWadDown(mu).mulWadDown(
-                uint256(int256(mu.mulWadDown(sharesReserves.divWadDown(WAD))).powWad(int256(a)))
+                _powHelper(mu.mulWadDown(sharesReserves.divWadDown(WAD)), a)
             );
 
-            uint256 ya = uint256(int256(fyTokenReserves.divWadDown(WAD)).powWad(int256(a)));
+            uint256 ya = _powHelper(fyTokenReserves.divWadDown(WAD), a);
 
             uint256 numerator = za + ya;
 
@@ -360,6 +360,9 @@ library YieldMathS {
             result = (topTerm.mulWadDown(WAD) * WAD) / totalSupply;
         }
     }
+
+    /* UTILITY FUNCTIONS
+     ******************************************************************************************************************/
 
     function _computeA(uint256 timeTillMaturity, uint256 k, uint256 g) internal pure returns (uint256) {
         // t = k * timeTillMaturity
@@ -380,5 +383,4 @@ library YieldMathS {
             result = uint256(int256(x).powWad(int256(y)));
         }
     }
-
 }
