@@ -659,10 +659,6 @@ library YieldMathS {
     }
 
     function _powHelper(uint256 x, uint256 y) internal pure returns (uint256 result) {
-        if (x == 0) {
-            return 0;
-        } else {
-            result = uint256(int256(x).powWad(int256(y)));
-        }
+        x == 0 ? result = 0 : result = uint256(int256(x).powWad(int256(y)));
     }
 }
