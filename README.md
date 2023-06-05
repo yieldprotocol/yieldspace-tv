@@ -54,6 +54,9 @@ forge test
 
 If using forking capability, be sure to add `MAINNET_RPC` to your `.env`.
 
+TODO: Fuzz test with sharesReserves and fyToken reserves as fuzzed variables
+TODO: Fuzz test that the invariant growth with sequential trades is continuous
+
 ## Math
 
 In developing this YieldSpace we have used two different libraries for fixed point arithmetic.

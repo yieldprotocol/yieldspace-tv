@@ -76,6 +76,7 @@ contract YieldMathTest is Test {
     uint128 public constant timeTillMaturity = uint128(90 * 24 * 60 * 60 * 10); // T
 
     uint256 immutable k;
+    uint256 public invK = 25 * 365 * 24 * 60 * 60 * 10; // The Desmos formulas use this * 10 at the end for tenths of a second.  Pool.sol does not.
 
     uint256 public constant gNumerator = 95;
     uint256 public constant gDenominator = 100;
@@ -91,8 +92,6 @@ contract YieldMathTest is Test {
     uint256 public mu;
 
     constructor() {
-        // The Desmos formulas use this * 10 at the end for tenths of a second.  Pool.sol does not.
-        uint256 invK = 25 * 365 * 24 * 60 * 60 * 10;
         k = 1e18 / invK;
 
         g1 = gNumerator.wdiv(gDenominator);
@@ -954,7 +953,7 @@ contract YieldMathTest is Test {
             mu
         );
         // https://www.desmos.com/calculator/jcdfr1qv3z
-        assertApproxEqAbs(_maxFYTokenIn, 1230211.59495e18, 1e13);
+        assertApproxEqAbs(_maxFYTokenIn, 1230211.59495e18, 1e15); // 
 
         uint256 sharesOut = YieldMathS.sharesOutForFYTokenIn(
             sharesReserves,
@@ -986,6 +985,29 @@ contract YieldMathTest is Test {
 
         // https://www.desmos.com/calculator/yfngmdxnsg
         assertApproxEqAbs(_maxFYTokenOut, 176616.991033e18, 1e12);
+
+        uint256 sharesIn = YieldMathS.sharesInForFYTokenOut(
+            sharesReserves,
+            fyTokenReserves,
+            _maxFYTokenOut,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+
+        _maxFYTokenOut = YieldMathS.maxFYTokenOut(
+            sharesReserves + sharesIn,
+            fyTokenReserves - _maxFYTokenOut,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+
+        assertApproxEqAbs(_maxFYTokenOut, 0, 1e12); // It would be better to verify the pool can't trade any more fyTokens without using YieldMathS.maxFYTokenOut
     }
 
     /* 7. function maxSharesIn
@@ -1004,6 +1026,29 @@ contract YieldMathTest is Test {
 
         // https://www.desmos.com/calculator/oddzrif0y7
         assertApproxEqAbs(_maxSharesIn, 160364.770445e18, 1e12);
+
+        uint256 fyTokenOut = YieldMathS.fyTokenOutForSharesIn(
+            sharesReserves,
+            fyTokenReserves,
+            _maxSharesIn,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+
+        uint256 _maxFYTokenOut = YieldMathS.maxFYTokenOut(
+            sharesReserves + _maxSharesIn,
+            fyTokenReserves - fyTokenOut,
+            timeTillMaturity,
+            k,
+            g1,
+            c,
+            mu
+        );
+
+        assertApproxEqAbs(_maxFYTokenOut, 0, 1e12); // It would be better to verify the pool can't trade any more without using YieldMathS.maxSharesIn
     }
 
     /* 8. function invariant
@@ -1022,6 +1067,6 @@ contract YieldMathTest is Test {
         );
 
         // https://www.desmos.com/calculator/tl0of4wrju
-        assertApproxEqAbs(result, 1.1553244e18, 1e12);
+        assertApproxEqAbs(result, 1.1553244e18, 1e15); // TODO: Fuzz test that the invariant growth with sequential trades is continuous
     }
 }
