@@ -9,7 +9,8 @@
     "!lib"
   ],
   "scripts": {
-    "size": "forge build --sizes"
+    "size": "forge build --sizes",
+    "test": "forge test -vvv --fork-url $MAINNET_RPC --fork-block-number 16685009"
   },
   "repository": {
     "type": "git",
